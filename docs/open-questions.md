@@ -4,32 +4,23 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## SETUP-001 — Vercel + Supabase accounts
+## SETUP-004 — Vercel deployment URL + Supabase auth redirect
 
 **Status**: Open
-**Question**: Does the user have existing Vercel and Supabase accounts? Do they want to use the Supabase ↔ Vercel integration for automatic env var sync?
-**Blocking**: Cannot initialize project or configure env vars until resolved.
+**Question**: What is the Vercel deployment URL for this project? Needed to configure Supabase Authentication → URL Configuration (Site URL + Redirect URLs).
+**Blocking**: Auth callback won't work on production until redirect URL is added in Supabase dashboard.
+**Action**: User adds URL to Supabase → Authentication → URL Configuration → Redirect URLs: `https://<your-vercel-url>/auth/callback`
 **Owner**: User
 
 ---
 
-## SETUP-002 — Supabase project region
+## SETUP-005 — Vercel environment variables
 
 **Status**: Open
-**Question**: Which region should the Supabase database be in?
-**Default if no answer**: US East (us-east-1)
-**Blocking**: Supabase project creation.
+**Question**: Have `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` been added to Vercel project settings?
+**Blocking**: First deployment will build but auth won't function without these.
+**Action**: Vercel → Project → Settings → Environment Variables. Service role key found at supabase.com → project → Settings → API.
 **Owner**: User
-
----
-
-## SETUP-003 — Development vs production Supabase projects
-
-**Status**: Open
-**Question**: Should we use one Supabase project (simpler, but migrations hit prod immediately) or two (dev + prod, safer but more setup)?
-**Recommendation**: Start with one. Add a second when the project approaches launch.
-**Blocking**: Nothing immediately. Decide before first migration.
-**Owner**: User + Claude
 
 ---
 
@@ -40,3 +31,11 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 **Alternatives**: Budget dashboard (higher value but requires OAuth + platform API setup first).
 **Blocking**: Feature planning and scope definition.
 **Owner**: User
+
+---
+
+## Resolved
+
+- **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
+- **SETUP-002** — Region: us-east-1. Supabase project `ad-op-tools` created. Resolved 2026-06-24.
+- **SETUP-003** — Starting with one Supabase project. Will add dev/prod split before launch. Resolved 2026-06-24.
