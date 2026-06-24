@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/run-with-flags.js post-edit:accumulator scripts/hooks/post-edit-accumulator.js standard,strict"
+          },
+          {
+            "type": "command",
+            "command": "node scripts/hooks/run-with-flags.js post-edit:format scripts/hooks/post-edit-format.js standard,strict"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/run-with-flags.js pre-bash:commit-quality scripts/hooks/pre-bash-commit-quality.js standard,strict"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/run-with-flags.js stop:format-typecheck scripts/hooks/stop-format-typecheck.js standard,strict"
+          }
+        ]
+      }
+    ]
+  }
+}
