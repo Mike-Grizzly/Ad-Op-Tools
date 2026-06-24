@@ -1,40 +1,36 @@
 # Current Status
 
 ## Project Phase
-**Foundation** — Next.js project initialized, Supabase integration layer wired. Awaiting Supabase project credentials for first Vercel deployment.
+**Setup & Planning** — Foundation (Next.js + Supabase auth shell) is built. Repo, Supabase, and Vercel are linked and configured. No feature code yet. Next deliverable: a full-app plan before building any feature slices.
 
-## What Exists
-- `.claude/` — ECC framework: 16 agents, 3 commands, 2 rule files, hooks, skill
-- `scripts/` — Hook automation scripts
-- `CLAUDE.md` — Project reference document
-- `docs/` — Source-of-truth directory
-- `package.json` — Next.js 16, React 19, TypeScript strict, Tailwind v4, `@supabase/supabase-js`, `@supabase/ssr`
-- `src/app/` — Default Next.js scaffold (layout, page, globals.css)
-- `src/lib/supabase/server.ts` — Async server-side Supabase client (`@supabase/ssr`)
-- `src/lib/supabase/client.ts` — Browser-side Supabase client
-- `src/middleware.ts` — Auth middleware: unauthenticated users redirected to `/login`
-- `src/types/database.ts` — Placeholder for Supabase-generated types (do not hand-edit)
-- `.env.example` — All required env vars documented with placeholders
-- `.gitignore` — Excludes `.env.local`, `.next/`, `node_modules/`
+## What Exists — Code
+- Next.js 16 App Router, React 19, TypeScript strict, Tailwind v4
+- `src/lib/supabase/server.ts` / `client.ts` — SSR + browser Supabase clients (`@supabase/ssr`)
+- `src/middleware.ts` — auth gate; unauthenticated users redirected to `/login`
+- `src/app/(auth)/login/` — login page + client form (`signInWithPassword`)
+- `src/app/auth/callback/route.ts` — code → session exchange
+- `src/app/(dashboard)/layout.tsx` — auth-protected shell with nav + sign-out
+- `src/app/(dashboard)/dashboard/page.tsx` — placeholder dashboard (shows user email)
+- `src/features/auth/` — sign-out server action + button
+- `src/types/database.ts` — placeholder; regenerate from Supabase once schema settles
+- `.env.example` — all env vars documented with placeholders
 
-## What Does Not Exist Yet
-- Supabase remote project (user creating — us-east-1)
-- `.env.local` with real credentials
-- First Vercel deployment
-- Auth pages (`/login`, `/signup`, `/auth/callback`)
-- Dashboard route group `src/app/(dashboard)/`
-- Any feature modules under `src/features/`
-- Any database migrations
+## What Exists — Infrastructure
+- GitHub repo: `mike-grizzly/ad-op-tools`
+- Supabase project `ad-op-tools` (us-east-1, id `fwzltthkcwthuuptqlby`)
+- Vercel project linked to GitHub
+  - Domains: `ad-op-tools.vercel.app` (primary) + `ad-op-tools-mike-grigsby-s-projects.vercel.app`
+  - Env vars set: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Supabase Auth URL config: Site URL + redirect URLs for both Vercel domains
 
-## Immediate Next Steps
-1. User creates Supabase project (us-east-1), retrieves URL + anon key + service role key
-2. Add env vars to Vercel dashboard
-3. Create `.env.local` locally
-4. Build auth pages + dashboard shell → first deployment
-5. Define feature scope and plan first slice (recommendation: UTM Generator)
+## Database State
+- Remote DB has two tables: `utm_templates`, `utm_history` (RLS enabled, 0 rows)
+- NOTE: these tables are not tracked by any migration file (`supabase/migrations/` is empty). They were applied during the shelved UTM build and kept intentionally. Reconcile before UTM work resumes — add a matching migration, or drop and recreate via migration. RLS *policies* on these tables are unverified (RLS is enabled, but policy correctness has not been checked).
 
-## In Progress
-Waiting for Supabase project credentials from user.
+## Not Built Yet
+- Any feature slices (UTM, budget, GTM, creative, reports)
+- Ad platform integrations / OAuth
+- Full-app plan (the next thing to produce)
 
 ## Last Updated
-2026-06-24 — Session: Next.js initialized, Supabase SSR layer + middleware wired, pushed to branch
+2026-06-24 — Vercel linked, Supabase auth configured, UTM code shelved; entering planning phase.
