@@ -32,27 +32,34 @@ src/
 │   └── api/                    # API routes
 │       └── integrations/       # Platform OAuth + sync
 ├── components/
-│   ├── ui/                     # Primitive/headless components
-│   ├── dashboard/              # Budget dashboard widgets
-│   ├── campaigns/              # Campaign UI
-│   ├── utm/                    # UTM generator UI
-│   └── creative/               # Creative manager UI
-├── hooks/                      # React hooks (use-*.ts)
+│   └── ui/                     # Shared primitive/headless components only
+├── features/                   # Vertical slice modules
+│   └── {name}/
+│       ├── queries.ts          # DB queries and data fetching
+│       ├── actions.ts          # Server actions ("use server")
+│       ├── validation.ts       # Zod schemas for this feature
+│       ├── constants.ts        # Feature constants (never "use server")
+│       └── components/         # Feature-specific UI (if needed)
+├── hooks/                      # Shared React hooks (use-*.ts)
 ├── lib/
-│   ├── integrations/           # Ad platform API clients
+│   ├── integrations/           # Ad platform API clients (shared infra)
 │   │   ├── google-ads/
 │   │   ├── meta/
 │   │   ├── linkedin/
 │   │   └── tiktok/
-│   ├── supabase/               # DB client helpers
-│   └── gtm/                    # GTM API client
+│   └── supabase/               # DB client helpers
 └── types/
     ├── database.ts             # Supabase generated types (do not hand-edit)
     └── integrations.ts         # Shared integration types
 
 supabase/
-├── migrations/                 # Timestamped SQL migrations
-└── seed.sql                    # Local dev seed data
+└── migrations/                 # Timestamped SQL migrations
+
+docs/
+├── current-status.md           # What's built, what's in progress
+├── decision-log.md             # Architecture and product decisions
+├── open-questions.md           # Unresolved questions and risks
+└── features/                   # Per-feature specs and status
 ```
 
 ## Core Features
@@ -169,14 +176,30 @@ This project uses the [ECC (Everything Claude Code)](https://github.com/affaan-m
 
 Set `ECC_HOOK_PROFILE=minimal` to disable non-critical hooks, `standard` (default) for normal development, `strict` for pre-release. Disable individual hooks with `ECC_DISABLED_HOOKS=hookId1,hookId2`.
 
+## Source of Truth
+
+`docs/` is the source of truth for project state. At the start of each session, read:
+- `docs/current-status.md` — what exists, what's in progress
+- `docs/features/{name}.md` — spec for the feature being worked on
+- `docs/decision-log.md` — prior architectural decisions
+
+When docs and code disagree, fix the docs to match reality or flag the discrepancy.
+
+## Session Closeout (Required Every Session)
+
+Before ending any session, update:
+- `docs/current-status.md` — what changed, what's incomplete
+- `docs/features/{name}.md` — status, test results, edge cases found
+- `docs/decision-log.md` — if any architecture or product decisions were made
+- `docs/open-questions.md` — if any risks, bugs, or unresolved questions surfaced
+
+Do not mark a feature complete unless it has been manually tested.
+
 ## Getting Started
 
 ```bash
 # Install dependencies
 npm install
-
-# Start Supabase locally
-supabase start
 
 # Copy and fill in env vars
 cp .env.example .env.local
