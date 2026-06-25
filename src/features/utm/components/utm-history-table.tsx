@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef } from 'react'
 import type { Database } from '@/types/database'
 
 type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
@@ -9,6 +10,19 @@ type Props = {
   loading?: boolean
   onCopy: (url: string) => void
 }
+
+const CHECK_SVG = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+)
+
+const COPY_SVG = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+  </svg>
+)
 
 function SkeletonRow() {
   return (
@@ -41,6 +55,16 @@ function formatDate(isoString: string): string {
 }
 
 export function UTMHistoryTable({ entries, loading = false, onCopy }: Props) {
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleCopy(value: string, id: string) {
+    onCopy(value)
+    setCopiedId(id)
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+    copyTimerRef.current = setTimeout(() => setCopiedId(null), 1500)
+  }
+
   const showLoading = loading
   const showEmpty = !loading && entries.length === 0
   const showList = !loading && entries.length > 0
@@ -93,41 +117,72 @@ export function UTMHistoryTable({ entries, loading = false, onCopy }: Props) {
 
         {showList && (
           <div>
-            {visible.map((entry) => (
-              <div key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f1f2f4' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 700, color: '#161922', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-mono)' }}>
-                    {entry.campaign}
-                  </span>
-                  <span style={{ fontSize: 11.5, color: '#9aa0aa', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500 }}>
-                    {formatDate(entry.created_at)}
-                  </span>
+            {visible.map((entry) => {
+              const tail = (() => { const i = entry.generated_url.indexOf('?'); return i >= 0 ? entry.generated_url.slice(i) : '' })()
+              const idFull = entry.id + '-full'
+              const idTail = entry.id + '-tail'
+              return (
+                <div key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f1f2f4' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: '#161922', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-mono)' }}>
+                      {entry.campaign}
+                    </span>
+                    <span style={{ fontSize: 11.5, color: '#9aa0aa', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500 }}>
+                      {formatDate(entry.created_at)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#4f46e5', background: 'rgba(79,70,229,.09)', padding: '2px 7px', borderRadius: 5 }}>
+                      {entry.source}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#5b626e', background: '#f1f2f4', padding: '2px 7px', borderRadius: 5 }}>
+                      {entry.medium}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: '#8a909b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {entry.generated_url}
+                    </span>
+                    {tail && (
+                      <button
+                        onClick={() => handleCopy(tail, idTail)}
+                        title="Copy UTM tail"
+                        style={{
+                          flexShrink: 0, height: 28, padding: '0 9px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                          border: `1px solid ${copiedId === idTail ? '#bbf7d0' : '#e9ebef'}`,
+                          background: copiedId === idTail ? '#f0fdf4' : '#fff',
+                          borderRadius: 7,
+                          color: copiedId === idTail ? '#16a34a' : '#6b727f',
+                          cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                          fontFamily: 'var(--font-mono)',
+                          transition: 'color .15s, background .15s, border-color .15s',
+                        }}
+                      >
+                        {copiedId === idTail ? CHECK_SVG : null}
+                        UTM
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleCopy(entry.generated_url, idFull)}
+                      title="Copy full URL"
+                      style={{
+                        flexShrink: 0, width: 30, height: 30,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: `1px solid ${copiedId === idFull ? '#bbf7d0' : '#e9ebef'}`,
+                        background: copiedId === idFull ? '#f0fdf4' : '#fff',
+                        borderRadius: 8,
+                        color: copiedId === idFull ? '#16a34a' : '#6b727f',
+                        cursor: 'pointer',
+                        transition: 'color .15s, background .15s, border-color .15s',
+                      }}
+                    >
+                      {copiedId === idFull ? CHECK_SVG : COPY_SVG}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#4f46e5', background: 'rgba(79,70,229,.09)', padding: '2px 7px', borderRadius: 5 }}>
-                    {entry.source}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#5b626e', background: '#f1f2f4', padding: '2px 7px', borderRadius: 5 }}>
-                    {entry.medium}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                  <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: '#8a909b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {entry.generated_url}
-                  </span>
-                  <button
-                    onClick={() => onCopy(entry.generated_url)}
-                    title="Copy URL"
-                    style={{ flexShrink: 0, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e9ebef', background: '#fff', borderRadius: 8, color: '#6b727f', cursor: 'pointer' }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="9" y="9" width="11" height="11" rx="2" />
-                      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

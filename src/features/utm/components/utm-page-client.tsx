@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react'
 import type { Database } from '@/types/database'
 import { UTMForm } from './utm-form'
 import { UTMHistoryTable } from './utm-history-table'
-import { generateAndSaveURL, saveTemplate } from '../actions'
+import { UTMUrlLibrary } from './utm-url-library'
+import { generateAndSaveURL, saveTemplate, getAutocompleteSuggestions } from '../actions'
 
 type UTMTemplate = Database['public']['Tables']['utm_templates']['Row']
 type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
@@ -46,7 +47,7 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
 
   return (
     <>
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '30px 32px 60px' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '30px 32px 26px' }}>
 
         {/* Page heading */}
         <div style={{ marginBottom: 26 }}>
@@ -69,6 +70,7 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
             onCopy={handleCopy}
             generateAction={generateAndSaveURL}
             saveTemplateAction={saveTemplate}
+            autocompleteAction={getAutocompleteSuggestions}
           />
           <UTMHistoryTable
             entries={entries}
@@ -78,6 +80,11 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
             }}
           />
         </div>
+      </div>
+
+      {/* URL Library — full-width section below the generator */}
+      <div style={{ padding: '0 32px 60px' }}>
+        <UTMUrlLibrary entries={entries} />
       </div>
 
       {/* Toast */}
