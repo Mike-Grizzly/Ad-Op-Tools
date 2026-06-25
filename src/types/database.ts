@@ -63,6 +63,8 @@ export type Database = {
           campaign: string
           content: string | null
           term: string | null
+          ad_set: string | null
+          creative: string | null
           generated_url: string
           created_at: string
         }
@@ -76,6 +78,8 @@ export type Database = {
           campaign: string
           content?: string | null
           term?: string | null
+          ad_set?: string | null
+          creative?: string | null
           generated_url: string
           created_at?: string
         }
@@ -89,6 +93,8 @@ export type Database = {
           campaign?: string
           content?: string | null
           term?: string | null
+          ad_set?: string | null
+          creative?: string | null
           generated_url?: string
           created_at?: string
         }

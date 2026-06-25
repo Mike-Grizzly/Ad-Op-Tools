@@ -15,7 +15,7 @@ export async function getUTMTemplates(): Promise<UTMTemplate[]> {
   return data
 }
 
-export async function getUTMHistory(limit = 20): Promise<UTMHistoryEntry[]> {
+export async function getUTMHistory(limit = 500): Promise<UTMHistoryEntry[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('utm_history')

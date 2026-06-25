@@ -28,6 +28,8 @@ export async function generateAndSaveURL(
     campaign: params.campaign,
     content: params.content || null,
     term: params.term || null,
+    ad_set: params.ad_set || null,
+    creative: params.creative || null,
     generated_url,
   })
 
@@ -90,6 +92,40 @@ export async function deleteTemplate(
   return { data: null }
 }
 
+const AUTOCOMPLETE_FIELDS = ['campaign', 'base_url'] as const
+type AutocompleteField = typeof AUTOCOMPLETE_FIELDS[number]
+
+export async function getAutocompleteSuggestions(
+  field: unknown,
+  prefix: unknown
+): Promise<ActionResult<string[]>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  if (!AUTOCOMPLETE_FIELDS.includes(field as AutocompleteField)) {
+    return { error: 'Invalid field' }
+  }
+
+  const validField = field as AutocompleteField
+  const trimmed = typeof prefix === 'string' ? prefix.trim().slice(0, 200) : ''
+  if (trimmed.length < 2) return { data: [] }
+
+  const { data, error } = await supabase
+    .from('utm_history')
+    .select('campaign, base_url')
+    .eq('user_id', user.id)
+    .ilike(validField, `${trimmed}%`)
+    .order(validField)
+    .limit(8)
+
+  if (error) return { error: 'Failed to fetch suggestions' }
+
+  const values = data.map(r => validField === 'campaign' ? r.campaign : r.base_url)
+  const unique = [...new Set(values)].filter(Boolean) as string[]
+  return { data: unique }
+}
+
 function buildUTMUrl(params: UTMParamsInput): string {
   const url = new URL(params.base_url)
   url.searchParams.set('utm_source', params.source)
@@ -97,5 +133,7 @@ function buildUTMUrl(params: UTMParamsInput): string {
   url.searchParams.set('utm_campaign', params.campaign)
   if (params.content) url.searchParams.set('utm_content', params.content)
   if (params.term) url.searchParams.set('utm_term', params.term)
+  if (params.ad_set) url.searchParams.set('utm_adset', params.ad_set)
+  if (params.creative) url.searchParams.set('utm_creative', params.creative)
   return url.toString()
 }

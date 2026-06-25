@@ -32,6 +32,18 @@ export const utmParamsSchema = z.object({
     .regex(/^[a-z0-9_. -]*$/i, 'Only letters, numbers, spaces, underscores, hyphens, and dots allowed')
     .optional()
     .or(z.literal('')),
+  ad_set: z
+    .string()
+    .max(200)
+    .regex(/^[a-z0-9_. -]*$/i, 'Only letters, numbers, spaces, underscores, hyphens, and dots allowed')
+    .optional()
+    .or(z.literal('')),
+  creative: z
+    .string()
+    .max(200)
+    .regex(/^[a-z0-9_. -]*$/i, 'Only letters, numbers, spaces, underscores, hyphens, and dots allowed')
+    .optional()
+    .or(z.literal('')),
 })
 
 export type UTMParamsInput = z.infer<typeof utmParamsSchema>
