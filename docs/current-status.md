@@ -2,7 +2,12 @@
 
 ## Project Phase
 **Feature Slice 1: UTM Generator — Built, not yet manually tested in production.**
-All code is on `main`, deployed to Vercel. Next deliverable: pick the next feature slice.
+All code is on `main`, deployed to Vercel.
+
+**Roadmap is set** (`docs/roadmap.md`): next deliverable is **Phase 0+1 — integration
+foundation + Budget Dashboard (Meta, read-only)**. Three gating decisions must be confirmed
+before that build starts (open-questions INT-001 first platform, SEC-001 token encryption,
+INFRA-001 dev/prod Supabase split). No Phase 1 code has been written yet.
 
 ## What Exists — Code
 
@@ -48,12 +53,17 @@ All code is on `main`, deployed to Vercel. Next deliverable: pick the next featu
 - `src/types/database.ts` is hand-maintained (not auto-generated from Supabase CLI); reflects current schema
 
 ## Not Built Yet
-- Budget dashboard (requires platform OAuth + API integrations)
-- GTM automation
-- Creative asset manager
-- Custom reporting dashboards
-- Ad platform integrations / OAuth
-- Dev/prod Supabase project split
+(See `docs/roadmap.md` for build order. Confirmed: nothing under `src/lib/integrations/`,
+no `src/types/integrations.ts`, no `AdPlatformClient`, no `platform_connections` table.)
+- Ad platform integration foundation / OAuth (Phase 0+1)
+- Budget dashboard (Phase 0+1; Meta first)
+- Custom reporting / additional platforms (Phase 2)
+- GTM automation (Phase 3)
+- Creative asset manager (Phase 4)
+- Dev/prod Supabase project split (recommended before Phase 1 — INFRA-001)
 
 ## Last Updated
-2026-06-25 — UTM Generator feature slice complete: form, history sidebar, URL Library spreadsheet, autocomplete, Ad Set/Creative fields. All committed and pushed to main.
+2026-06-25 — Roadmap session: `architect` + `planner` review set the build order
+(`docs/roadmap.md`); ARCH-002 re-resolved to Budget-first; gating decisions recorded
+(INT-001/SEC-001/INFRA-001); `docs/features/budget.md` spec drafted; fixed doc drift
+(`database.ts` header, `CLAUDE.md` Next.js version). No feature code changed.

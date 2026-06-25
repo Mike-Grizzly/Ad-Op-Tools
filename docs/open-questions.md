@@ -31,15 +31,51 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## ARCH-002 — Next feature slice
+## INT-001 — First platform to integrate (Phase 1)
+
+**Status**: Open — recommended path documented; confirm before Phase 1 build.
+**Question**: Which ad platform do we integrate first behind the new foundation?
+**Recommendation**: **Meta.** Marketing API yields a usable long-lived token immediately. Google Ads requires a Developer Token approval (can take days) that blocks all testing. If Google is preferred instead, start that application today.
+**Action**: Confirm Meta (or Google). Either way, start the Google Developer Token application during Phase 1 so it's ready for Phase 2.
+**Owner**: User
+
+---
+
+## SEC-001 — OAuth token encryption at rest
+
+**Status**: Open — recommended path documented; **security boundary, must be settled before the first token is written.**
+**Question**: How are OAuth access/refresh tokens protected at rest in `platform_connections`? RLS controls who can *read a row* but does not encrypt the stored bytes — anyone with the service-role key or DB/backup access would see plaintext.
+**Recommendation**: **App-side AES-256-GCM** — encrypt token columns in server code before insert, key in a server-only env var (e.g. `TOKEN_ENCRYPTION_KEY`, never `NEXT_PUBLIC_*`), distinct per environment; RLS stays on as defense-in-depth. Alternatives: Supabase Vault / `pgcrypto` (DB-side; confirm plan-tier support). RLS-only is **not** acceptable for token columns.
+**Action**: Confirm the mechanism — it changes the `platform_connections` migration.
+**Owner**: User
+
+---
+
+## INFRA-001 — dev/prod Supabase split timing
+
+**Status**: Open — recommended path documented; confirm before Phase 1 build.
+**Question**: When do we split into separate dev/prod Supabase projects? (decision-log "No Local Supabase" / SETUP-003 deferred this to "before launch.")
+**Recommendation**: **Before Phase 1.** Phase 1 is the first phase that writes live OAuth tokens and churns schema (`platform_connections`). UTM was safe on one shared project; credentials are not. Use a distinct `TOKEN_ENCRYPTION_KEY` per environment so a leaked dev key can't decrypt prod tokens.
+**Action**: Confirm we do the split now, or accept and document the risk of deferring.
+**Owner**: User
+
+---
+
+## TEST-001 — Testing posture (no test runner installed)
 
 **Status**: Open
-**Question**: What do we build next? Candidates:
-- Budget Dashboard (high value, but requires OAuth + Google/Meta/LinkedIn/TikTok API setup first)
-- GTM Automation (API-based, no creative assets needed)
-- Creative Asset Manager (requires storage + platform APIs)
-**Recommendation**: GTM Automation — bounded scope, API-only, no OAuth credential complexity if using service accounts.
+**Question**: `package.json` has no Vitest/Playwright despite docs referencing them, and there are no `test`/`test:e2e` scripts. The real quality gate today is manual testing + `type-check`/`lint`/`build`.
+**Action**: Confirm manual-only is acceptable for the upcoming slices, or budget a sub-task to stand up Vitest for the highest-value pure functions (the per-platform `transforms.ts` spend mappers, where an off-by-1000 currency error is exactly the kind of bug a unit test catches cheaply).
 **Owner**: User
+
+---
+
+## NAV-001 — Dead nav links in the dashboard shell
+
+**Status**: Open (cosmetic; resolves as features land)
+**Question**: `src/components/ui/dashboard-shell.tsx` links to `/budget`, `/campaigns`, `/creative`, `/reports` — all 404 today — and has **no** `/gtm` link. Clicking them shows a 404.
+**Action**: These resolve naturally as phases land (Budget in Phase 1, etc.). Add the `/gtm` nav item in Phase 3. If a 404 in the meantime is undesirable, gate the unbuilt links or add "coming soon" placeholder routes — flag if you want this done now.
+**Owner**: Claude (per phase)
 
 ---
 
@@ -52,3 +88,4 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - **SETUP-005** — All three env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) added to Vercel project settings. Resolved 2026-06-24.
 - **DATA-001** — Remote DB schema ahead of repo. Resolved 2026-06-25: two migrations now track `utm_templates`, `utm_history`, all columns, RLS, and prefix-search indexes.
 - **ARCH-001** — First slice selection. Resolved 2026-06-25: UTM Generator built first.
+- **ARCH-002** — Next feature slice. Resolved 2026-06-25: **Budget Dashboard (Meta, read-only) next**, behind a thin integration foundation built through one platform. Full order in `docs/roadmap.md`. The prior GTM-first recommendation was rejected — its "no OAuth complexity / use service accounts" premise is incorrect: the GTM API requires Google OAuth, and service accounts are the wrong auth model for multi-tenant GTM (a service account is *our* GTM, not the user's). See decision-log "Build Roadmap & Feature Order."

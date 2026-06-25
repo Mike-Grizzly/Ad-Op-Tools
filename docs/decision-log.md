@@ -115,3 +115,39 @@ Significant architecture and product decisions. Append; never delete.
 **Rationale**: User delegated execution judgment for the project but wants code quality, safety, and architectural stability held constant. Encoding it in the auto-loaded working-style rules makes the bar durable across sessions rather than dependent on in-context memory.
 
 **Implications**: Applies from now on without needing to be re-requested each session. The bar can be tightened or loosened by editing the working-style section; changes of substance get logged here.
+
+---
+
+## 2026-06-25 — Build Roadmap & Feature Order
+
+**Decision**: After the UTM Generator, build in this order — **Phase 0+1**: integration foundation + Budget Dashboard (Meta, read-only); **Phase 2**: widen the read-path (add Google Ads to Budget and/or Custom Reporting); **Phase 3**: GTM Automation (first write-path); **Phase 4**: Creative Asset Manager (last). LinkedIn/TikTok are repeat-the-pattern increments, not separate phases. Full plan in `docs/roadmap.md`.
+
+**Rationale**: Three of the four remaining features (Budget, Reporting, Creative) block on a shared OAuth + integration layer that doesn't exist. Budget is the highest-value feature, is read-only (lowest blast radius to prove the foundation on), and defines the canonical `campaigns`/`budget_entries` model the others inherit. Reporting is cheap afterward. GTM is dependency-isolated and write-oriented, so sequenced on value. Creative is last — it mutates live ad accounts and spends real money.
+
+**Process**: Produced by an `architect` + `planner` review that ran independently and converged on the same order.
+
+**Supersedes**: The earlier ARCH-002 lean toward GTM-first (see open-questions; that rationale was incorrect).
+
+---
+
+## 2026-06-25 — Integration Foundation Built Through One Platform (Meta), Not As a Framework
+
+**Decision**: The OAuth/token/sync foundation ships *with* the first feature that consumes it (Budget Dashboard on Meta), not as a standalone abstract framework. We do not build all four platform clients up front. The shared pieces designed once: `platform_connections` schema, the encryption format, and the `AdPlatformClient` *interface*. The Meta adapter, OAuth flow, refresh, and rate-limit are proven end-to-end before a second platform is added.
+
+**Rationale**: An OAuth layer with zero consumers can't be manually tested, and "nothing is complete until manually tested" is a hard rule. Designing the `AdPlatformClient` interface against one real implementation (then correcting it with the second platform) avoids baking in the wrong abstraction. Building four adapters speculatively would violate the "no speculative abstractions" rule.
+
+**First platform = Meta** (recommended, pending confirmation — see open-questions INT-001): Meta's Marketing API yields a usable token immediately; Google Ads requires a Developer Token approval that can take days and blocks all testing. Start the Google Developer Token application during Phase 1 so it's ready for Phase 2.
+
+---
+
+## 2026-06-25 — Canonical Spend Model: Integer Minor Units + Per-Row Currency
+
+**Decision**: Spend is stored as integer minor units (`spend_micros`, matching Google's native `cost_micros`) with an explicit per-row `currency`. Never floats. `budget_entries` uses an idempotent upsert key (`user_id, platform, campaign_external_id, entry_date`) so on-demand and scheduled syncs cannot double-count. Platform-specific mapping is confined to each platform's `transforms.ts`.
+
+**Rationale**: Money in floats is a data-integrity bug waiting to happen; multi-platform means mixed currencies (normalize for display, never at rest). These are low-reversibility choices (re-typing a populated money column is migration pain), so they're settled now as a standing guardrail for every platform phase.
+
+---
+
+## 2026-06-25 — Doc/Code Drift Corrections
+
+**Decision**: Fixed three factual drifts surfaced during the roadmap review: (1) `src/types/database.ts` header now states it is hand-maintained (it previously claimed to be auto-generated, which would have led a contributor to clobber hand edits); (2) `CLAUDE.md` tech-stack table now reads "Next.js 16 App Router (React 19)" (was "Next.js 14+"); (3) recorded that `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel but intentionally unused — nothing reads it, and the integration phase should keep it that way unless a background sync job with no user session forces the question.
