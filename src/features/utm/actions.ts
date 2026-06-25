@@ -1,0 +1,101 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+import { utmParamsSchema, saveTemplateSchema } from './validation'
+import type { UTMParamsInput, SaveTemplateInput } from './validation'
+
+type ActionResult<T> = { data: T; error?: undefined } | { data?: undefined; error: string }
+
+export async function generateAndSaveURL(
+  input: unknown
+): Promise<ActionResult<{ generated_url: string }>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const parsed = utmParamsSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+
+  const params = parsed.data
+  const generated_url = buildUTMUrl(params)
+
+  const { error } = await supabase.from('utm_history').insert({
+    user_id: user.id,
+    base_url: params.base_url,
+    source: params.source,
+    medium: params.medium,
+    campaign: params.campaign,
+    content: params.content || null,
+    term: params.term || null,
+    generated_url,
+  })
+
+  if (error) return { error: 'Failed to save to history' }
+
+  revalidatePath('/utm')
+  return { data: { generated_url } }
+}
+
+export async function saveTemplate(
+  input: unknown
+): Promise<ActionResult<{ id: string }>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const parsed = saveTemplateSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+
+  const params = parsed.data
+  const { data, error } = await supabase
+    .from('utm_templates')
+    .insert({
+      user_id: user.id,
+      name: params.name,
+      source: params.source || null,
+      medium: params.medium || null,
+      campaign: params.campaign || null,
+      content: params.content || null,
+      term: params.term || null,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { error: 'A template with that name already exists' }
+    return { error: 'Failed to save template' }
+  }
+
+  revalidatePath('/utm')
+  return { data: { id: data.id } }
+}
+
+export async function deleteTemplate(
+  id: string
+): Promise<ActionResult<null>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('utm_templates')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return { error: 'Failed to delete template' }
+
+  revalidatePath('/utm')
+  return { data: null }
+}
+
+function buildUTMUrl(params: UTMParamsInput): string {
+  const url = new URL(params.base_url)
+  url.searchParams.set('utm_source', params.source)
+  url.searchParams.set('utm_medium', params.medium)
+  url.searchParams.set('utm_campaign', params.campaign)
+  if (params.content) url.searchParams.set('utm_content', params.content)
+  if (params.term) url.searchParams.set('utm_term', params.term)
+  return url.toString()
+}
