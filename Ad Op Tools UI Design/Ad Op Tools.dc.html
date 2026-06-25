@@ -187,7 +187,18 @@
                 <!-- Base URL -->
                 <div style="margin-bottom:16px">
                   <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Base URL <span style="color:#cdd1d8">·</span> <span style="color:#9aa0aa;font-weight:500">the page you're linking to</span></label>
-                  <input value="{{ baseUrl }}" onChange="{{ setBaseUrl }}" placeholder="https://www.example.com/landing" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  <div style="position:relative">
+                    <input value="{{ baseUrl }}" onChange="{{ setBaseUrl }}" onFocus="{{ focusBase }}" onBlur="{{ blurAc }}" onKeyDown="{{ acKeyDown }}" placeholder="https://www.example.com/landing" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                    <sc-if value="{{ acOpenBase }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;z-index:40;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e9ebef;border-radius:10px;box-shadow:0 8px 24px -4px rgba(22,25,34,.12);padding:4px;overflow:hidden">
+                        <div style="padding:9px 14px 5px;font-size:11px;font-weight:600;color:#9aa0aa">from your history</div>
+                        <sc-for list="{{ acSuggestions }}" as="sug" hint-placeholder-count="3">
+                          <sc-if value="{{ sug.sel }}" hint-placeholder-val="{{ false }}"><button type="button" data-field="baseUrl" data-val="{{ sug.label }}" onMouseDown="{{ pickSuggestion }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                          <sc-if value="{{ sug.notSel }}" hint-placeholder-val="{{ true }}"><button type="button" data-field="baseUrl" data-val="{{ sug.label }}" data-idx="{{ sug.idx }}" onMouseDown="{{ pickSuggestion }}" onMouseEnter="{{ setAcIndex }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:transparent;color:#6b727f" style-hover="background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
                   <sc-if value="{{ urlInvalid }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c2410c;margin-top:6px;font-weight:500">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4.5"></path><path d="M12 16h.01"></path></svg>
@@ -228,13 +239,36 @@
                   </div>
                 </div>
 
+                <!-- Ad Set + Creative row -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Ad Set <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ adSet }}" onChange="{{ setAdSet }}" placeholder="e.g. retargeting-30d" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Creative <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ creative }}" onChange="{{ setCreative }}" placeholder="e.g. video-15s-summer" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                </div>
+
                 <!-- Campaign -->
                 <div style="margin-bottom:16px">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
                     <label style="font-size:12.5px;font-weight:600;color:#4b5563">Campaign name</label>
                     <span style="font-size:11.5px;color:#9aa0aa;font-family:'JetBrains Mono',monospace">{{ campaignCount }}</span>
                   </div>
-                  <input value="{{ campaign }}" onChange="{{ setCampaign }}" placeholder="spring_launch_2026" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  <div style="position:relative">
+                    <input value="{{ campaign }}" onChange="{{ setCampaign }}" onFocus="{{ focusCampaign }}" onBlur="{{ blurAc }}" onKeyDown="{{ acKeyDown }}" placeholder="spring_launch_2026" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                    <sc-if value="{{ acOpenCampaign }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;z-index:40;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e9ebef;border-radius:10px;box-shadow:0 8px 24px -4px rgba(22,25,34,.12);padding:4px;overflow:hidden">
+                        <div style="padding:9px 14px 5px;font-size:11px;font-weight:600;color:#9aa0aa">from your history</div>
+                        <sc-for list="{{ acSuggestions }}" as="sug" hint-placeholder-count="3">
+                          <sc-if value="{{ sug.sel }}" hint-placeholder-val="{{ false }}"><button type="button" data-field="campaign" data-val="{{ sug.label }}" onMouseDown="{{ pickSuggestion }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:13.5px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                          <sc-if value="{{ sug.notSel }}" hint-placeholder-val="{{ true }}"><button type="button" data-field="campaign" data-val="{{ sug.label }}" data-idx="{{ sug.idx }}" onMouseDown="{{ pickSuggestion }}" onMouseEnter="{{ setAcIndex }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:13.5px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:transparent;color:#374151" style-hover="background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
                 </div>
 
                 <!-- Content + Term row -->
@@ -322,11 +356,12 @@
                             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent,#4f46e5);background:rgba(79,70,229,.09);padding:2px 7px;border-radius:5px">{{ e.source }}</span>
                             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#5b626e;background:#f1f2f4;padding:2px 7px;border-radius:5px">{{ e.medium }}</span>
                           </div>
-                          <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                          <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
                             <span style="flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8a909b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.generated_url }}</span>
-                            <button data-url="{{ e.generated_url }}" onClick="{{ copyRow }}" title="Copy URL" style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:8px;color:#6b727f;cursor:pointer" style-hover="background:var(--accent,#4f46e5);border-color:var(--accent,#4f46e5);color:#fff">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
-                            </button>
+                            <sc-if value="{{ e.copiedTail }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;height:30px;display:flex;align-items:center;gap:4px;padding:0 9px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;color:#16a34a;font-size:11px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>UTM</span></sc-if>
+                            <sc-if value="{{ e.notCopiedTail }}" hint-placeholder-val="{{ true }}"><button data-val="{{ e.tail }}" data-id="{{ e.idTail }}" onClick="{{ copyRecent }}" title="Copy UTM parameters only" style="flex-shrink:0;height:30px;display:flex;align-items:center;padding:0 10px;border:1px solid #e9ebef;background:#fff;border-radius:8px;color:#6b727f;cursor:pointer;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)">UTM</button></sc-if>
+                            <sc-if value="{{ e.copiedFull }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;color:#16a34a"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                            <sc-if value="{{ e.notCopiedFull }}" hint-placeholder-val="{{ true }}"><button data-val="{{ e.generated_url }}" data-id="{{ e.idFull }}" onClick="{{ copyRecent }}" title="Copy full URL" style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:8px;color:#6b727f;cursor:pointer" style-hover="background:var(--accent,#4f46e5);border-color:var(--accent,#4f46e5);color:#fff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
                           </div>
                         </div>
                       </sc-for>
@@ -342,6 +377,116 @@
               </section>
 
             </div>
+
+            <!-- URL LIBRARY (spreadsheet) -->
+            <section style="background:#fff;border:1px solid #e9ebef;border-radius:16px;box-shadow:0 1px 2px rgba(22,25,34,.04);overflow:hidden;margin-top:24px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <h3 style="font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em">URL Library</h3>
+                  <span style="font-size:11.5px;font-weight:700;color:#5b626e;background:#f1f2f4;padding:2px 9px;border-radius:999px">{{ libTotal }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button onClick="{{ libGroupAll }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbAll }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">All</span></sc-if>
+                      <sc-if value="{{ gbNotAll }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">All</span></sc-if>
+                    </button>
+                    <button onClick="{{ libGroupSource }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbSource }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">Source</span></sc-if>
+                      <sc-if value="{{ gbNotSource }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">Source</span></sc-if>
+                    </button>
+                    <button onClick="{{ libGroupCampaign }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbCampaign }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">Campaign</span></sc-if>
+                      <sc-if value="{{ gbNotCampaign }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">Campaign</span></sc-if>
+                    </button>
+                  </div>
+                  <div style="position:relative;width:260px">
+                    <svg width="16" height="16" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9aa0aa;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    <input value="{{ libFilter }}" onChange="{{ setLibFilter }}" placeholder="Filter URLs…" style="width:100%;height:34px;padding:0 12px 0 34px;border:1px solid #e9ebef;border-radius:8px;font-size:13px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="overflow-x:auto;border-top:1px solid #eef0f2">
+                <table style="width:100%;min-width:1600px;border-collapse:collapse;table-layout:fixed">
+                  <thead>
+                    <tr>
+                      <th style="width:200px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Campaign</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Source</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Medium</th>
+                      <th style="width:130px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Ad Set</th>
+                      <th style="width:150px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Creative</th>
+                      <th style="width:130px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Content</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Term</th>
+                      <th style="width:180px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Base URL</th>
+                      <th style="width:260px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Full URL</th>
+                      <th style="width:220px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">UTM Tail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-if value="{{ libIsEmpty }}" hint-placeholder-val="{{ false }}">
+                      <tr>
+                        <td colspan="10" style="padding:0">
+                          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 24px">
+                            <div style="width:54px;height:54px;border-radius:14px;background:#f3f4f7;display:flex;align-items:center;justify-content:center;color:#a7adb8;margin-bottom:16px">
+                              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+                            </div>
+                            <div style="font-size:15px;font-weight:700;color:#161922;margin-bottom:5px">No tagged URLs yet</div>
+                            <p style="font-size:13px;color:#9aa0aa;margin:0;max-width:260px;line-height:1.5">Generate your first UTM link and it will appear here.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </sc-if>
+
+                    <sc-for list="{{ libSections }}" as="sec" hint-placeholder-count="3">
+                      <sc-if value="{{ sec.showHeader }}" hint-placeholder-val="{{ false }}">
+                        <tr data-key="{{ sec.key }}" onClick="{{ toggleLibGroup }}" style="cursor:pointer;background:#f3f4f7" style-hover="background:#eceef2">
+                          <td colspan="10" style="padding:9px 16px;border-top:1px solid #eef0f2;border-bottom:1px solid #eef0f2">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                              <div style="display:flex;align-items:center;gap:9px">
+                                <span style="font-size:13px;font-weight:700;color:#161922">{{ sec.label }}</span>
+                                <span style="font-size:11px;font-weight:600;color:#5b626e;background:#fff;border:1px solid #e9ebef;padding:1px 8px;border-radius:999px">{{ sec.count }}</span>
+                              </div>
+                              <sc-if value="{{ sec.expanded }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" style="color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></sc-if>
+                              <sc-if value="{{ sec.collapsed }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" style="color:#9aa0aa;transform:rotate(180deg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></sc-if>
+                            </div>
+                          </td>
+                        </tr>
+                      </sc-if>
+
+                      <sc-if value="{{ sec.expanded }}" hint-placeholder-val="{{ true }}">
+                        <sc-for list="{{ sec.rows }}" as="r" hint-placeholder-count="4">
+                          <tr style="height:48px;background:{{ r.bg }};border-bottom:1px solid #f1f2f4" style-hover="background:#f9fafb">
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.campaign }}" style="font-size:13.5px;font-weight:700;color:#161922;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.campaign }}</div></td>
+                            <td style="padding:0 14px"><span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent,#4f46e5);background:rgba(79,70,229,.09);padding:2px 7px;border-radius:5px">{{ r.source }}</span></td>
+                            <td style="padding:0 14px"><span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#5b626e;background:#f1f2f4;padding:2px 7px;border-radius:5px">{{ r.medium }}</span></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.adSet }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.adSet }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.creative }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.creative }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.content }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.content }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.term }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.term }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.base_url }}" style="font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.base_url }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden">
+                              <div style="display:flex;align-items:center;gap:8px">
+                                <span title="{{ r.fullUrl }}" style="flex:1;min-width:0;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.fullUrl }}</span>
+                                <sc-if value="{{ r.copiedFull }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#22c55e"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                                <sc-if value="{{ r.notCopiedFull }}" hint-placeholder-val="{{ true }}"><button data-val="{{ r.fullUrl }}" data-id="{{ r.idFull }}" onClick="{{ copyLibCell }}" title="Copy full URL" style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#9aa0aa;cursor:pointer" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
+                              </div>
+                            </td>
+                            <td style="padding:0 14px;overflow:hidden">
+                              <div style="display:flex;align-items:center;gap:8px">
+                                <span title="{{ r.tail }}" style="flex:1;min-width:0;font-size:11px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.tail }}</span>
+                                <sc-if value="{{ r.copiedTail }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#22c55e"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                                <sc-if value="{{ r.notCopiedTail }}" hint-placeholder-val="{{ true }}"><button data-val="{{ r.tail }}" data-id="{{ r.idTail }}" onClick="{{ copyLibCell }}" title="Copy UTM tail" style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#9aa0aa;cursor:pointer" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
+                              </div>
+                            </td>
+                          </tr>
+                        </sc-for>
+                      </sc-if>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </sc-if>
 
@@ -407,6 +552,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4f46e5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#4f46e5&quot;,&quot;#2563eb&quot;,&quot;#0d9488&quot;,&quot;#ea580c&quot;,&quot;#7c3aed&quot;]},&quot;defaultCollapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
+  campaignHistory = ['spring_launch_2026', 'spring_launch_2025', 'brand_2026', 'brand_defense', 'retargeting_warm', 'retargeting_cold', 'lead_gen_q3', 'newsletter_jun', 'whitepaper_q2', 'creator_collab', 'webinar_invite', 'thought_leadership'];
+  baseHistory = ['https://www.acme.io/pricing', 'https://www.acme.io/demo', 'https://www.acme.io/', 'https://www.acme.io/blog/utm-guide', 'https://www.acme.io/features', 'https://www.acme.io/webinar', 'https://www.acme.io/case-studies'];
+
   state = {
     screen: 'app',
     collapsed: null,
@@ -415,6 +563,10 @@ class Component extends DCLogic {
     baseUrl: 'https://www.acme.io/pricing',
     source: 'google', medium: 'cpc', campaign: 'spring_launch_2026', content: '', term: '',
     selectedTemplate: '',
+    adSet: '', creative: '',
+    acField: null, acIndex: 0,
+    libGroupBy: 'all', libFilter: '', libCollapsed: {}, libCopiedId: null,
+    recentCopiedId: null,
     sourceOpen: false, mediumOpen: false,
     historyState: 'filled',
     toast: null,
@@ -434,9 +586,19 @@ class Component extends DCLogic {
       { id: 'h7', base_url: 'https://www.acme.io/webinar', source: 'email', medium: 'email', campaign: 'webinar_invite', generated_url: 'https://www.acme.io/webinar?utm_source=email&utm_medium=email&utm_campaign=webinar_invite', created_at: '4 days ago' },
       { id: 'h8', base_url: 'https://www.acme.io/case-studies', source: 'linkedin', medium: 'organic', campaign: 'thought_leadership', generated_url: 'https://www.acme.io/case-studies?utm_source=linkedin&utm_medium=organic&utm_campaign=thought_leadership', created_at: 'Last week' },
     ],
+    libRows: [
+      { id: 'l1', campaign: 'summer-promo-2026', source: 'google', medium: 'cpc', adSet: '30-day-visitors', creative: 'video-15s-summer', content: 'summer_hero', term: '', base_url: 'https://www.acme.io/summer' },
+      { id: 'l2', campaign: 'summer-promo-2026', source: 'meta', medium: 'social', adSet: 'lookalike-2pct', creative: 'static-banner-blue', content: '', term: '', base_url: 'https://www.acme.io/summer' },
+      { id: 'l3', campaign: 'brand-awareness-q2', source: 'stackadapt', medium: 'display', adSet: 'interest-fitness', creative: 'dynamic-responsive', content: '', term: '', base_url: 'https://www.acme.io/brand' },
+      { id: 'l4', campaign: 'brand-awareness-q2', source: 'linkedin', medium: 'paid-social', adSet: 'lookalike-2pct', creative: 'carousel-product', content: 'sidebar', term: '', base_url: 'https://www.acme.io/brand' },
+      { id: 'l5', campaign: 'retargeting-site-visitors', source: 'meta', medium: 'paid-social', adSet: '30-day-visitors', creative: 'carousel-product', content: '', term: '', base_url: 'https://www.acme.io/pricing' },
+      { id: 'l6', campaign: 'retargeting-site-visitors', source: 'google', medium: 'display', adSet: '30-day-visitors', creative: 'dynamic-responsive', content: '', term: 'running_shoes', base_url: 'https://www.acme.io/pricing' },
+      { id: 'l7', campaign: 'competitor-conquest', source: 'google', medium: 'cpc', adSet: 'competitor-kw', creative: 'static-banner-blue', content: '', term: 'competitor_brand', base_url: 'https://www.acme.io/compare' },
+      { id: 'l8', campaign: 'competitor-conquest', source: 'stackadapt', medium: 'display', adSet: 'interest-fitness', creative: 'video-15s-summer', content: '', term: '', base_url: 'https://www.acme.io/compare' },
+    ],
   };
 
-  componentWillUnmount() { clearTimeout(this._t); }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._c); clearTimeout(this._r); }
 
   buildUrl() {
     const s = this.state;
@@ -459,7 +621,27 @@ class Component extends DCLogic {
     this._t = setTimeout(() => this.setState({ toast: null }), 2600);
   }
 
-  copy(text) { try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {} }
+  copy(text) { try { const p = navigator.clipboard && navigator.clipboard.writeText(text); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+
+  buildTail(r) {
+    const parts = ['utm_source=' + r.source, 'utm_medium=' + r.medium, 'utm_campaign=' + r.campaign];
+    if (r.content) parts.push('utm_content=' + r.content);
+    if (r.term) parts.push('utm_term=' + r.term);
+    return '?' + parts.join('&');
+  }
+
+  suggList(field) {
+    const val = (field === 'campaign' ? this.state.campaign : this.state.baseUrl) || '';
+    if (val.trim().length < 2) return [];
+    const src = field === 'campaign' ? this.campaignHistory : this.baseHistory;
+    const v = val.toLowerCase();
+    return src.filter((x) => x.toLowerCase().includes(v) && x.toLowerCase() !== v).slice(0, 8);
+  }
+
+  applySuggestion(field, val) {
+    if (field === 'campaign') this.setState({ campaign: val, acField: null });
+    else this.setState({ baseUrl: val, acField: null });
+  }
 
   renderVals() {
     const s = this.state;
@@ -481,6 +663,42 @@ class Component extends DCLogic {
     const showList = s.historyState === 'filled' && s.entries.length > 0;
     const showEmpty = s.historyState === 'empty' || (s.historyState === 'filled' && s.entries.length === 0);
     const showLoading = s.historyState === 'loading';
+
+    // autocomplete
+    const acList = s.acField ? this.suggList(s.acField) : [];
+    const acOpen = acList.length > 0;
+    const acSuggestions = acList.map((label, i) => ({ label, sel: i === s.acIndex, notSel: i !== s.acIndex, idx: i }));
+
+    // url library
+    const lq = (s.libFilter || '').trim().toLowerCase();
+    const lmatch = (r) => !lq || [r.campaign, r.source, r.medium, r.adSet, r.creative, r.content, r.term, r.base_url].filter(Boolean).join(' ').toLowerCase().includes(lq);
+    const lfiltered = s.libRows.filter(lmatch);
+    const lmapRow = (r, idx) => {
+      const tail = this.buildTail(r);
+      return {
+        id: r.id, idFull: r.id + '-full', idTail: r.id + '-tail',
+        campaign: r.campaign, source: r.source, medium: r.medium,
+        adSet: r.adSet || '—', creative: r.creative || '—', content: r.content || '—', term: r.term || '—',
+        base_url: r.base_url, fullUrl: r.base_url + tail, tail: tail,
+        bg: idx % 2 === 1 ? '#fafafa' : '#ffffff',
+        copiedFull: s.libCopiedId === r.id + '-full', notCopiedFull: s.libCopiedId !== r.id + '-full',
+        copiedTail: s.libCopiedId === r.id + '-tail', notCopiedTail: s.libCopiedId !== r.id + '-tail',
+      };
+    };
+    let libSections = [];
+    if (s.libGroupBy === 'all') {
+      libSections = [{ key: 'all', showHeader: false, expanded: true, collapsed: false, rows: lfiltered.map((r, i) => lmapRow(r, i)) }];
+    } else {
+      const keyOf = (r) => (s.libGroupBy === 'source' ? r.source : r.campaign);
+      const order = []; const groups = {};
+      lfiltered.forEach((r) => { const k = keyOf(r); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
+      let zi = 0;
+      libSections = order.map((k) => {
+        const cl = !!s.libCollapsed[k];
+        const rows = cl ? [] : groups[k].map((r) => lmapRow(r, zi++));
+        return { key: k, showHeader: true, label: k, count: groups[k].length + (groups[k].length === 1 ? ' URL' : ' URLs'), expanded: !cl, collapsed: cl, rows };
+      });
+    }
 
     return {
       // routing
@@ -526,10 +744,10 @@ class Component extends DCLogic {
       previewText: url || 'Fill in the fields above — your tagged URL builds here in real time.',
       previewColor: previewEmpty ? '#5b6273' : '#cdd3e0',
 
-      setBaseUrl: (e) => this.setState({ baseUrl: e.target.value }),
+      setBaseUrl: (e) => this.setState({ baseUrl: e.target.value, acField: 'baseUrl', acIndex: 0 }),
       setSource: (e) => this.setState({ source: e.target.value }),
       setMedium: (e) => this.setState({ medium: e.target.value }),
-      setCampaign: (e) => this.setState({ campaign: e.target.value.slice(0, 60) }),
+      setCampaign: (e) => this.setState({ campaign: e.target.value.slice(0, 60), acField: 'campaign', acIndex: 0 }),
       setContent: (e) => this.setState({ content: e.target.value }),
       setTerm: (e) => this.setState({ term: e.target.value }),
       openSource: () => this.setState({ sourceOpen: true }),
@@ -557,7 +775,20 @@ class Component extends DCLogic {
       // history
       historyState: s.historyState,
       showList, showEmpty, showLoading,
-      entriesView: s.entries.slice(0, 20),
+      entriesView: s.entries.slice(0, 20).map((e) => {
+        const qi = (e.generated_url || '').indexOf('?');
+        const tail = qi >= 0 ? e.generated_url.slice(qi) : '';
+        return {
+          ...e, tail, idFull: e.id + '-rfull', idTail: e.id + '-rtail',
+          copiedFull: s.recentCopiedId === e.id + '-rfull', notCopiedFull: s.recentCopiedId !== e.id + '-rfull',
+          copiedTail: s.recentCopiedId === e.id + '-rtail', notCopiedTail: s.recentCopiedId !== e.id + '-rtail',
+        };
+      }),
+      copyRecent: (e) => {
+        const v = e.currentTarget.dataset.val; const id = e.currentTarget.dataset.id;
+        this.copy(v); this.setState({ recentCopiedId: id });
+        clearTimeout(this._r); this._r = setTimeout(() => this.setState({ recentCopiedId: null }), 1500);
+      },
       entryCount: s.entries.length,
       totalCount: s.entries.length,
       skeletonRows: [0, 1, 2, 3, 4],
@@ -571,6 +802,48 @@ class Component extends DCLogic {
 
       // toast
       toast: s.toast,
+
+      // form additions
+      adSet: s.adSet, creative: s.creative,
+      setAdSet: (e) => this.setState({ adSet: e.target.value }),
+      setCreative: (e) => this.setState({ creative: e.target.value }),
+
+      // autocomplete
+      acSuggestions,
+      acOpenCampaign: acOpen && s.acField === 'campaign',
+      acOpenBase: acOpen && s.acField === 'baseUrl',
+      focusCampaign: () => this.setState({ acField: 'campaign', acIndex: 0 }),
+      focusBase: () => this.setState({ acField: 'baseUrl', acIndex: 0 }),
+      blurAc: () => setTimeout(() => this.setState({ acField: null }), 140),
+      pickSuggestion: (e) => { e.preventDefault(); this.applySuggestion(e.currentTarget.dataset.field, e.currentTarget.dataset.val); },
+      setAcIndex: (e) => this.setState({ acIndex: Number(e.currentTarget.dataset.idx) }),
+      acKeyDown: (e) => {
+        const field = this.state.acField; if (!field) return;
+        const list = this.suggList(field); if (!list.length) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState((st) => ({ acIndex: (st.acIndex + 1) % list.length })); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState((st) => ({ acIndex: (st.acIndex - 1 + list.length) % list.length })); }
+        else if (e.key === 'Enter') { e.preventDefault(); this.applySuggestion(field, list[this.state.acIndex] || list[0]); }
+        else if (e.key === 'Escape') { this.setState({ acField: null }); }
+      },
+
+      // url library
+      libTotal: s.libRows.length,
+      libFilter: s.libFilter,
+      setLibFilter: (e) => this.setState({ libFilter: e.target.value }),
+      libSections,
+      libIsEmpty: lfiltered.length === 0,
+      gbAll: s.libGroupBy === 'all', gbNotAll: s.libGroupBy !== 'all',
+      gbSource: s.libGroupBy === 'source', gbNotSource: s.libGroupBy !== 'source',
+      gbCampaign: s.libGroupBy === 'campaign', gbNotCampaign: s.libGroupBy !== 'campaign',
+      libGroupAll: () => this.setState({ libGroupBy: 'all' }),
+      libGroupSource: () => this.setState({ libGroupBy: 'source' }),
+      libGroupCampaign: () => this.setState({ libGroupBy: 'campaign' }),
+      toggleLibGroup: (e) => { const k = e.currentTarget.dataset.key; this.setState((st) => ({ libCollapsed: { ...st.libCollapsed, [k]: !st.libCollapsed[k] } })); },
+      copyLibCell: (e) => {
+        const v = e.currentTarget.dataset.val; const id = e.currentTarget.dataset.id;
+        this.copy(v); this.setState({ libCopiedId: id });
+        clearTimeout(this._c); this._c = setTimeout(() => this.setState({ libCopiedId: null }), 1500);
+      },
     };
   }
 }
