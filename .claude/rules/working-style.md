@@ -59,6 +59,26 @@ Never only one.
 ### Server-first
 Default to React Server Components for data fetching and rendering. Add `'use client'` only when interactivity requires it. Keep client components small.
 
+## Quality Bar & Agent Usage
+
+The standing bar for every change: clean, safe, stable architecture. The mechanics are spread through this file; this section codifies how the review agents enforce that bar and when to escalate vs. decide.
+
+### Review agents — invoke proactively (judgment, not a fixed pipeline)
+- **Before non-trivial work** — `architect` or `planner` to scope the slice and surface architectural impact.
+- **After substantive code changes** — `code-reviewer`, plus `typescript-reviewer` / `react-reviewer` when the diff warrants.
+- **Auth, user input, or API endpoints** — `security-reviewer`.
+- **Ad platform API / OAuth / token / spend code** — `ad-platform-reviewer`.
+- **Migrations or schema changes** — `database-reviewer`; RLS ships in the same migration, never a table left open.
+
+Scale to the task — a one-line fix does not need the architect; a feature slice does.
+
+### Pre-commit gate
+`npm run type-check`, `npm run lint`, and `npm run build` must pass before committing. Never commit red.
+
+### Decide vs. escalate
+- **Decide without asking** — execution details: naming, file layout, which helper, how a query is structured.
+- **Surface first** — anything that changes architecture, adds a dependency, or trades off security or data integrity. Flag it and get a call before acting; never work around documented architecture silently.
+
 ## Code Style
 
 - No comments unless the WHY is non-obvious: a hidden constraint, a workaround, a subtle invariant.
