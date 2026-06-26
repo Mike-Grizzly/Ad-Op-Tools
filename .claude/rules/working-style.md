@@ -96,6 +96,14 @@ Scale to the task — a one-line fix does not need the architect; a feature slic
 - Do not silently introduce new patterns — flag and discuss first.
 - Ask before broad refactors.
 
+## Claude Design Exports — Additive, Never Replace (Guardrail)
+
+Design exports live in `Ad Op Tools UI Design/`. Each new export (often a numbered `(N)` subfolder) is a **feature-scoped mock** of the thing it was prompted for — it usually shows only that feature and may omit, simplify, or restyle existing UI. It is NOT a new full-page design.
+
+- Never delete or overwrite existing components, pages, or the original design files because a new export looks different. Integrate the export **on top of** what exists.
+- Diff a new export against the current UI; extract only the new/changed feature and build that. Preserve all existing functionality unless the user explicitly asks to drop it. If an export removes a feature (e.g. the table group-by), flag it and confirm before removing.
+- Keep the original full-page design as the source of truth. Store feature mocks in clearly-named subfolders; do **not** auto-replace the parent design folder with a numbered export.
+
 ## Session Closeout (required at end of every session)
 
 1. Update `docs/current-status.md` — what changed, what is incomplete.

@@ -19,17 +19,17 @@ type Fields = {
   content: string; term: string; ad_set: string; creative: string
 }
 
-const PARAMS: { key: keyof Fields; label: string; utm: string; required?: boolean }[] = [
-  { key: 'source', label: 'Source', utm: 'utm_source', required: true },
-  { key: 'medium', label: 'Medium', utm: 'utm_medium', required: true },
-  { key: 'campaign', label: 'Campaign', utm: 'utm_campaign', required: true },
-  { key: 'content', label: 'Content', utm: 'utm_content' },
-  { key: 'term', label: 'Term', utm: 'utm_term' },
-  { key: 'ad_set', label: 'Ad Set', utm: 'utm_adset' },
-  { key: 'creative', label: 'Creative', utm: 'utm_creative' },
+// Order matches the design: utm params first, Base URL last (no utm_ key of its own).
+const PARAMS: { key: keyof Fields; label: string; utm: string; required?: boolean; ph: string }[] = [
+  { key: 'source', label: 'Source', utm: 'utm_source', required: true, ph: 'newsletter · paid_social · referral' },
+  { key: 'medium', label: 'Medium', utm: 'utm_medium', required: true, ph: 'email · cpc · social · organic' },
+  { key: 'campaign', label: 'Campaign', utm: 'utm_campaign', required: true, ph: 'campaign name' },
+  { key: 'content', label: 'Content', utm: 'utm_content', ph: 'optional' },
+  { key: 'term', label: 'Term', utm: 'utm_term', ph: 'optional' },
+  { key: 'ad_set', label: 'Ad Set', utm: 'utm_adset', ph: 'optional' },
+  { key: 'creative', label: 'Creative', utm: 'utm_creative', ph: 'optional' },
+  { key: 'base_url', label: 'Base URL', utm: '', required: true, ph: 'https://example.com/path' },
 ]
-
-const ANALYTICS_TILES = ['Clicks', 'CTR', 'Last seen']
 
 function toFields(e: UTMHistoryEntry): Fields {
   return {
@@ -42,20 +42,13 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 11px', border: '1px solid #e1e4e9', borderRadius: 9,
-  fontSize: 13.5, fontFamily: 'var(--font-mono)', color: '#161922', background: '#fff', outline: 'none',
+const sectionLabel: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.14em',
+  textTransform: 'uppercase', color: '#9aa0aa', fontWeight: 600,
 }
 
-const COPY_SVG = (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" />
-  </svg>
-)
-const CHECK_SVG = (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 6 9 17l-5-5" />
-  </svg>
+const Spinner = (
+  <span style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: 999, display: 'inline-block', animation: 'spin .6s linear infinite' }} />
 )
 
 export function UTMDetailDrawer({ entry, onClose, onSave, onDelete }: Props) {
@@ -100,6 +93,7 @@ export function UTMDetailDrawer({ entry, onClose, onSave, onDelete }: Props) {
   }
 
   function handleCopy() {
+    if (!shownUrl) return
     navigator.clipboard.writeText(shownUrl).catch(() => {})
     setCopied(true)
     if (copyTimer.current) clearTimeout(copyTimer.current)
@@ -141,137 +135,143 @@ export function UTMDetailDrawer({ entry, onClose, onSave, onDelete }: Props) {
         aria-modal="true"
         aria-labelledby="utm-drawer-title"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 440, maxWidth: '100vw', height: '100%', background: '#fff', display: 'flex', flexDirection: 'column', boxShadow: '-18px 0 50px -20px rgba(0,0,0,.35)' }}
+        style={{ width: 440, maxWidth: '100vw', height: '100%', background: '#fff', display: 'flex', flexDirection: 'column', boxShadow: '-26px 0 54px -22px rgba(22,25,34,.45)' }}
       >
         {/* Header */}
-        <div style={{ padding: '18px 20px 16px', borderBottom: '1px solid #eef0f2' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ minWidth: 0 }}>
-              <h3 id="utm-drawer-title" title={entry.campaign} style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', margin: 0, color: '#161922', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.campaign}</h3>
-              <div style={{ fontSize: 11.5, color: '#9aa0aa', marginTop: 4, fontWeight: 500 }}>Created {formatDate(entry.created_at)}</div>
+        <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid #e9ebef' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div id="utm-drawer-title" title={entry.campaign} style={{ fontSize: 17, fontWeight: 700, color: '#161922', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{entry.campaign}</div>
+              <div style={{ display: 'flex', gap: 7, marginTop: 10 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 999, background: 'rgba(79,70,229,.09)', color: '#4f46e5' }}>{entry.source}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 999, background: '#f1f2f4', color: '#5b626e' }}>{entry.medium}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: '#9aa0aa', marginTop: 11 }}>Created {formatDate(entry.created_at)}</div>
             </div>
-            <button type="button" onClick={onClose} title="Close" aria-label="Close" style={{ flexShrink: 0, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e9ebef', background: '#fff', borderRadius: 8, color: '#6b727f', cursor: 'pointer' }}>
+            <button type="button" onClick={onClose} title="Close" aria-label="Close" style={{ flex: 'none', width: 32, height: 32, border: 'none', background: 'transparent', color: '#6b727f', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
-          </div>
-          <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#4f46e5', background: 'rgba(79,70,229,.09)', padding: '2px 8px', borderRadius: 999 }}>{entry.source}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: '#5b626e', background: '#f1f2f4', padding: '2px 8px', borderRadius: 999 }}>{entry.medium}</span>
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '18px 20px 20px' }}>
-          {/* Tagged URL */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: '#4b5563' }}>Tagged URL</span>
-              <button type="button" onClick={handleCopy} title="Copy URL" disabled={!shownUrl} style={{ display: 'flex', alignItems: 'center', gap: 5, height: 26, padding: '0 10px', border: `1px solid ${copied ? '#bbf7d0' : '#e9ebef'}`, background: copied ? '#f0fdf4' : '#fff', borderRadius: 7, color: copied ? '#16a34a' : '#6b727f', cursor: shownUrl ? 'pointer' : 'not-allowed', fontSize: 11.5, fontWeight: 700, fontFamily: 'inherit' }}>
-                {copied ? CHECK_SVG : COPY_SVG}{copied ? 'Copied' : 'Copy'}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px 8px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+          {/* Tagged URL card */}
+          <div style={{ background: '#0f1118', border: '1px solid #1d2030', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#6b727f', fontWeight: 600 }}>Tagged URL</span>
+              <button type="button" onClick={handleCopy} disabled={!shownUrl} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1d2030', color: copied ? '#22c55e' : '#cdd3e0', border: '1px solid #2a2f42', borderRadius: 7, padding: '5px 11px', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: copied ? 600 : 500, cursor: shownUrl ? 'pointer' : 'not-allowed' }}>
+                {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
-            <div style={{ background: '#0f1118', border: '1px solid #1d2030', borderRadius: 12, padding: 14, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.7, wordBreak: 'break-all', color: shownUrl ? '#cdd3e0' : '#5b6273', minHeight: 50 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, lineHeight: 1.75, color: shownUrl ? '#cdd3e0' : '#5b6273', wordBreak: 'break-all' }}>
               {shownUrl || 'Fill in the required fields to build the URL.'}
             </div>
-            {mode === 'edit' && urlInvalid && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#c2410c', marginTop: 7, fontWeight: 500 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5" /><path d="M12 16h.01" /></svg>
-                Include the full protocol, e.g. https://
+          </div>
+
+          {/* Parameters */}
+          <div>
+            <div style={{ ...sectionLabel, marginBottom: 8 }}>Parameters</div>
+
+            {mode === 'edit' ? (
+              <div style={{ animation: 'fadeUp .24s ease' }}>
+                {PARAMS.map((p) => {
+                  const showWarn = p.key === 'base_url' && urlInvalid
+                  return (
+                    <div key={p.key} style={{ padding: '12px 0', borderBottom: '1px solid #f1f2f4', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#161922' }}>{p.label}</span>
+                        {p.utm && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#9aa0aa' }}>{p.utm}</span>}
+                      </div>
+                      <input
+                        value={fields[p.key]}
+                        onChange={(e) => set(p.key, e.target.value)}
+                        placeholder={p.ph}
+                        aria-label={p.label}
+                        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12.5, color: '#161922', background: '#fff', border: `1px solid ${showWarn ? '#ef4444' : '#e1e4e9'}`, borderRadius: 9, padding: '9px 11px', outline: 'none' }}
+                      />
+                      {showWarn && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: '#c2410c', marginTop: 1 }}>
+                          <span style={{ flex: 'none', width: 15, height: 15, borderRadius: 999, background: 'rgba(239,68,68,.13)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>!</span>
+                          <span>Include the full protocol, e.g. https://</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div>
+                {PARAMS.map((p) => (
+                  <div key={p.key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '13px 0', borderBottom: '1px solid #f1f2f4' }}>
+                    <div style={{ minWidth: 0, flex: 'none' }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161922' }}>{p.label}</div>
+                      {p.utm && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: '#9aa0aa', marginTop: 2 }}>{p.utm}</div>}
+                    </div>
+                    <div style={{ textAlign: 'right', maxWidth: 240, minWidth: 0 }}>
+                      <ViewValue paramKey={p.key} value={entry[p.key]} />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Parameters */}
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9aa0aa', marginBottom: 10 }}>Parameters</div>
-
-          {/* Base URL row */}
-          <ParamRow label="Base URL" hint="destination" mode={mode}>
-            {mode === 'edit'
-              ? <input value={fields.base_url} onChange={(e) => set('base_url', e.target.value)} placeholder="https://example.com/landing" aria-label="Base URL" style={inputStyle} />
-              : <ValueText value={entry.base_url} mono />}
-          </ParamRow>
-
-          {PARAMS.map((p) => (
-            <ParamRow key={p.key} label={p.label} hint={p.utm} mode={mode} required={p.required}>
-              {mode === 'edit'
-                ? <input value={fields[p.key]} onChange={(e) => set(p.key, e.target.value)} placeholder={p.required ? 'Required' : 'Optional'} aria-label={p.label} style={inputStyle} />
-                : <ValueText value={entry[p.key]} mono />}
-            </ParamRow>
-          ))}
-
-          {/* Analytics placeholder */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '24px 0 10px' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9aa0aa' }}>Analytics</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#9aa0aa', background: '#f1f2f4', padding: '2px 7px', borderRadius: 999 }}>Coming soon</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, opacity: 0.55 }}>
-            {ANALYTICS_TILES.map((t) => (
-              <div key={t} style={{ background: '#f7f8fa', border: '1px solid #eef0f2', borderRadius: 10, padding: '12px 10px' }}>
-                <div style={{ fontSize: 11, color: '#9aa0aa', fontWeight: 600, marginBottom: 6 }}>{t}</div>
-                <div className="shimmer" style={{ height: 14, width: '60%', borderRadius: 5 }} />
-              </div>
-            ))}
+          {/* Analytics (future) */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 13 }}>
+              <span style={sectionLabel}>Analytics</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, padding: '3px 9px', borderRadius: 999, background: '#f1f2f4', color: '#9aa0aa', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Coming soon</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, opacity: 0.5 }}>
+              {([['Clicks', '70%'], ['CTR', '55%'], ['Last seen', '80%']] as const).map(([label, w]) => (
+                <div key={label} style={{ border: '1px dashed #e1e4e9', borderRadius: 12, padding: 13, background: '#fafbfc', display: 'flex', flexDirection: 'column', gap: 11 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: '#9aa0aa' }}>{label}</span>
+                  <div style={{ height: 18, width: w, background: '#eceef1', borderRadius: 6 }} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '10px 22px 0', fontSize: 12.5, color: '#dc2626', fontWeight: 600 }}>{error}</div>
+        )}
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid #eef0f2', padding: '14px 20px' }}>
-          {error && (
-            <div style={{ fontSize: 12.5, color: '#dc2626', fontWeight: 600, marginBottom: 10 }}>{error}</div>
-          )}
-          {confirmingDelete ? (
-            <div>
-              <div style={{ fontSize: 13, color: '#4b5563', fontWeight: 500, marginBottom: 11 }}>Delete this URL? This can&apos;t be undone.</div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={handleDelete} disabled={busy} style={{ flex: 1, padding: 11, border: 'none', borderRadius: 10, background: '#dc2626', color: '#fff', fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1 }}>
-                  {busy ? 'Deleting…' : 'Delete'}
-                </button>
-                <button type="button" onClick={() => setConfirmingDelete(false)} disabled={busy} style={{ padding: '11px 18px', border: '1px solid #e1e4e9', borderRadius: 10, background: '#fff', color: '#4b5563', fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Cancel</button>
-              </div>
-            </div>
-          ) : mode === 'edit' ? (
+        {confirmingDelete ? (
+          <div style={{ borderTop: '1px solid rgba(239,68,68,.22)', background: 'rgba(239,68,68,.05)', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 13 }}>
+            <div style={{ fontSize: 13.5, color: '#161922', fontWeight: 600 }}>Delete this URL? <span style={{ fontWeight: 500, color: '#6b727f' }}>This can&apos;t be undone.</span></div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={handleSave} disabled={saveDisabled} style={{ flex: 1, padding: 11, border: 'none', borderRadius: 10, background: '#4f46e5', color: '#fff', fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit', cursor: saveDisabled ? 'not-allowed' : 'pointer', opacity: saveDisabled ? 0.6 : 1 }}>
-                {busy ? 'Saving…' : 'Save changes'}
+              <button type="button" onClick={handleDelete} disabled={busy} style={{ flex: 1, background: busy ? '#dc2626' : '#ef4444', color: '#fff', border: 'none', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: busy ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+                {busy && Spinner}<span>{busy ? 'Deleting…' : 'Delete'}</span>
               </button>
-              <button type="button" onClick={cancelEdit} disabled={busy} style={{ padding: '11px 18px', border: '1px solid #e1e4e9', borderRadius: 10, background: '#fff', color: '#4b5563', fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Cancel</button>
+              <button type="button" onClick={() => setConfirmingDelete(false)} disabled={busy} style={{ background: '#fff', color: '#4b5563', border: '1px solid #e1e4e9', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={() => { setFields(toFields(entry)); setMode('edit') }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 11, border: 'none', borderRadius: 10, background: '#4f46e5', color: '#fff', fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                Edit
-              </button>
-              <button type="button" onClick={() => setConfirmingDelete(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px 18px', border: '1px solid #f3d1d1', borderRadius: 10, background: '#fff', color: '#dc2626', fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /></svg>
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : mode === 'edit' ? (
+          <div style={{ borderTop: '1px solid #e9ebef', padding: '14px 22px', display: 'flex', gap: 10 }}>
+            <button type="button" onClick={handleSave} disabled={saveDisabled} style={{ flex: 1, background: urlInvalid || missingRequired ? '#a5a3e8' : '#4f46e5', color: '#fff', border: 'none', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: saveDisabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+              {busy && Spinner}<span>{busy ? 'Saving…' : 'Save changes'}</span>
+            </button>
+            <button type="button" onClick={cancelEdit} disabled={busy} style={{ background: '#fff', color: '#4b5563', border: '1px solid #e1e4e9', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        ) : (
+          <div style={{ borderTop: '1px solid #e9ebef', padding: '14px 22px', display: 'flex', gap: 10 }}>
+            <button type="button" onClick={() => { setFields(toFields(entry)); setMode('edit') }} style={{ flex: 1, background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+            <button type="button" onClick={() => setConfirmingDelete(true)} style={{ background: '#fff', color: '#ef4444', border: '1px solid #e9ebef', borderRadius: 9, padding: '12px 16px', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+          </div>
+        )}
       </aside>
     </div>
   )
 }
 
-function ParamRow({ label, hint, mode, required, children }: { label: string; hint: string; mode: 'view' | 'edit'; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div style={{ padding: '10px 0', borderBottom: '1px solid #f4f5f7' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, marginBottom: mode === 'edit' ? 7 : 4 }}>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#4b5563' }}>{label}</span>
-        {required && <span style={{ fontSize: 10, color: '#dc2626', fontWeight: 700 }}>•</span>}
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: '#a7adb8' }}>{hint}</span>
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function ValueText({ value, mono }: { value: string | null; mono?: boolean }) {
-  const empty = !value
-  return (
-    <div style={{ fontSize: 13, fontFamily: mono ? 'var(--font-mono)' : 'inherit', color: empty ? '#c4c9d0' : '#161922', wordBreak: 'break-all' }}>
-      {value || '—'}
-    </div>
-  )
+function ViewValue({ paramKey, value }: { paramKey: keyof Fields; value: string | null }) {
+  if (!value) return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#9aa0aa' }}>—</span>
+  if (paramKey === 'source') return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 999, background: 'rgba(79,70,229,.09)', color: '#4f46e5', display: 'inline-block' }}>{value}</span>
+  if (paramKey === 'medium') return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 999, background: '#f1f2f4', color: '#5b626e', display: 'inline-block' }}>{value}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: '#161922', wordBreak: 'break-all' }}>{value}</span>
 }

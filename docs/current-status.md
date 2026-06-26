@@ -32,7 +32,7 @@ Base feature on `main`, deployed to Vercel. UTM edit/delete + detail drawer adde
 - `components/utm-form.tsx` — form with `AutocompleteInput` on Campaign + Base URL, optional Ad Set + Creative fields, live URL preview, template load/save
 - `components/utm-history-table.tsx` — Recent URLs sidebar; shows last 20; UTM tail + full URL copy buttons with 1.5s green checkmark feedback
 - `components/utm-url-library.tsx` — spreadsheet table for all entries; group-by (All / Source / Campaign), collapsible headers, text filter, copy buttons; rows are clickable and open the detail drawer
-- `components/utm-detail-drawer.tsx` — right-side slide-over; view all params, edit any field (live preview, rebuilds URL on save), delete with inline confirm; disabled analytics placeholder for later
+- `components/utm-detail-drawer.tsx` — right-side slide-over styled to the `Ad Op Tools UI Design/detail-drawer/` Claude Design export; view all params, edit any field (live preview, rebuilds URL on save), delete with inline confirm; disabled analytics placeholder for later
 - `components/utm-page-client.tsx` — client shell wiring all components together; owns drawer state + optimistic update/delete
 - `app/(dashboard)/utm/page.tsx` — server component fetching templates + history, rendering `UTMPageClient`
 
@@ -62,5 +62,6 @@ Base feature on `main`, deployed to Vercel. UTM edit/delete + detail drawer adde
 - Dev/prod Supabase project split
 
 ## Last Updated
+2026-06-26 (later) — Merged the new Claude Design export (URL Library + drawer) from main and reskinned `utm-detail-drawer.tsx` to match it; the grouped URL Library table and the generator form were left untouched, per direction (only the drawer was in scope). Added a guardrail in `.claude/rules/working-style.md` so design exports are integrated additively, never used to wholesale-replace existing UI. Renamed the export subfolder → `Ad Op Tools UI Design/detail-drawer/`.
 2026-06-26 — UTM history edit/delete + detail drawer added on branch `claude/quirky-dirac-o95ke7`. New `updateUTMHistory`/`deleteUTMHistory` actions, `utm-detail-drawer.tsx`, shared `url.ts`, UPDATE-policy migration (tracked only). type-check/lint/build green; reviewed by security/react/code/database agents. Pending manual test.
 2026-06-25 — UTM Generator feature slice complete: form, history sidebar, URL Library spreadsheet, autocomplete, Ad Set/Creative fields. All committed and pushed to main.

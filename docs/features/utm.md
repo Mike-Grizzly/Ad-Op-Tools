@@ -82,7 +82,7 @@ app/(dashboard)/utm/page.tsx          ← server component; fetches templates + 
         ├── UTMForm                   ← form with AutocompleteInput sub-component
         ├── UTMHistoryTable           ← recent 20 sidebar
         ├── UTMUrlLibrary             ← spreadsheet; rows clickable → onRowClick(entry)
-        └── UTMDetailDrawer           ← slide-over: view / edit / delete, mounted with key={entry.id}
+        └── UTMDetailDrawer           ← slide-over: view / edit / delete, mounted with key={entry.id}; styled to the detail-drawer/ design export
 ```
 
 Shared helper: `url.ts` `buildPreviewUrl` (client-side live preview, used by the form and the drawer).

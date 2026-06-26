@@ -132,3 +132,13 @@ Significant architecture and product decisions. Append; never delete.
 **Risk**: tracked migrations and remote now differ in policy *shape* (granular vs consolidated) though not in effect. Do not `supabase db pull` over the tracked lineage. Reconciling the two is deferred — see open-questions UTM-004.
 
 **Out of scope (deferred)**: per-UTM analytics in the drawer — a disabled "coming soon" placeholder is rendered so the layout reserves space for it.
+
+---
+
+## 2026-06-26 — Guardrail: Design exports are additive, never page replacements
+
+**Context**: A new Claude Design export (`Ad Op Tools UI Design (2)/`) was a standalone, feature-scoped redesign of just the URL Library + detail drawer — it dropped the generator form and simplified the table. The prior "Design-First Workflow" note (2026-06-25) said to "move files to replace the parent folder and delete the subfolder" on each new export, which would have clobbered the original full-page design and implied wholesale-replacing existing components. The user flagged this as a foot-gun.
+
+**Decision**: Treat every design export as a feature-scoped mock to integrate **additively**. Never delete/replace existing components, pages, or the original design files based on a new export. Preserve existing functionality unless the user explicitly asks to remove it; flag any feature an export drops before removing it. Keep the original full design as the source of truth and store feature mocks in clearly-named subfolders (do not auto-replace the parent folder). Codified in `.claude/rules/working-style.md` → "Claude Design Exports — Additive, Never Replace" (auto-loaded every session). This supersedes the folder-replacement step in the 2026-06-25 "Design-First Workflow" entry.
+
+**Applied here**: Built only the detail-drawer reskin from the new export onto the existing UTM page; left the generator form, Recent URLs sidebar, and the grouped URL Library table untouched, per user direction. Renamed the export subfolder `Ad Op Tools UI Design (2)/` → `Ad Op Tools UI Design/detail-drawer/` for clarity.
