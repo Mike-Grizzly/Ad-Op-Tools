@@ -67,6 +67,16 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## QUAL-001 — Pre-existing lint errors block the "lint passes" gate
+
+**Status**: Open
+**Question**: `npm run lint` currently reports ~35 errors + warnings that pre-date Phase 1 — mostly `require()`-style imports in `scripts/lib/resolve-formatter.js` (ECC hook tooling, CommonJS), plus a few UTM warnings (unused vars, `react-hooks/exhaustive-deps`). `npm run type-check` is clean.
+**Impact**: The working-style pre-commit gate expects lint to pass. New code is kept lint-clean, but the gate can't be honestly green until these are resolved or scoped out.
+**Action**: Address separately from feature work (not during a slice) — e.g. an eslint override/ignore for ECC `scripts/` tooling + fix the UTM warnings, or formally accept lint-as-advisory. Do not bundle into Phase 1.
+**Owner**: Claude (separate cleanup pass)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
