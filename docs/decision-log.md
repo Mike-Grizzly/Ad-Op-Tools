@@ -172,3 +172,23 @@ Significant architecture and product decisions. Append; never delete.
 **Scope strategy**: request scopes incrementally (least privilege — read scopes now, write scopes when Creative ships). Re-consent is a single click; least privilege gives better security and better consent rates. Meta App Review (only needed for *external* users) is per advanced permission on the same app, done once per permission — never per slice; the owner's own accounts work in dev mode without review.
 
 **Implication for the user**: a human registers once per platform (≈4 times ever), and never per feature. This is why pinning the Meta registration (SETUP-006) costs us nothing now — adding it later unlocks every Meta feature, not just Budget.
+
+---
+
+## 2026-06-26 — Token Storage Schema Hardened (database + security review)
+
+**Decision**: After `database-reviewer` + `security-reviewer` passes on the `platform_connections` / `budget_entries` migration (changes made while tables are empty, so zero migration cost):
+- **Key rotation**: a `token_key_id` column (default `'v1'`) records which `TOKEN_ENCRYPTION_KEY` encrypted each row, so the key can be rotated by an incremental re-encrypt instead of a forced data migration.
+- **Token split**: access and refresh tokens are encrypted independently (separate ciphertext/iv/auth_tag column sets; refresh columns nullable — Meta long-lived tokens have no refresh token). Different lifetimes/threat models; the refresh path only touches access columns.
+- **Encoding**: token columns are base64 `text`, not `bytea` — chosen for supabase-js ergonomics. The base64 + 12-byte-IV + 16-byte-tag contract is enforced in the crypto helper, not the DB.
+- **RLS**: all policies use `(select auth.uid())` (evaluated once as an init-plan), not bare `auth.uid()` (per-row). `budget_entries` has no delete policy (sync is upsert-only; a user session can't erase spend history). `platform_connections` gets an `updated_at` trigger via a new `public.set_updated_at()` function — the first trigger in the project; token refresh/status updates make it load-bearing.
+- **Integrity**: `external_account_id NOT NULL` (the nullable-in-unique gap allowed duplicate connections); `currency` ISO-4217 check; negative `spend_micros` allowed (platforms report credits/clawbacks); `created_at` added to `budget_entries` for convention.
+
+**App-code obligations the schema cannot enforce** (must hold when the crypto helper + queries are built):
+1. Fresh random IV per encryption — never reuse (GCM nonce reuse with one key is catastrophic).
+2. Decrypt must propagate the auth-tag-mismatch error, never swallow it.
+3. Token columns never appear in a client-facing SELECT — enforce via a `PlatformConnectionPublic` type that omits them + explicit column lists in `queries.ts`.
+4. `TOKEN_ENCRYPTION_KEY` is a 32-byte random value (documented in `.env.example`), distinct per environment.
+5. Any service-role sync path must not SELECT token columns.
+
+Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
