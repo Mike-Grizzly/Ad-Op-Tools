@@ -115,3 +115,20 @@ Significant architecture and product decisions. Append; never delete.
 **Rationale**: User delegated execution judgment for the project but wants code quality, safety, and architectural stability held constant. Encoding it in the auto-loaded working-style rules makes the bar durable across sessions rather than dependent on in-context memory.
 
 **Implications**: Applies from now on without needing to be re-requested each session. The bar can be tightened or loosened by editing the working-style section; changes of substance get logged here.
+
+---
+
+## 2026-06-26 — UTM History Edit/Delete + Detail Drawer; RLS Lineage Divergence
+
+**Decision**: Add edit and delete for `utm_history` entries via a right-side detail drawer opened by clicking a row in the URL Library. This reverses the earlier "editing or deleting history entries — out of scope" note in the UTM spec, at user request.
+
+**Architecture**:
+- New server actions `updateUTMHistory` / `deleteUTMHistory` — auth-guarded, scoped with `.eq('user_id', user.id)`, Zod-validated (`utmHistoryIdSchema` for the id + `utmParamsSchema` for the body). `updateUTMHistory` rebuilds `generated_url` server-side via the existing strict `buildUTMUrl` and returns the full row so the client syncs state from the source of truth.
+- The drawer (`utm-detail-drawer.tsx`) is mounted with `key={entry.id}` and initializes local state from props, rather than resetting via an effect — idiomatic React, avoids set-state-in-effect and stale state when switching rows.
+- Extracted the client preview builder to `url.ts` (`buildPreviewUrl`), shared by the form and drawer (behavior-preserving move out of `utm-form.tsx`).
+
+**RLS decision**: The remote DB was provisioned manually with a single consolidated `FOR ALL` policy per UTM table (`USING`/`WITH CHECK = auth.uid() = user_id`), which already permits UPDATE/DELETE — so edit/delete work on remote with no DB change. The tracked migrations use granular per-command policies and lacked an UPDATE policy. Added `20260626000000_utm_history_update_policy.sql` (granular UPDATE) to keep the tracked lineage complete for fresh environments, but **did not apply it to remote** (would create a redundant overlapping policy on an already-working table).
+
+**Risk**: tracked migrations and remote now differ in policy *shape* (granular vs consolidated) though not in effect. Do not `supabase db pull` over the tracked lineage. Reconciling the two is deferred — see open-questions UTM-004.
+
+**Out of scope (deferred)**: per-UTM analytics in the drawer — a disabled "coming soon" placeholder is rendered so the layout reserves space for it.

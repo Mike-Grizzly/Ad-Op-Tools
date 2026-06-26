@@ -43,6 +43,29 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## UTM-004 — Tracked-vs-remote RLS policy shape divergence
+
+**Status**: Open
+**Question**: Remote uses one consolidated `FOR ALL` policy per UTM table; the tracked migrations use granular per-command policies (now including UPDATE). Effective permissions match, but the shapes differ.
+**Risk**: Low. `supabase db pull` would overwrite the granular tracked lineage with the consolidated form. A fresh environment built from the tracked migrations gets the granular policies (correct, UPDATE included).
+**Action**: At the dev/prod Supabase split, pick one canonical policy shape and reconcile. Until then, do not `db pull` over `supabase/migrations/`.
+**Owner**: Claude (at dev/prod split)
+
+---
+
+## UTM-005 — Minor tech debt surfaced in 2026-06-26 review
+
+**Status**: Open
+**Items** (none blocking, found while adding edit/delete):
+- `deleteTemplate` takes `id: string` with no uuid validation, unlike the new `deleteUTMHistory` (`utmHistoryIdSchema`). Align for consistency.
+- `utm_history.template_id` FK has no index; add a `(template_id)` index in a future migration.
+- `utm_templates.updated_at` has no auto-update trigger; the value never changes after insert unless set in app code.
+- `utm-page-client.tsx` stores the toast timer in `useState` (should be `useRef`); causes a spurious re-render per toast. Pre-existing.
+- `utm-url-library.tsx` computes an unused `totalFiltered`; dead code.
+**Owner**: Claude (next UTM maintenance pass)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.

@@ -60,3 +60,29 @@ body {
 .toast-in {
   animation: toast-in 0.25s ease;
 }
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drawer-in {
+  animation: drawer-in 0.26s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.backdrop-in {
+  animation: backdrop-in 0.2s ease;
+}
+
+.utm-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.utm-row:hover {
+  background: #f6f7ff !important;
+}

@@ -5,7 +5,9 @@ import type { Database } from '@/types/database'
 import { UTMForm } from './utm-form'
 import { UTMHistoryTable } from './utm-history-table'
 import { UTMUrlLibrary } from './utm-url-library'
-import { generateAndSaveURL, saveTemplate, getAutocompleteSuggestions } from '../actions'
+import { UTMDetailDrawer } from './utm-detail-drawer'
+import { generateAndSaveURL, saveTemplate, getAutocompleteSuggestions, updateUTMHistory, deleteUTMHistory } from '../actions'
+import type { UTMParamsInput } from '../validation'
 
 type UTMTemplate = Database['public']['Tables']['utm_templates']['Row']
 type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
@@ -21,6 +23,7 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
   const [templates, setTemplates] = useState(initialTemplates)
   const [entries, setEntries] = useState(initialHistory)
   const [toast, setToast] = useState<Toast | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const toastTimer = useState<ReturnType<typeof setTimeout> | null>(null)
 
   function showToast(msg: string, type: Toast['type'] = 'success') {
@@ -44,6 +47,33 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
       showToast(urlOrError.replace('error:', ''), 'error')
     }
   }, [])
+
+  const handleUpdateEntry = useCallback(async (id: string, params: UTMParamsInput): Promise<string | null> => {
+    const result = await updateUTMHistory(id, params)
+    if (result.error || !result.data) {
+      const msg = result.error ?? 'Failed to update URL'
+      showToast(msg, 'error')
+      return msg
+    }
+    const updated = result.data
+    setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)))
+    showToast('URL updated')
+    return null
+  }, [])
+
+  const handleDeleteEntry = useCallback(async (id: string): Promise<string | null> => {
+    const result = await deleteUTMHistory(id)
+    if (result.error) {
+      showToast(result.error, 'error')
+      return result.error
+    }
+    setEntries((prev) => prev.filter((e) => e.id !== id))
+    setSelectedId(null)
+    showToast('URL deleted')
+    return null
+  }, [])
+
+  const selectedEntry = entries.find((e) => e.id === selectedId) ?? null
 
   return (
     <>
@@ -84,8 +114,18 @@ export function UTMPageClient({ initialTemplates, initialHistory }: Props) {
 
       {/* URL Library — full-width section below the generator */}
       <div style={{ padding: '0 32px 60px' }}>
-        <UTMUrlLibrary entries={entries} />
+        <UTMUrlLibrary entries={entries} onRowClick={(entry) => setSelectedId(entry.id)} />
       </div>
+
+      {selectedEntry && (
+        <UTMDetailDrawer
+          key={selectedEntry.id}
+          entry={selectedEntry}
+          onClose={() => setSelectedId(null)}
+          onSave={handleUpdateEntry}
+          onDelete={handleDeleteEntry}
+        />
+      )}
 
       {/* Toast */}
       {toast && (

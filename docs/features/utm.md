@@ -1,7 +1,7 @@
 # Feature: UTM Generator
 
 ## Status
-**Built — not yet manually tested in production.** All code is on `main`.
+**Built — not yet manually tested in production.** Base feature on `main`; edit/delete + detail drawer on branch `claude/quirky-dirac-o95ke7` (pending manual test).
 
 ## Problem
 Every new campaign requires constructing tagged URLs by hand — copy-pasting base URLs, appending `?utm_source=...` etc., and keeping naming consistent across team members and platforms. Mistakes mean broken attribution.
@@ -18,12 +18,15 @@ A form that auto-populates parameters from saved templates, generates the full U
 - Autocomplete on Campaign and Base URL (prefix search against history)
 - Recent URLs sidebar (last 20 entries, UTM tail + full URL copy)
 - URL Library spreadsheet (all entries, group-by, filter, copy)
+- Click a spreadsheet row → detail drawer showing every parameter
+- Edit any parameter in the drawer — `generated_url` rebuilds server-side on save
+- Delete a history entry from the drawer (inline confirm)
 - History persisted per-user in Supabase
 
 ### Out of scope (by design)
 - Bulk generation from CSV
 - Sharing URLs across team members (single-user for now)
-- Editing or deleting history entries
+- Per-UTM analytics in the drawer (placeholder shown; "coming soon")
 
 ## Data Model
 
@@ -75,11 +78,19 @@ A form that auto-populates parameters from saved templates, generates the full U
 
 ```
 app/(dashboard)/utm/page.tsx          ← server component; fetches templates + history
-  └── UTMPageClient                   ← 'use client' shell
+  └── UTMPageClient                   ← 'use client' shell; owns drawer state + optimistic update/delete
         ├── UTMForm                   ← form with AutocompleteInput sub-component
         ├── UTMHistoryTable           ← recent 20 sidebar
-        └── UTMUrlLibrary             ← spreadsheet for all entries
+        ├── UTMUrlLibrary             ← spreadsheet; rows clickable → onRowClick(entry)
+        └── UTMDetailDrawer           ← slide-over: view / edit / delete, mounted with key={entry.id}
 ```
+
+Shared helper: `url.ts` `buildPreviewUrl` (client-side live preview, used by the form and the drawer).
+
+### Edit / delete flow
+- Clicking a URL Library row sets `selectedId`; the drawer is rendered only when an entry is selected and is keyed by `entry.id` (so opening a different row resets local state without an effect).
+- Edit mode renders an input per parameter with a live preview. On save, `updateUTMHistory` validates, rebuilds `generated_url` via the strict server `buildUTMUrl`, persists, and returns the full row; the client patches its `entries` state in place (the entry re-groups automatically if its source/campaign changed).
+- Delete uses an inline confirm in the drawer; `deleteUTMHistory` removes the row (user-scoped) and the client drops it from `entries` and closes the drawer.
 
 ### Data flow
 - Page server component passes `initialTemplates` and `initialHistory` to `UTMPageClient`
@@ -98,14 +109,16 @@ app/(dashboard)/utm/page.tsx          ← server component; fetches templates + 
 - URL Library group-header chevron icon does not animate smoothly in Safari (CSS `transition` on SVG `transform` behaves differently)
 - If `navigator.clipboard.writeText` is unavailable (insecure context), copy silently fails — no fallback `document.execCommand` shim
 - `getUTMHistory(500)` fetches all rows on every page load; no pagination yet
-- Auto-generated `generated_url` is built client-side for preview but re-built server-side on save — both paths should produce identical output; not explicitly tested
+- Preview vs persisted URL encoding differs cosmetically: the client preview (`buildPreviewUrl`) renders spaces in campaign/content/term/ad_set/creative as `_`, while the server (`buildUTMUrl` via `URL.searchParams`) renders them as `+`. Both decode identically in analytics tools. Most visible in the drawer when editing a value containing spaces (edit preview shows `_`, saved view shows `+`). Pre-existing; unify the two builders if it becomes confusing.
 
 ## Migrations
 - `supabase/migrations/20260624000000_create_utm_tables.sql`
 - `supabase/migrations/20260625000000_utm_history_add_columns.sql`
+- `supabase/migrations/20260626000000_utm_history_update_policy.sql` — granular UPDATE RLS policy (tracked lineage only; remote already permits UPDATE via a consolidated `FOR ALL` policy, so not applied to remote)
 
 ## Test Status
-- TypeScript: passes `tsc --noEmit` clean
-- Manual: not yet tested in production (Vercel deploy pending verification)
+- TypeScript: passes `tsc --noEmit` clean; `eslint` clean on the feature; `next build` passes
+- Reviewed by security-, react-, code-, and database-reviewer agents (2026-06-26) — no blocking findings; fixes applied (hook deps, copyTimer cleanup, a11y dialog role + labels, Fragment key)
+- Manual: edit/delete + drawer **not yet manually tested** (page is auth-gated; verify in a browser with a logged-in session — generate a URL, click its row, edit a field, confirm the URL updates, then delete)
 - No unit tests written
 - No E2E tests written

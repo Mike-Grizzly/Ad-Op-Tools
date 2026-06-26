@@ -56,3 +56,5 @@ export const saveTemplateSchema = utmParamsSchema.omit({ base_url: true }).exten
 })
 
 export type SaveTemplateInput = z.infer<typeof saveTemplateSchema>
+
+export const utmHistoryIdSchema = z.string().uuid('Invalid history id')
