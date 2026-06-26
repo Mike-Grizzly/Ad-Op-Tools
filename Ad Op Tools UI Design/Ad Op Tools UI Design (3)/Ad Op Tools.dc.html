@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#d3d7dd;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#bcc2cb;background-clip:content-box}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  @keyframes toastIn{from{opacity:0;transform:translateY(-10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes barflow{0%{transform:translateX(-100%)}100%{transform:translateX(560%)}}
+</style>
+</helmet>
+<div style="display:flex;flex-direction:column;height:100vh;width:100%;font-family:'Manrope',-apple-system,sans-serif;background:#f6f7f9;color:#161922;--accent: {{ accent }};--sbw: {{ sbw }}">
+
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(1100px 600px at 50% -10%, #eef0fb 0%, #f6f7f9 55%)">
+      <div style="width:100%;max-width:404px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px">
+          <div style="width:42px;height:42px;border-radius:12px;background:var(--accent,#4f46e5);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(79,70,229,.35)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+          </div>
+          <div>
+            <div style="font-size:18px;font-weight:800;letter-spacing:-.01em;color:#161922">Ad Op Tools</div>
+            <div style="font-size:12.5px;color:#8a909b;font-weight:500">Campaign operations workspace</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:16px;padding:28px;box-shadow:0 12px 40px -12px rgba(22,25,34,.12)">
+          <div style="font-size:20px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px">Sign in</div>
+          <div style="font-size:13.5px;color:#8a909b;margin-bottom:22px;font-weight:500">Welcome back. Enter your credentials to continue.</div>
+
+          <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:9px;background:#fef2f2;border:1px solid #fecdd3;color:#b42318;border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:13px;font-weight:600">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4.5"></path><path d="M12 16h.01"></path></svg>
+              <span>Incorrect email or password. Please try again.</span>
+            </div>
+          </sc-if>
+
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Email</label>
+          <input value="{{ loginEmail }}" onChange="{{ setEmail }}" type="email" placeholder="you@company.com" style="width:100%;padding:11px 13px;border:1px solid #e1e4e9;border-radius:10px;font-size:14px;font-family:inherit;color:#161922;background:#fbfbfc;outline:none;transition:border-color .12s,box-shadow .12s;margin-bottom:16px" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13);background:#fff" />
+
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Password</label>
+          <input value="{{ loginPassword }}" onChange="{{ setPassword }}" type="password" placeholder="••••••••••" style="width:100%;padding:11px 13px;border:1px solid #e1e4e9;border-radius:10px;font-size:14px;font-family:inherit;color:#161922;background:#fbfbfc;outline:none;transition:border-color .12s,box-shadow .12s;margin-bottom:22px" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13);background:#fff" />
+
+          <button onClick="{{ signIn }}" style="width:100%;padding:12px;border:none;border-radius:10px;background:var(--accent,#4f46e5);color:#fff;font-size:14.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:filter .12s,transform .05s" style-hover="filter:brightness(1.08)" style-active="transform:translateY(1px)">Sign in</button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#9aa0aa;margin-top:18px;font-weight:500">Invite-only access · Contact your admin for an invitation</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;height:100vh;width:100%">
+
+    <!-- SIDEBAR -->
+    <aside style="width:var(--sbw,248px);flex-shrink:0;background:#10121a;display:flex;flex-direction:column;padding:16px 12px;transition:width .18s ease;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:11px;padding:6px 6px 4px 6px;height:42px">
+        <div style="width:32px;height:32px;flex-shrink:0;border-radius:9px;background:var(--accent,#4f46e5);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+        </div>
+        <sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}">
+          <span style="font-size:15.5px;font-weight:800;color:#f5f6f8;letter-spacing:-.01em;white-space:nowrap">Ad Op Tools</span>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.09em;color:#565d6b;padding:18px 8px 8px">MENU</div>
+      </sc-if>
+      <sc-if value="{{ collapsed }}" hint-placeholder-val="{{ false }}">
+        <div style="height:18px"></div>
+      </sc-if>
+
+      <nav style="display:flex;flex-direction:column;gap:3px;margin-top:2px">
+        <button onClick="{{ navGo.home }}" title="Dashboard" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.home }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.home }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Dashboard</span></sc-if></span>
+        </button>
+
+        <button onClick="{{ navGo.utm }}" title="UTM Generator" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.utm }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.utm }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">UTM Generator</span></sc-if></span>
+        </button>
+
+        <button onClick="{{ navGo.budget }}" title="Budget Dashboard" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.budget }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.budget }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M16.5 6.5c-1-1-2.7-1.5-4.5-1.5-2.8 0-4.5 1.2-4.5 3.2 0 4.8 9 2.3 9 7.1 0 2-1.9 3.2-4.5 3.2-1.9 0-3.6-.6-4.6-1.7"></path></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Budget Dashboard</span></sc-if></span>
+        </button>
+
+        <button onClick="{{ navGo.camp }}" title="Campaigns" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.camp }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.camp }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2.5L11 18.5V5.5L6.5 10H4a1 1 0 0 0-1 1Z"></path><path d="M15 8.5a4 4 0 0 1 0 7"></path><path d="M18 5.5a8 8 0 0 1 0 13"></path></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Campaigns</span></sc-if></span>
+        </button>
+
+        <button onClick="{{ navGo.creative }}" title="Creative Assets" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.creative }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.creative }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><circle cx="8.5" cy="9.5" r="1.6"></circle><path d="m4 17 4.5-4.5a1.6 1.6 0 0 1 2.3 0L16 18"></path><path d="m14 15 1.8-1.8a1.6 1.6 0 0 1 2.3 0L20 15"></path></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Creative Assets</span></sc-if></span>
+        </button>
+
+        <button onClick="{{ navGo.reports }}" title="Reports" style="position:relative;display:flex;align-items:center;width:100%;border:none;background:transparent;padding:0;cursor:pointer;border-radius:9px;overflow:hidden" style-hover="background:rgba(255,255,255,.045)">
+          <sc-if value="{{ navActive.reports }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.07);border-radius:9px"></span><span style="position:absolute;left:0;top:9px;bottom:9px;width:3px;background:var(--accent,#4f46e5);border-radius:0 3px 3px 0"></span></sc-if>
+          <span style="{{ navTxt.reports }}"><svg width="19" height="19" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"></path><rect x="6" y="11" width="3" height="6" rx="1"></rect><rect x="11" y="7" width="3" height="10" rx="1"></rect><rect x="16" y="13" width="3" height="4" rx="1"></rect></svg><sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Reports</span></sc-if></span>
+        </button>
+      </nav>
+
+      <div style="margin-top:auto">
+        <div style="height:1px;background:rgba(255,255,255,.07);margin:10px 6px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:6px">
+          <div style="width:30px;height:30px;flex-shrink:0;border-radius:8px;background:#262a36;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#c8ccd4">MR</div>
+          <sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}">
+            <div style="min-width:0">
+              <div style="font-size:12.5px;font-weight:600;color:#e4e6ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Maya Rivera</div>
+              <div style="font-size:11px;color:#6b727f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Paid Media Lead</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN COLUMN -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <header style="height:62px;flex-shrink:0;background:#fff;border-bottom:1px solid #e9ebef;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:16px">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0">
+          <button onClick="{{ toggleSidebar }}" title="Toggle sidebar" style="width:34px;height:34px;flex-shrink:0;border:1px solid #e9ebef;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b626e" style-hover="background:#f4f5f7;color:#161922">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>
+          </button>
+          <h1 style="font-size:18px;font-weight:700;letter-spacing:-.01em;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pageTitle }}</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+          <span style="font-size:13px;color:#6b727f;font-weight:500">maya@acme.io</span>
+          <button onClick="{{ signOut }}" style="display:flex;align-items:center;gap:7px;border:1px solid #e9ebef;background:#fff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;color:#4b5563;cursor:pointer" style-hover="background:#f4f5f7;color:#161922;border-color:#dde0e5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      <main style="flex:1;overflow:auto;min-height:0">
+
+        <!-- UTM PAGE -->
+        <sc-if value="{{ isUtm }}" hint-placeholder-val="{{ true }}">
+          <div style="max-width:1240px;margin:0 auto;padding:30px 32px 60px">
+            <div style="margin-bottom:26px">
+              <div style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--accent,#4f46e5);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--accent,#4f46e5)"></span>Link tagging
+              </div>
+              <h2 style="font-size:25px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px">UTM Generator</h2>
+              <p style="font-size:14.5px;color:#6b727f;margin:0;max-width:640px;line-height:1.5">Build consistent, trackable campaign URLs. Pick a saved template or start fresh, tag your link, and copy it straight into your ad platform.</p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:24px;align-items:start">
+
+              <!-- FORM PANEL (utm-form) -->
+              <section style="background:#fff;border:1px solid #e9ebef;border-radius:16px;padding:24px;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                  <h3 style="font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em">Build a URL</h3>
+                </div>
+
+                <!-- Template picker -->
+                <div style="margin-bottom:20px;padding:13px 14px;background:#f7f8fa;border:1px solid #ebedf1;border-radius:11px">
+                  <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:8px">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h10"></path></svg>
+                    Load a saved template
+                  </label>
+                  <div style="position:relative">
+                    <select value="{{ selectedTemplate }}" onChange="{{ applyTemplate }}" style="width:100%;appearance:none;padding:10px 36px 10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:inherit;font-weight:500;color:#161922;background:#fff;outline:none;cursor:pointer" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)">
+                      <option value="">Start from scratch…</option>
+                      <sc-for list="{{ templates }}" as="t" hint-placeholder-count="4">
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                      </sc-for>
+                    </select>
+                    <svg width="16" height="16" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                  </div>
+                </div>
+
+                <!-- Base URL -->
+                <div style="margin-bottom:16px">
+                  <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Base URL <span style="color:#cdd1d8">·</span> <span style="color:#9aa0aa;font-weight:500">the page you're linking to</span></label>
+                  <div style="position:relative">
+                    <input value="{{ baseUrl }}" onChange="{{ setBaseUrl }}" onFocus="{{ focusBase }}" onBlur="{{ blurAc }}" onKeyDown="{{ acKeyDown }}" placeholder="https://www.example.com/landing" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                    <sc-if value="{{ acOpenBase }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;z-index:40;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e9ebef;border-radius:10px;box-shadow:0 8px 24px -4px rgba(22,25,34,.12);padding:4px;overflow:hidden">
+                        <div style="padding:9px 14px 5px;font-size:11px;font-weight:600;color:#9aa0aa">from your history</div>
+                        <sc-for list="{{ acSuggestions }}" as="sug" hint-placeholder-count="3">
+                          <sc-if value="{{ sug.sel }}" hint-placeholder-val="{{ false }}"><button type="button" data-field="baseUrl" data-val="{{ sug.label }}" onMouseDown="{{ pickSuggestion }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                          <sc-if value="{{ sug.notSel }}" hint-placeholder-val="{{ true }}"><button type="button" data-field="baseUrl" data-val="{{ sug.label }}" data-idx="{{ sug.idx }}" onMouseDown="{{ pickSuggestion }}" onMouseEnter="{{ setAcIndex }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:transparent;color:#6b727f" style-hover="background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ urlInvalid }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c2410c;margin-top:6px;font-weight:500">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4.5"></path><path d="M12 16h.01"></path></svg>
+                      Include the full protocol, e.g. https://
+                    </div>
+                  </sc-if>
+                </div>
+
+                <!-- Source + Medium row -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Source</label>
+                    <div style="position:relative">
+                      <input value="{{ source }}" onChange="{{ setSource }}" onFocus="{{ openSource }}" onBlur="{{ closeSource }}" placeholder="google, meta…" style="width:100%;padding:10px 34px 10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                      <svg width="15" height="15" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                      <sc-if value="{{ sourceOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute;z-index:30;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e1e4e9;border-radius:11px;box-shadow:0 12px 30px -8px rgba(22,25,34,.22);padding:5px;max-height:210px;overflow:auto">
+                          <sc-for list="{{ sourcePresets }}" as="s" hint-placeholder-count="6">
+                            <button type="button" data-val="{{ s }}" onMouseDown="{{ chooseSource }}" style="display:block;width:100%;border:none;background:transparent;text-align:left;padding:8px 10px;border-radius:7px;font-size:13.5px;color:#161922;cursor:pointer;font-family:'JetBrains Mono',monospace" style-hover="background:#f3f4f6">{{ s }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Medium</label>
+                    <div style="position:relative">
+                      <input value="{{ medium }}" onChange="{{ setMedium }}" onFocus="{{ openMedium }}" onBlur="{{ closeMedium }}" placeholder="cpc, social…" style="width:100%;padding:10px 34px 10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                      <svg width="15" height="15" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                      <sc-if value="{{ mediumOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute;z-index:30;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e1e4e9;border-radius:11px;box-shadow:0 12px 30px -8px rgba(22,25,34,.22);padding:5px;max-height:210px;overflow:auto">
+                          <sc-for list="{{ mediumPresets }}" as="m" hint-placeholder-count="5">
+                            <button type="button" data-val="{{ m }}" onMouseDown="{{ chooseMedium }}" style="display:block;width:100%;border:none;background:transparent;text-align:left;padding:8px 10px;border-radius:7px;font-size:13.5px;color:#161922;cursor:pointer;font-family:'JetBrains Mono',monospace" style-hover="background:#f3f4f6">{{ m }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ad Set + Creative row -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Ad Set <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ adSet }}" onChange="{{ setAdSet }}" placeholder="e.g. retargeting-30d" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Creative <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ creative }}" onChange="{{ setCreative }}" placeholder="e.g. video-15s-summer" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                </div>
+
+                <!-- Campaign -->
+                <div style="margin-bottom:16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <label style="font-size:12.5px;font-weight:600;color:#4b5563">Campaign name</label>
+                    <span style="font-size:11.5px;color:#9aa0aa;font-family:'JetBrains Mono',monospace">{{ campaignCount }}</span>
+                  </div>
+                  <div style="position:relative">
+                    <input value="{{ campaign }}" onChange="{{ setCampaign }}" onFocus="{{ focusCampaign }}" onBlur="{{ blurAc }}" onKeyDown="{{ acKeyDown }}" placeholder="spring_launch_2026" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                    <sc-if value="{{ acOpenCampaign }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;z-index:40;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #e9ebef;border-radius:10px;box-shadow:0 8px 24px -4px rgba(22,25,34,.12);padding:4px;overflow:hidden">
+                        <div style="padding:9px 14px 5px;font-size:11px;font-weight:600;color:#9aa0aa">from your history</div>
+                        <sc-for list="{{ acSuggestions }}" as="sug" hint-placeholder-count="3">
+                          <sc-if value="{{ sug.sel }}" hint-placeholder-val="{{ false }}"><button type="button" data-field="campaign" data-val="{{ sug.label }}" onMouseDown="{{ pickSuggestion }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:13.5px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                          <sc-if value="{{ sug.notSel }}" hint-placeholder-val="{{ true }}"><button type="button" data-field="campaign" data-val="{{ sug.label }}" data-idx="{{ sug.idx }}" onMouseDown="{{ pickSuggestion }}" onMouseEnter="{{ setAcIndex }}" style="display:block;width:100%;text-align:left;border:none;height:36px;padding:0 14px;border-radius:7px;font-size:13.5px;font-family:'JetBrains Mono',monospace;cursor:pointer;background:transparent;color:#374151" style-hover="background:rgba(79,70,229,.07);color:var(--accent,#4f46e5)">{{ sug.label }}</button></sc-if>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+
+                <!-- Content + Term row -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Content <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ content }}" onChange="{{ setContent }}" placeholder="carousel_a" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">Term <span style="color:#9aa0aa;font-weight:500">· optional</span></label>
+                    <input value="{{ term }}" onChange="{{ setTerm }}" placeholder="running_shoes" style="width:100%;padding:10px 12px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                </div>
+
+                <!-- Live preview -->
+                <div style="margin-bottom:18px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <span style="font-size:12.5px;font-weight:600;color:#4b5563">Generated URL</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#5b626e;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e"></span>Live preview</span>
+                  </div>
+                  <div style="position:relative;background:#0f1118;border:1px solid #1d2030;border-radius:12px;padding:15px 15px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;word-break:break-all;min-height:58px;color:{{ previewColor }}">{{ previewText }}</div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:11px">
+                  <button onClick="{{ generate }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:none;border-radius:10px;background:var(--accent,#4f46e5);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:filter .12s,transform .05s" style-hover="filter:brightness(1.08)" style-active="transform:translateY(1px)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+                    Generate &amp; Copy
+                  </button>
+                  <button onClick="{{ saveTemplate }}" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 16px;border:1px solid #e1e4e9;border-radius:10px;background:#fff;color:#4b5563;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer" style-hover="background:#f7f8fa;border-color:#dde0e5;color:#161922">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg>
+                    Save as Template
+                  </button>
+                </div>
+              </section>
+
+              <!-- HISTORY PANEL (utm-history-table) -->
+              <section style="background:#fff;border:1px solid #e9ebef;border-radius:16px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;max-height:760px">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eef0f2">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <h3 style="font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em">Recent URLs</h3>
+                    <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+                      <span style="font-size:11.5px;font-weight:700;color:#5b626e;background:#f1f2f4;padding:2px 8px;border-radius:999px">{{ entryCount }}</span>
+                    </sc-if>
+                  </div>
+                  <svg width="17" height="17" style="color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+                </div>
+
+                <div style="flex:1;overflow:auto;padding:6px 20px">
+
+                  <!-- Loading skeleton -->
+                  <sc-if value="{{ showLoading }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <sc-for list="{{ skeletonRows }}" as="k" hint-placeholder-count="5">
+                        <div style="padding:14px 0;border-bottom:1px solid #f1f2f4">
+                          <div style="display:flex;justify-content:space-between;gap:12px"><div style="height:13px;width:42%;border-radius:6px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div><div style="height:11px;width:54px;border-radius:6px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div></div>
+                          <div style="display:flex;gap:7px;margin-top:11px"><div style="height:16px;width:54px;border-radius:5px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div><div style="height:16px;width:46px;border-radius:5px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div></div>
+                          <div style="height:12px;width:85%;border-radius:6px;margin-top:11px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+
+                  <!-- Empty state -->
+                  <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px 24px">
+                      <div style="width:54px;height:54px;border-radius:14px;background:#f3f4f7;display:flex;align-items:center;justify-content:center;color:#a7adb8;margin-bottom:16px">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+                      </div>
+                      <div style="font-size:15px;font-weight:700;color:#161922;margin-bottom:5px">No URLs yet</div>
+                      <p style="font-size:13px;color:#8a909b;margin:0;max-width:240px;line-height:1.5">Generate your first tagged URL with the form and it'll appear here for quick reuse.</p>
+                    </div>
+                  </sc-if>
+
+                  <!-- Populated list -->
+                  <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <sc-for list="{{ entriesView }}" as="e" hint-placeholder-count="6">
+                        <div style="padding:14px 0;border-bottom:1px solid #f1f2f4">
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                            <span style="font-size:13.5px;font-weight:700;color:#161922;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace">{{ e.campaign }}</span>
+                            <span style="font-size:11.5px;color:#9aa0aa;white-space:nowrap;flex-shrink:0;font-weight:500">{{ e.created_at }}</span>
+                          </div>
+                          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent,#4f46e5);background:rgba(79,70,229,.09);padding:2px 7px;border-radius:5px">{{ e.source }}</span>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#5b626e;background:#f1f2f4;padding:2px 7px;border-radius:5px">{{ e.medium }}</span>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                            <span style="flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8a909b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.generated_url }}</span>
+                            <sc-if value="{{ e.copiedTail }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;height:30px;display:flex;align-items:center;gap:4px;padding:0 9px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;color:#16a34a;font-size:11px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>UTM</span></sc-if>
+                            <sc-if value="{{ e.notCopiedTail }}" hint-placeholder-val="{{ true }}"><button data-val="{{ e.tail }}" data-id="{{ e.idTail }}" onClick="{{ copyRecent }}" title="Copy UTM parameters only" style="flex-shrink:0;height:30px;display:flex;align-items:center;padding:0 10px;border:1px solid #e9ebef;background:#fff;border-radius:8px;color:#6b727f;cursor:pointer;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)">UTM</button></sc-if>
+                            <sc-if value="{{ e.copiedFull }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;color:#16a34a"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                            <sc-if value="{{ e.notCopiedFull }}" hint-placeholder-val="{{ true }}"><button data-val="{{ e.generated_url }}" data-id="{{ e.idFull }}" onClick="{{ copyRecent }}" title="Copy full URL" style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:8px;color:#6b727f;cursor:pointer" style-hover="background:var(--accent,#4f46e5);border-color:var(--accent,#4f46e5);color:#fff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+                  <div style="padding:13px 20px;border-top:1px solid #eef0f2;text-align:center">
+                    <button style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--accent,#4f46e5);cursor:pointer;font-family:inherit" style-hover="text-decoration:underline">View all {{ totalCount }} URLs →</button>
+                  </div>
+                </sc-if>
+              </section>
+
+            </div>
+
+            <!-- URL LIBRARY (spreadsheet) -->
+            <section style="background:#fff;border:1px solid #e9ebef;border-radius:16px;box-shadow:0 1px 2px rgba(22,25,34,.04);overflow:hidden;margin-top:24px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <h3 style="font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em">URL Library</h3>
+                  <span style="font-size:11.5px;font-weight:700;color:#5b626e;background:#f1f2f4;padding:2px 9px;border-radius:999px">{{ libTotal }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button onClick="{{ libGroupAll }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbAll }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">All</span></sc-if>
+                      <sc-if value="{{ gbNotAll }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">All</span></sc-if>
+                    </button>
+                    <button onClick="{{ libGroupSource }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbSource }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">Source</span></sc-if>
+                      <sc-if value="{{ gbNotSource }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">Source</span></sc-if>
+                    </button>
+                    <button onClick="{{ libGroupCampaign }}" style="position:relative;overflow:hidden;border-radius:999px;padding:0;border:none;background:transparent;cursor:pointer">
+                      <sc-if value="{{ gbCampaign }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:var(--accent,#4f46e5);color:#fff;border-radius:999px">Campaign</span></sc-if>
+                      <sc-if value="{{ gbNotCampaign }}" hint-placeholder-val="{{ true }}"><span style="display:block;padding:6px 14px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:#6b727f;border:1px solid #e9ebef;border-radius:999px" style-hover="border-color:#cdd1d8;color:#161922">Campaign</span></sc-if>
+                    </button>
+                  </div>
+                  <div style="position:relative;width:260px">
+                    <svg width="16" height="16" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9aa0aa;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    <input value="{{ libFilter }}" onChange="{{ setLibFilter }}" placeholder="Filter URLs…" style="width:100%;height:34px;padding:0 12px 0 34px;border:1px solid #e9ebef;border-radius:8px;font-size:13px;font-family:inherit;color:#161922;background:#fff;outline:none;transition:border-color .12s,box-shadow .12s" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.13)" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="overflow-x:auto;border-top:1px solid #eef0f2">
+                <table style="width:100%;min-width:1600px;border-collapse:collapse;table-layout:fixed">
+                  <thead>
+                    <tr>
+                      <th style="width:200px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Campaign</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Source</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Medium</th>
+                      <th style="width:130px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Ad Set</th>
+                      <th style="width:150px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Creative</th>
+                      <th style="width:130px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Content</th>
+                      <th style="width:110px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Term</th>
+                      <th style="width:180px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Base URL</th>
+                      <th style="width:260px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">Full URL</th>
+                      <th style="width:220px;text-align:left;padding:11px 14px;background:#f3f4f7;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b727f;position:sticky;top:0;z-index:2">UTM Tail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-if value="{{ libIsEmpty }}" hint-placeholder-val="{{ false }}">
+                      <tr>
+                        <td colspan="10" style="padding:0">
+                          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 24px">
+                            <div style="width:54px;height:54px;border-radius:14px;background:#f3f4f7;display:flex;align-items:center;justify-content:center;color:#a7adb8;margin-bottom:16px">
+                              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+                            </div>
+                            <div style="font-size:15px;font-weight:700;color:#161922;margin-bottom:5px">No tagged URLs yet</div>
+                            <p style="font-size:13px;color:#9aa0aa;margin:0;max-width:260px;line-height:1.5">Generate your first UTM link and it will appear here.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </sc-if>
+
+                    <sc-for list="{{ libSections }}" as="sec" hint-placeholder-count="3">
+                      <sc-if value="{{ sec.showHeader }}" hint-placeholder-val="{{ false }}">
+                        <tr data-key="{{ sec.key }}" onClick="{{ toggleLibGroup }}" style="cursor:pointer;background:#f3f4f7" style-hover="background:#eceef2">
+                          <td colspan="10" style="padding:9px 16px;border-top:1px solid #eef0f2;border-bottom:1px solid #eef0f2">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                              <div style="display:flex;align-items:center;gap:9px">
+                                <span style="font-size:13px;font-weight:700;color:#161922">{{ sec.label }}</span>
+                                <span style="font-size:11px;font-weight:600;color:#5b626e;background:#fff;border:1px solid #e9ebef;padding:1px 8px;border-radius:999px">{{ sec.count }}</span>
+                              </div>
+                              <sc-if value="{{ sec.expanded }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" style="color:#9aa0aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></sc-if>
+                              <sc-if value="{{ sec.collapsed }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" style="color:#9aa0aa;transform:rotate(180deg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></sc-if>
+                            </div>
+                          </td>
+                        </tr>
+                      </sc-if>
+
+                      <sc-if value="{{ sec.expanded }}" hint-placeholder-val="{{ true }}">
+                        <sc-for list="{{ sec.rows }}" as="r" hint-placeholder-count="4">
+                          <tr data-id="{{ r.id }}" onClick="{{ openDrawer }}" style="height:48px;background:{{ r.bg }};border-bottom:1px solid #f1f2f4;cursor:pointer" style-hover="background:#f9fafb">
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.campaign }}" style="font-size:13.5px;font-weight:700;color:#161922;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.campaign }}</div></td>
+                            <td style="padding:0 14px"><span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent,#4f46e5);background:rgba(79,70,229,.09);padding:2px 7px;border-radius:5px">{{ r.source }}</span></td>
+                            <td style="padding:0 14px"><span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#5b626e;background:#f1f2f4;padding:2px 7px;border-radius:5px">{{ r.medium }}</span></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.adSet }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.adSet }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.creative }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.creative }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.content }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.content }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.term }}" style="font-size:12.5px;color:#6b727f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.term }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden"><div title="{{ r.base_url }}" style="font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.base_url }}</div></td>
+                            <td style="padding:0 14px;overflow:hidden">
+                              <div style="display:flex;align-items:center;gap:8px">
+                                <span title="{{ r.fullUrl }}" style="flex:1;min-width:0;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.fullUrl }}</span>
+                                <sc-if value="{{ r.copiedFull }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#22c55e"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                                <sc-if value="{{ r.notCopiedFull }}" hint-placeholder-val="{{ true }}"><button data-val="{{ r.fullUrl }}" data-id="{{ r.idFull }}" onClick="{{ copyLibCell }}" title="Copy full URL" style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#9aa0aa;cursor:pointer" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
+                              </div>
+                            </td>
+                            <td style="padding:0 14px;overflow:hidden">
+                              <div style="display:flex;align-items:center;gap:8px">
+                                <span title="{{ r.tail }}" style="flex:1;min-width:0;font-size:11px;font-family:'JetBrains Mono',monospace;color:#9aa0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.tail }}</span>
+                                <sc-if value="{{ r.copiedTail }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#22c55e"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+                                <sc-if value="{{ r.notCopiedTail }}" hint-placeholder-val="{{ true }}"><button data-val="{{ r.tail }}" data-id="{{ r.idTail }}" onClick="{{ copyLibCell }}" title="Copy UTM tail" style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e9ebef;background:#fff;border-radius:7px;color:#9aa0aa;cursor:pointer" style-hover="border-color:var(--accent,#4f46e5);color:var(--accent,#4f46e5)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button></sc-if>
+                              </div>
+                            </td>
+                          </tr>
+                        </sc-for>
+                      </sc-if>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </sc-if>
+
+        <!-- DASHBOARD placeholder -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+          <div style="height:100%;display:flex;align-items:center;justify-content:center;padding:40px">
+            <div style="text-align:center;max-width:420px">
+              <div style="width:58px;height:58px;border-radius:15px;background:#fff;border:1px solid #e9ebef;display:flex;align-items:center;justify-content:center;color:var(--accent,#4f46e5);margin:0 auto 18px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+              </div>
+              <h2 style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px">Welcome back, Maya</h2>
+              <p style="font-size:14.5px;color:#6b727f;margin:0;line-height:1.55">Your campaign operations hub. Jump into the UTM Generator from the sidebar to build trackable links.</p>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- BUDGET DASHBOARD -->
+        <sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+          <div style="position:relative">
+            <sc-if value="{{ budget.flags.isSyncing }}">
+              <div style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(79,70,229,.16);overflow:hidden;z-index:6"><div style="position:absolute;top:0;left:0;height:100%;width:18%;background:var(--accent,#4f46e5);animation:barflow 1.2s ease-in-out infinite"></div></div>
+            </sc-if>
+
+            <div style="max-width:1240px;margin:0 auto;padding:30px 32px 90px">
+
+              <!-- token-expired banner -->
+              <sc-if value="{{ budget.flags.isError }}">
+                <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid rgba(220,38,38,.28);border-left:3px solid #dc2626;border-radius:12px;padding:14px 18px;margin-bottom:22px;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+                  <span style="width:30px;height:30px;flex:none;border-radius:999px;background:rgba(220,38,38,.1);color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800">!</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#161922">Your Meta connection expired</div><div style="font-size:12.5px;color:#6b727f;margin-top:2px">Spend stopped syncing 3 days ago — the figures below are stale.</div></div>
+                  <button onClick="{{ bReconnect }}" style="flex:none;background:#dc2626;color:#fff;border:none;border-radius:9px;padding:10px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#b91c1c">Reconnect Meta</button>
+                </div>
+              </sc-if>
+
+              <!-- page sub-header -->
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;flex-wrap:wrap">
+                <div>
+                  <div style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--accent,#4f46e5);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent,#4f46e5)"></span>Spend tracking</div>
+                  <h2 style="font-size:25px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px">Budget Dashboard</h2>
+                  <p style="font-size:14px;color:#6b727f;margin:0;max-width:580px;line-height:1.5">Unified ad spend across every platform — replacing the monthly-cap spreadsheet. Meta is live; Google, LinkedIn and TikTok are coming soon.</p>
+                </div>
+                <sc-if value="{{ budget.flags.showDash }}">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <div style="position:relative">
+                      <button onClick="{{ bToggleRange }}" style="display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:#161922;background:#fff;border:1px solid #e9ebef;border-radius:9px;padding:9px 13px;cursor:pointer;font-family:inherit" style-hover="border-color:#d6d9df">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.8" y="2.8" width="12.4" height="11.4" rx="2" stroke="#6b727f" stroke-width="1.4"/><line x1="1.8" y1="6" x2="14.2" y2="6" stroke="#6b727f" stroke-width="1.4"/><line x1="5" y1="1.2" x2="5" y2="4" stroke="#6b727f" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1.2" x2="11" y2="4" stroke="#6b727f" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        {{ budget.range.label }}<span style="color:#9aa0aa;font-size:10px">▾</span>
+                      </button>
+                      <sc-if value="{{ budget.range.menuOpen }}">
+                        <div style="position:absolute;top:44px;right:0;z-index:20;width:200px;background:#fff;border:1px solid #e9ebef;border-radius:11px;box-shadow:0 16px 40px -12px rgba(22,25,34,.28);padding:6px;animation:fadeUp .16s ease">
+                          <sc-for list="{{ bRangeOptions }}" as="opt" hint-placeholder-count="6">
+                            <div onClick="{{ opt.onPick }}" style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:500;color:#161922;cursor:pointer;background:{{ opt.bg }}" style-hover="background:#f6f7f9"><span>{{ opt.label }}</span><sc-if value="{{ opt.active }}"><span style="color:var(--accent,#4f46e5);font-weight:700">✓</span></sc-if></div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa;white-space:nowrap">{{ budget.sync.line }}</span>
+                    <button onClick="{{ bSync }}" disabled="{{ budget.sync.disabled }}" style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#fff;background:var(--accent,#4f46e5);border:none;border-radius:9px;padding:9px 14px;cursor:pointer;font-family:inherit" style-hover="filter:brightness(1.08)">
+                      <span style="display:inline-flex;width:14px;height:14px;animation:{{ budget.sync.spin }}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 8a6 6 0 1 1-1.8-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 1.5V5h-3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>{{ budget.sync.label }}
+                    </button>
+                  </div>
+                </sc-if>
+              </div>
+
+              <!-- ===== EMPTY STATE ===== -->
+              <sc-if value="{{ budget.flags.isEmpty }}">
+                <div style="background:#fff;border:1px solid #e9ebef;border-radius:16px;padding:46px 36px 40px;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+                  <div style="max-width:520px;margin:0 auto 30px;text-align:center">
+                    <div style="width:54px;height:54px;border-radius:14px;background:rgba(79,70,229,.09);display:flex;align-items:center;justify-content:center;margin:0 auto 18px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent,#4f46e5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M15 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg></div>
+                    <div style="font-size:21px;font-weight:800;letter-spacing:-.01em">Connect a platform to see your spend</div>
+                    <p style="font-size:14px;color:#6b727f;margin:8px 0 0;line-height:1.6">Pull spend, impressions and campaign data into one place. Connect Meta to begin — the others are on the way.</p>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:680px;margin:0 auto">
+                    <sc-for list="{{ bEmptyPlatforms }}" as="p" hint-placeholder-count="4">
+                      <div style="border:1px solid #e9ebef;border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;background:#fff">
+                        <div style="width:40px;height:40px;border-radius:11px;background:{{ p.color }};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex:none">{{ p.glyph }}</div>
+                        <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700">{{ p.name }}</div><div style="font-size:12px;color:#9aa0aa;margin-top:2px">{{ p.desc }}</div></div>
+                        <sc-if value="{{ p.isActive }}"><button onClick="{{ p.onConnect }}" style="flex:none;background:var(--accent,#4f46e5);color:#fff;border:none;border-radius:9px;padding:9px 15px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Connect</button></sc-if>
+                        <sc-if value="{{ p.isSoon }}"><span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9aa0aa;background:#f1f2f4;border-radius:7px;padding:6px 10px">Coming soon</span></sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ===== LOADING SKELETON ===== -->
+              <sc-if value="{{ budget.flags.isLoading }}">
+                <div>
+                  <div style="display:grid;grid-template-columns:1.9fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+                    <div style="height:150px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                    <div style="height:150px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                    <div style="height:150px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                    <div style="height:150px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                    <div style="height:150px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:16px">
+                    <div style="height:300px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                    <div style="height:300px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                  </div>
+                  <div style="height:340px;border-radius:14px;background:linear-gradient(90deg,#eef0f2 25%,#e3e6ea 50%,#eef0f2 75%);background-size:200% 100%;animation:shimmer 1.3s ease infinite"></div>
+                </div>
+              </sc-if>
+
+              <!-- ===== DASHBOARD BODY ===== -->
+              <sc-if value="{{ budget.flags.showDash }}">
+                <div>
+                  <!-- multi-currency note -->
+                  <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa;margin-bottom:14px"><span style="width:5px;height:5px;border-radius:50%;background:#cdd1d8"></span>{{ budget.multiCur }}</div>
+
+                  <!-- KPI ROW -->
+                  <div style="display:grid;grid-template-columns:1.9fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+                    <!-- HERO pacing -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;gap:15px">
+                      <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;font-weight:600;color:#6b727f">Monthly cap pacing</span><span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;color:{{ budget.pacing.paceColor }};background:{{ budget.pacing.paceBg }}">{{ budget.pacing.paceLabel }}</span></div>
+                      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:32px;font-weight:800;letter-spacing:-.02em;color:#161922">{{ budget.pacing.mtd }}</span><span style="font-size:14px;color:#9aa0aa;font-weight:600">of {{ budget.pacing.cap }} cap</span></div>
+                      <div>
+                        <div style="position:relative;height:9px;background:#f1f2f4;border-radius:999px;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ budget.pacing.pctWidth }};background:{{ budget.pacing.barColor }};border-radius:999px"></div></div>
+                        <div style="position:relative;height:0"><div style="position:absolute;left:{{ budget.pacing.projLeft }};top:-14px;width:2px;height:14px;background:#161922" title="Projected end of month"></div></div>
+                      </div>
+                      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#6b727f"><span><span style="font-weight:700;color:#161922">{{ budget.pacing.pctUsed }}</span> used</span><span>Projected EOM <span style="font-weight:700;color:#161922">{{ budget.pacing.proj }}</span> ({{ budget.pacing.projPct }})</span></div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa;margin-top:-3px">⌁ {{ budget.pacing.daysLeft }}</div>
+                    </div>
+                    <!-- Total spend -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;gap:10px">
+                      <span style="font-size:12.5px;font-weight:600;color:#6b727f">Total spend</span>
+                      <span style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ budget.kpiTotal.value }}</span>
+                      <div style="display:flex;align-items:center;gap:7px;margin-top:auto">
+                        <sc-if value="{{ budget.kpiTotal.up }}"><span style="font-size:11.5px;font-weight:700;color:#16a34a;background:rgba(22,163,74,.1);border-radius:6px;padding:2px 7px">▲ {{ budget.kpiTotal.delta }}</span></sc-if>
+                        <sc-if value="{{ budget.kpiTotal.down }}"><span style="font-size:11.5px;font-weight:700;color:#dc2626;background:rgba(220,38,38,.1);border-radius:6px;padding:2px 7px">▼ {{ budget.kpiTotal.delta }}</span></sc-if>
+                        <span style="font-size:11px;color:#9aa0aa">{{ budget.kpiTotal.prev }}</span>
+                      </div>
+                    </div>
+                    <!-- Active campaigns -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;gap:10px">
+                      <span style="font-size:12.5px;font-weight:600;color:#6b727f">Active campaigns</span>
+                      <span style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ budget.kpiActive.value }}</span>
+                      <span style="font-size:11.5px;color:#9aa0aa;margin-top:auto">{{ budget.kpiActive.sub }}</span>
+                    </div>
+                    <!-- Avg daily -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;gap:10px">
+                      <span style="font-size:12.5px;font-weight:600;color:#6b727f">Avg daily spend</span>
+                      <span style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ budget.kpiAvgDaily.value }}</span>
+                      <span style="font-size:11.5px;color:#9aa0aa;margin-top:auto">{{ budget.kpiAvgDaily.sub }}</span>
+                    </div>
+                    <!-- CPC -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(22,25,34,.04);display:flex;flex-direction:column;gap:10px">
+                      <span style="font-size:12.5px;font-weight:600;color:#6b727f">Avg CPC</span>
+                      <span style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ budget.kpiCpc.value }}</span>
+                      <div style="display:flex;gap:12px;margin-top:auto;font-size:11px;color:#9aa0aa"><span>{{ budget.kpiCpc.imp }} impr.</span><span>{{ budget.kpiCpc.clicks }} clicks</span></div>
+                    </div>
+                  </div>
+
+                  <!-- CHARTS ROW -->
+                  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:16px">
+                    <!-- Area chart -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px 14px;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                        <h3 style="font-size:14.5px;font-weight:700;margin:0">Spend over time</h3>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#6b727f"><span style="width:9px;height:9px;border-radius:3px;background:#0866FF"></span>Meta</div>
+                      </div>
+                      <sc-if value="{{ budget.chart.hasData }}">
+                        <div onMouseLeave="{{ bChartLeave }}" style="position:relative;height:190px">
+                          <svg viewBox="0 0 680 190" preserveAspectRatio="none" style="width:100%;height:190px;display:block">
+                            <defs><linearGradient id="bArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0866FF" stop-opacity="0.18"/><stop offset="100%" stop-color="#0866FF" stop-opacity="0"/></linearGradient></defs>
+                            <sc-for list="{{ bChartGrid }}" as="g" hint-placeholder-count="3"><line x1="0" x2="680" y1="{{ g.y }}" y2="{{ g.y }}" stroke="#eef0f2" stroke-width="1" vector-effect="non-scaling-stroke"></line></sc-for>
+                            <path d="{{ budget.chart.areaPath }}" fill="url(#bArea)"></path>
+                            <path d="{{ budget.chart.linePath }}" fill="none" stroke="#0866FF" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                          </svg>
+                          <div style="position:absolute;left:0;top:0;bottom:0;width:34px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
+                            <sc-for list="{{ bChartGrid }}" as="g" hint-placeholder-count="3"><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#b6bcc6;background:#fff;padding-right:3px;transform:translateY(-50%)">{{ g.label }}</span></sc-for>
+                          </div>
+                          <div style="position:absolute;inset:0;display:flex">
+                            <sc-for list="{{ bChartCols }}" as="col" hint-placeholder-count="30"><div onMouseEnter="{{ col.onEnter }}" style="flex:1;height:100%"></div></sc-for>
+                          </div>
+                          <sc-if value="{{ budget.chart.hover.show }}">
+                            <div style="position:absolute;left:{{ budget.chart.hover.leftPct }};top:{{ budget.chart.hover.topPct }};width:9px;height:9px;border-radius:50%;background:#0866FF;border:2px solid #fff;box-shadow:0 0 0 1px #0866FF;transform:translate(-50%,-50%);pointer-events:none"></div>
+                            <div style="position:absolute;left:{{ budget.chart.hover.leftPct }};top:{{ budget.chart.hover.topPct }};transform:translate(-50%,-130%);background:#10121a;color:#fff;border-radius:8px;padding:7px 10px;pointer-events:none;white-space:nowrap;box-shadow:0 8px 20px -6px rgba(0,0,0,.4)"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#9aa1ad">{{ budget.chart.hover.date }}</div><div style="font-size:13px;font-weight:700">{{ budget.chart.hover.value }}</div></div>
+                          </sc-if>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:8px;padding-left:34px">
+                          <sc-for list="{{ bChartXLabels }}" as="x" hint-placeholder-count="5"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9aa0aa">{{ x.label }}</span></sc-for>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ budget.flags.noSpendVisible }}">
+                        <div style="height:214px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#9aa0aa"><div style="font-size:13.5px;font-weight:600;color:#6b727f">No spend in this range</div><div style="font-size:12px;margin-top:4px">Try a wider date range to see activity.</div></div>
+                      </sc-if>
+                    </div>
+
+                    <!-- Donut / by platform -->
+                    <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+                      <h3 style="font-size:14.5px;font-weight:700;margin:0 0 14px">Spend by platform</h3>
+                      <div style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
+                        <div style="position:relative;width:140px;height:140px;flex:none">
+                          <svg width="140" height="140" viewBox="0 0 140 140">
+                            <circle cx="70" cy="70" r="54" fill="none" stroke="#f1f2f4" stroke-width="18"></circle>
+                            <sc-for list="{{ bDonutSegs }}" as="seg" hint-placeholder-count="1"><circle cx="70" cy="70" r="54" fill="none" stroke="{{ seg.color }}" stroke-width="18" stroke-dasharray="{{ seg.dasharray }}" transform="{{ seg.rotate }}" stroke-linecap="butt"></circle></sc-for>
+                          </svg>
+                          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><span style="font-size:17px;font-weight:800;letter-spacing:-.01em">{{ budget.donut.centerTotal }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9aa0aa;margin-top:2px">{{ budget.donut.centerSub }}</span></div>
+                        </div>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:11px">
+                        <sc-for list="{{ bPlatLegend }}" as="pl" hint-placeholder-count="4">
+                          <div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                              <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:{{ pl.color }}"></span><span style="font-size:12.5px;font-weight:600;color:#161922">{{ pl.name }}</span><span style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;color:{{ pl.chipColor }};background:{{ pl.chipBg }}">{{ pl.chipLabel }}</span></div>
+                              <div style="text-align:right"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:#161922">{{ pl.amtLabel }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9aa0aa;margin-left:7px">{{ pl.sharePct }}</span></div>
+                            </div>
+                            <div style="height:6px;background:#f1f2f4;border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ pl.barPct }};background:{{ pl.color }};border-radius:999px"></div></div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- MONTHLY CAP WIDGET -->
+                  <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(22,25,34,.04);margin-bottom:16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px">
+                      <div><h3 style="font-size:14.5px;font-weight:700;margin:0">Monthly cap</h3><p style="font-size:12.5px;color:#9aa0aa;margin:4px 0 0">Set an overall spend ceiling and an optional per-platform limit.</p></div>
+                      <sc-if value="{{ budget.flags.hasSpend }}">
+                        <button onClick="{{ bCapEdit }}" style="flex:none;border:1px solid #e9ebef;background:#fff;border-radius:9px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:600;color:#4b5563;cursor:pointer" style-hover="background:#f6f7f9;border-color:#dde0e5;color:#161922">Edit caps</button>
+                      </sc-if>
+                    </div>
+
+                    <sc-if value="{{ budget.cap.editing }}">
+                      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;animation:fadeUp .2s ease">
+                        <div><label style="display:block;font-size:12px;font-weight:600;color:#4b5563;margin-bottom:6px">Overall cap</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9aa0aa;font-size:13px">$</span><input value="{{ budget.cap.draftOverall }}" onChange="{{ bSetCapOverall }}" style="width:160px;padding:9px 11px 9px 22px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;outline:none" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)"/></div></div>
+                        <div><label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4b5563;margin-bottom:6px"><span style="width:8px;height:8px;border-radius:2px;background:#0866FF"></span>Meta cap</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9aa0aa;font-size:13px">$</span><input value="{{ budget.cap.draftMeta }}" onChange="{{ bSetCapMeta }}" style="width:160px;padding:9px 11px 9px 22px;border:1px solid #e1e4e9;border-radius:9px;font-size:14px;font-family:'JetBrains Mono',monospace;color:#161922;outline:none" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)"/></div></div>
+                        <button onClick="{{ bCapSave }}" style="background:var(--accent,#4f46e5);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Save</button>
+                        <button onClick="{{ bCapCancel }}" style="background:#fff;color:#4b5563;border:1px solid #e1e4e9;border-radius:9px;padding:10px 16px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:#f6f7f9">Cancel</button>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ budget.cap.notEditing }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:24px;align-items:center">
+                        <div>
+                          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:9px"><span style="font-size:20px;font-weight:800;letter-spacing:-.01em">{{ budget.cap.mtd }}</span><span style="font-size:13px;color:#9aa0aa;font-weight:600">of {{ budget.cap.overall }}</span></div>
+                          <div style="position:relative;height:9px;background:#f1f2f4;border-radius:999px;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ budget.cap.pctWidth }};background:{{ budget.cap.barColor }};border-radius:999px"></div></div>
+                          <div style="position:relative;height:0"><div style="position:absolute;left:{{ budget.cap.projLeft }};top:-14px;width:2px;height:14px;background:#161922"></div></div>
+                          <div style="font-size:11.5px;color:#9aa0aa;margin-top:9px">{{ budget.cap.pctUsed }} used · dashed marker = projected EOM</div>
+                        </div>
+                        <div style="border-left:1px solid #f1f2f4;padding-left:24px"><div style="font-size:11.5px;color:#9aa0aa;margin-bottom:5px">Days remaining</div><div style="font-size:22px;font-weight:800">{{ budget.cap.daysLeft }}</div><div style="font-size:11.5px;color:#9aa0aa;margin-top:3px">in June</div></div>
+                        <div style="border-left:1px solid #f1f2f4;padding-left:24px"><div style="font-size:11.5px;color:#9aa0aa;margin-bottom:7px">Pace signal</div><span style="font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;color:{{ budget.cap.paceColor }};background:{{ budget.cap.paceBg }}">{{ budget.cap.paceLabel }}</span><div style="font-size:11.5px;color:#9aa0aa;margin-top:8px">Meta cap {{ budget.cap.metaCap }}</div></div>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <!-- CAMPAIGN TABLE -->
+                  <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;box-shadow:0 1px 2px rgba(22,25,34,.04);overflow:hidden;margin-bottom:16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;flex-wrap:wrap">
+                      <div style="display:flex;align-items:center;gap:10px"><h3 style="font-size:14.5px;font-weight:700;margin:0">Campaign spend</h3><span style="font-size:11.5px;font-weight:700;color:#5b626e;background:#f1f2f4;padding:2px 9px;border-radius:999px">{{ budget.table.totalLabel }}</span></div>
+                      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                        <button onClick="{{ bToggleGroup }}" style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#4b5563;background:#fff;border:1px solid #e9ebef;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:inherit" style-hover="border-color:#cdd1d8;color:#161922"><span style="width:14px;height:14px;display:inline-flex"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M4 8h10M6 12h8" stroke-linecap="round"/></svg></span>{{ budget.table.groupBtnLabel }}</button>
+                        <div style="position:relative;width:230px">
+                          <svg width="15" height="15" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9aa0aa;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                          <input value="{{ budget.table.query }}" onChange="{{ bSetQuery }}" placeholder="Search campaigns…" style="width:100%;height:34px;padding:0 12px 0 33px;border:1px solid #e9ebef;border-radius:8px;font-size:13px;font-family:inherit;color:#161922;outline:none" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)"/>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- header row -->
+                    <div style="display:grid;grid-template-columns:2.3fr .9fr .9fr 1fr 1fr .9fr .7fr .7fr;gap:8px;padding:10px 20px;background:#f3f4f7;border-top:1px solid #eef0f2;border-bottom:1px solid #eef0f2;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b727f">
+                      <div onClick="{{ bSortCols.name.onSort }}" style="cursor:pointer">Campaign {{ bSortCols.name.arrow }}</div>
+                      <div>Platform</div>
+                      <div>Status</div>
+                      <div onClick="{{ bSortCols.spend.onSort }}" style="cursor:pointer;text-align:right">Spend {{ bSortCols.spend.arrow }}</div>
+                      <div onClick="{{ bSortCols.imp.onSort }}" style="cursor:pointer;text-align:right">Impr. {{ bSortCols.imp.arrow }}</div>
+                      <div onClick="{{ bSortCols.clicks.onSort }}" style="cursor:pointer;text-align:right">Clicks {{ bSortCols.clicks.arrow }}</div>
+                      <div onClick="{{ bSortCols.ctr.onSort }}" style="cursor:pointer;text-align:right">CTR {{ bSortCols.ctr.arrow }}</div>
+                      <div onClick="{{ bSortCols.cpc.onSort }}" style="cursor:pointer;text-align:right">CPC {{ bSortCols.cpc.arrow }}</div>
+                    </div>
+
+                    <sc-if value="{{ budget.table.isEmpty }}">
+                      <div style="padding:56px 24px;text-align:center"><div style="font-size:14px;font-weight:700;color:#161922;margin-bottom:5px">Nothing to show</div><p style="font-size:13px;color:#9aa0aa;margin:0">{{ budget.table.emptyMsg }}</p></div>
+                    </sc-if>
+
+                    <sc-for list="{{ bCampSections }}" as="sec" hint-placeholder-count="1">
+                      <sc-if value="{{ sec.showHeader }}" hint-placeholder-val="{{ false }}">
+                        <div onClick="{{ bToggleMeta }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 20px;background:#fbfbfc;border-bottom:1px solid #f1f2f4;cursor:pointer" style-hover="background:#f6f7f8">
+                          <div style="display:flex;align-items:center;gap:9px"><span style="color:#9aa0aa;font-size:11px;width:10px">{{ sec.arrow }}</span><span style="width:20px;height:20px;border-radius:6px;background:{{ sec.color }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">{{ sec.glyph }}</span><span style="font-size:13px;font-weight:700;color:#161922">{{ sec.platform }}</span><span style="font-size:11px;color:#9aa0aa">{{ sec.countLabel }}</span></div>
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#161922">{{ sec.subtotalLabel }}</span>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ sec.expanded }}" hint-placeholder-val="{{ true }}">
+                        <sc-for list="{{ sec.rows }}" as="r" hint-placeholder-count="6">
+                          <div onClick="{{ r.onOpen }}" style="display:grid;grid-template-columns:2.3fr .9fr .9fr 1fr 1fr .9fr .7fr .7fr;gap:8px;align-items:center;padding:13px 20px;border-bottom:1px solid #f1f2f4;cursor:pointer;background:{{ r.rowBg }}" style-hover="background:#f9fafb">
+                            <div style="font-size:13.5px;font-weight:600;color:#161922;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">{{ r.name }}</div>
+                            <div><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#3b4252"><span style="width:16px;height:16px;border-radius:5px;background:#0866FF;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff">M</span>Meta</span></div>
+                            <div><span style="font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;color:{{ r.statusColor }};background:{{ r.statusBg }}">{{ r.statusLabel }}</span></div>
+                            <div style="text-align:right">
+                              <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:#161922">{{ r.spendDisp }}</div>
+                              <sc-if value="{{ r.isEUR }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#9aa0aa">{{ r.spendSub }}</div></sc-if>
+                            </div>
+                            <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:#5b626e">{{ r.impDisp }}</div>
+                            <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:#5b626e">{{ r.clicksDisp }}</div>
+                            <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:#5b626e">{{ r.ctrDisp }}</div>
+                            <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:#5b626e">{{ r.cpcDisp }}</div>
+                          </div>
+                        </sc-for>
+                      </sc-if>
+                    </sc-for>
+
+                    <sc-if value="{{ budget.table.hasMore }}">
+                      <div style="padding:13px 20px;text-align:center;border-top:1px solid #f1f2f4"><button onClick="{{ bLoadMore }}" style="border:1px solid #e9ebef;background:#fff;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;color:#4b5563;cursor:pointer;font-family:inherit" style-hover="border-color:#cdd1d8;color:#161922">Load more campaigns</button></div>
+                    </sc-if>
+                  </div>
+
+                  <!-- CONNECTION MANAGEMENT -->
+                  <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;box-shadow:0 1px 2px rgba(22,25,34,.04);overflow:hidden">
+                    <div style="padding:16px 20px;border-bottom:1px solid #eef0f2"><h3 style="font-size:14.5px;font-weight:700;margin:0">Connected accounts</h3><p style="font-size:12.5px;color:#9aa0aa;margin:4px 0 0">Read-only access. Disconnect or reconnect a source any time.</p></div>
+                    <sc-for list="{{ bConnections }}" as="cn" hint-placeholder-count="2">
+                      <div style="display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid #f1f2f4">
+                        <span style="width:34px;height:34px;border-radius:9px;background:{{ cn.color }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex:none">{{ cn.glyph }}</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13.5px;font-weight:700;color:#161922">{{ cn.platform }} · {{ cn.account }}</span><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;color:{{ cn.statusColor }};background:{{ cn.statusBg }}">{{ cn.statusLabel }}</span></div>
+                          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa;margin-top:3px">{{ cn.accId }} · {{ cn.currency }} · synced {{ cn.synced }}</div>
+                        </div>
+                        <sc-if value="{{ cn.expired }}" hint-placeholder-val="{{ false }}"><button onClick="{{ bReconnect }}" style="flex:none;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#b91c1c">Reconnect</button></sc-if>
+                        <sc-if value="{{ cn.notExpired }}" hint-placeholder-val="{{ true }}">
+                          <div style="display:flex;gap:8px;flex:none">
+                            <button onClick="{{ bSync }}" style="background:#fff;color:#4b5563;border:1px solid #e9ebef;border-radius:8px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:#cdd1d8;color:#161922">Sync</button>
+                            <button style="background:#fff;color:#dc2626;border:1px solid #e9ebef;border-radius:8px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:rgba(220,38,38,.4);background:rgba(220,38,38,.04)">Disconnect</button>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                    <div style="padding:14px 20px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#fbfbfc">
+                      <sc-for list="{{ bComingConns }}" as="cc" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:10px;border:1px dashed #e1e4e9;border-radius:10px;padding:11px 12px">
+                          <span style="width:26px;height:26px;border-radius:7px;background:{{ cc.color }};opacity:.85;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex:none">{{ cc.glyph }}</span>
+                          <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#3b4252;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cc.name }}</div><div style="font-size:10px;color:#9aa0aa">Coming soon</div></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                </div>
+              </sc-if>
+            </div>
+
+            <!-- demo state switcher (review only) -->
+            <div style="position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:3px;background:#10121a;border-radius:999px;padding:5px 7px 5px 13px;box-shadow:0 10px 30px -8px rgba(0,0,0,.45)">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#6b727f;text-transform:uppercase;margin-right:5px">State</span>
+              <sc-for list="{{ bStates }}" as="bs" hint-placeholder-count="6">
+                <button onClick="{{ bs.onPick }}" style="position:relative;border:none;cursor:pointer;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;font-family:inherit;background:transparent;overflow:hidden">
+                  <sc-if value="{{ bs.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:var(--accent,#4f46e5);border-radius:999px"></span><span style="position:relative;z-index:1;color:#fff">{{ bs.l }}</span></sc-if>
+                  <sc-if value="{{ bs.notActive }}" hint-placeholder-val="{{ true }}"><span style="position:relative;z-index:1;color:#9aa1ad">{{ bs.l }}</span></sc-if>
+                </button>
+              </sc-for>
+            </div>
+
+            <!-- campaign detail drawer -->
+            <div onClick="{{ bCampClose }}" style="position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:{{ budget.campDrawer.backdropOpacity }};pointer-events:{{ budget.campDrawer.pointer }};transition:opacity .26s ease;z-index:70"></div>
+            <div style="position:fixed;top:0;right:0;bottom:0;width:440px;background:#fff;display:flex;flex-direction:column;box-shadow:-26px 0 54px -22px rgba(22,25,34,.45);transform:translateX({{ budget.campDrawer.x }});transition:transform .26s cubic-bezier(.32,.72,0,1);z-index:71">
+              <div style="padding:20px 22px 16px;border-bottom:1px solid #e9ebef">
+                <div style="display:flex;align-items:flex-start;gap:12px">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:17px;font-weight:700;color:#161922;letter-spacing:-.01em;line-height:1.3">{{ budget.campDrawer.name }}</div>
+                    <div style="display:flex;gap:7px;margin-top:10px;align-items:center">
+                      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#3b4252"><span style="width:16px;height:16px;border-radius:5px;background:#0866FF;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff">M</span>Meta</span>
+                      <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;color:{{ budget.campDrawer.statusColor }};background:{{ budget.campDrawer.statusBg }}">{{ budget.campDrawer.statusLabel }}</span>
+                    </div>
+                  </div>
+                  <button onClick="{{ bCampClose }}" style="flex:none;width:32px;height:32px;border:none;background:transparent;color:#6b727f;border-radius:8px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f1f2f4;color:#161922">✕</button>
+                </div>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:18px 22px 24px;display:flex;flex-direction:column;gap:20px">
+                <div style="background:#0f1118;border:1px solid #1d2030;border-radius:12px;padding:15px 16px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#6b727f;font-weight:600;margin-bottom:12px">Spend trend · last 14 days</div>
+                  <svg width="100%" height="64" viewBox="0 0 252 64" preserveAspectRatio="none" style="display:block">
+                    <defs><linearGradient id="bCampG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+                    <path d="{{ budget.campDrawer.sparkArea }}" fill="url(#bCampG)"></path>
+                    <path d="{{ budget.campDrawer.spark }}" fill="none" stroke="#5b9bff" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                  </svg>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+                  <sc-for list="{{ bCampMetrics }}" as="m" hint-placeholder-count="6">
+                    <div style="border:1px solid #eef0f2;border-radius:11px;padding:13px 14px"><div style="font-size:11px;color:#9aa0aa;margin-bottom:6px">{{ m.label }}</div><div style="font-size:16px;font-weight:700;color:#161922;letter-spacing:-.01em">{{ m.value }}</div></div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ budget.campDrawer.isEUR }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:9px;background:#f7f8fa;border:1px solid #ebedf1;border-radius:10px;padding:11px 13px;font-size:12px;color:#6b727f"><span style="width:18px;height:18px;border-radius:999px;background:#fff;border:1px solid #e1e4e9;display:flex;align-items:center;justify-content:center;font-size:11px">€</span>{{ budget.campDrawer.eurNote }}</div>
+                </sc-if>
+              </div>
+            </div>
+
+          </div>
+        </sc-if>
+
+        <!-- Other (scope) placeholder -->
+        <sc-if value="{{ isOther }}" hint-placeholder-val="{{ false }}">
+          <div style="height:100%;display:flex;align-items:center;justify-content:center;padding:40px">
+            <div style="text-align:center;max-width:380px">
+              <div style="width:54px;height:54px;border-radius:14px;background:#f3f4f7;display:flex;align-items:center;justify-content:center;color:#a7adb8;margin:0 auto 16px">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              </div>
+              <h2 style="font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0 0 7px">{{ pageTitle }}</h2>
+              <p style="font-size:13.5px;color:#8a909b;margin:0;line-height:1.55">This section isn't part of the current design brief. The UTM Generator is the live feature — select it in the sidebar.</p>
+            </div>
+          </div>
+        </sc-if>
+      </main>
+    </div>
+
+    <!-- URL Library detail drawer -->
+    <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:{{ drawer.backdropOpacity }};pointer-events:{{ drawer.backdropPointer }};transition:opacity .26s ease;z-index:70"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:440px;background:#fff;display:flex;flex-direction:column;box-shadow:-26px 0 54px -22px rgba(22,25,34,.45);transform:translateX({{ drawer.x }});transition:transform .26s cubic-bezier(.32,.72,0,1);z-index:71">
+
+      <div style="padding:20px 22px 16px;border-bottom:1px solid #e9ebef">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:17px;font-weight:700;color:#161922;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em">{{ drawer.sel.campaign }}</div>
+            <div style="display:flex;gap:7px;margin-top:10px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:rgba(79,70,229,.09);color:var(--accent,#4f46e5)">{{ drawer.sel.source }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:#f1f2f4;color:#5b626e">{{ drawer.sel.medium }}</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9aa0aa;margin-top:11px">Created {{ drawer.sel.createdLong }}</div>
+          </div>
+          <button onClick="{{ closeDrawer }}" style="flex:none;width:32px;height:32px;border:none;background:transparent;color:#6b727f;border-radius:8px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f1f2f4;color:#161922">✕</button>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:18px 22px 8px;display:flex;flex-direction:column;gap:22px">
+        <div style="background:#0f1118;border:1px solid #1d2030;border-radius:12px;padding:14px 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6b727f;font-weight:600">Tagged URL</span>
+            <button onClick="{{ dwCopy }}" style="display:inline-flex;align-items:center;gap:6px;background:#1d2030;color:#cdd3e0;border:1px solid #2a2f42;border-radius:7px;padding:5px 11px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;cursor:pointer" style-hover="background:#262b3d">
+              <sc-if value="{{ drawer.notCopied }}" hint-placeholder-val="{{ true }}"><span>Copy</span></sc-if>
+              <sc-if value="{{ drawer.copied }}"><span style="color:#22c55e;font-weight:600">✓ Copied</span></sc-if>
+            </button>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;color:#cdd3e0;word-break:break-all">{{ drawer.taggedUrl }}</div>
+        </div>
+
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9aa0aa;font-weight:600;margin-bottom:8px">Parameters</div>
+          <sc-if value="{{ drawer.isEditing }}">
+            <div style="animation:fadeUp .24s ease">
+              <sc-for list="{{ dwEditParams }}" as="param" hint-placeholder-count="8">
+                <div style="padding:12px 0;border-bottom:1px solid #f1f2f4;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:baseline;gap:9px">
+                    <span style="font-size:13px;font-weight:600;color:#161922">{{ param.label }}</span>
+                    <sc-if value="{{ param.hasKey }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa">{{ param.key }}</span></sc-if>
+                  </div>
+                  <input value="{{ param.editValue }}" onChange="{{ param.onEdit }}" placeholder="{{ param.placeholder }}" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#161922;background:#fff;border:1px solid {{ param.borderColor }};border-radius:9px;padding:9px 11px;outline:none" style-focus="border-color:var(--accent,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)" />
+                  <sc-if value="{{ param.showWarn }}">
+                    <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#c2410c;margin-top:1px">
+                      <span style="flex:none;width:15px;height:15px;border-radius:999px;background:rgba(239,68,68,.13);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">!</span>
+                      <span>{{ drawer.warnText }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ drawer.notEditing }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <sc-for list="{{ dwViewParams }}" as="param" hint-placeholder-count="8">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #f1f2f4">
+                  <div style="min-width:0;flex:none">
+                    <div style="font-size:13.5px;font-weight:600;color:#161922">{{ param.label }}</div>
+                    <sc-if value="{{ param.hasKey }}"><div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9aa0aa;margin-top:2px">{{ param.key }}</div></sc-if>
+                  </div>
+                  <div style="text-align:right;max-width:240px;min-width:0">
+                    <sc-if value="{{ param.vSource }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:rgba(79,70,229,.09);color:var(--accent,#4f46e5);display:inline-block">{{ param.value }}</span></sc-if>
+                    <sc-if value="{{ param.vMedium }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:#f1f2f4;color:#5b626e;display:inline-block">{{ param.value }}</span></sc-if>
+                    <sc-if value="{{ param.vMuted }}"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#9aa0aa">—</span></sc-if>
+                    <sc-if value="{{ param.vMono }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#161922;word-break:break-all">{{ param.value }}</span></sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9aa0aa;font-weight:600">Analytics</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:3px 9px;border-radius:999px;background:#f1f2f4;color:#9aa0aa;font-weight:600;letter-spacing:.08em;text-transform:uppercase">Coming soon</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;opacity:.5">
+            <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">Clicks</span><div style="height:18px;width:70%;background:#eceef1;border-radius:6px"></div></div>
+            <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">CTR</span><div style="height:18px;width:55%;background:#eceef1;border-radius:6px"></div></div>
+            <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">Last seen</span><div style="height:18px;width:80%;background:#eceef1;border-radius:6px"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ drawer.isView }}">
+        <div style="border-top:1px solid #e9ebef;padding:14px 22px;display:flex;gap:10px;animation:fadeUp .2s ease">
+          <button onClick="{{ dwEdit }}" style="flex:1;background:var(--accent,#4f46e5);color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Edit</button>
+          <button onClick="{{ dwAskDelete }}" style="background:#fff;color:#ef4444;border:1px solid #e9ebef;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.04)">Delete</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ drawer.isEditing }}">
+        <div style="border-top:1px solid #e9ebef;padding:14px 22px;display:flex;gap:10px;animation:fadeUp .2s ease">
+          <button onClick="{{ dwSave }}" disabled="{{ drawer.saving }}" style="flex:1;background:{{ drawer.saveBg }};color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:{{ drawer.saveCursor }};display:inline-flex;align-items:center;justify-content:center;gap:9px;opacity:{{ drawer.saveOpacity }}" style-hover="filter:brightness(1.08)">
+            <sc-if value="{{ drawer.saving }}"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .6s linear infinite"></span></sc-if>
+            <span>{{ drawer.saveLabel }}</span>
+          </button>
+          <button onClick="{{ dwCancelEdit }}" disabled="{{ drawer.saving }}" style="background:#fff;color:#4b5563;border:1px solid #e1e4e9;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#f6f7f9">Cancel</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ drawer.isDelete }}">
+        <div style="border-top:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.05);padding:16px 22px;display:flex;flex-direction:column;gap:13px;animation:fadeUp .2s ease">
+          <div style="font-size:13.5px;color:#161922;font-weight:600">Delete this URL? <span style="font-weight:500;color:#6b727f">This can't be undone.</span></div>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{ dwConfirmDelete }}" disabled="{{ drawer.deleting }}" style="flex:1;background:{{ drawer.deleteBg }};color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:{{ drawer.deleteCursor }};display:inline-flex;align-items:center;justify-content:center;gap:9px" style-hover="background:#dc2626">
+              <sc-if value="{{ drawer.deleting }}"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .6s linear infinite"></span></sc-if>
+              <span>{{ drawer.deleteLabel }}</span>
+            </button>
+            <button onClick="{{ dwCancelDelete }}" disabled="{{ drawer.deleting }}" style="background:#fff;color:#4b5563;border:1px solid #e1e4e9;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#fff8f8">Cancel</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+
+    <!-- Toast -->
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;top:18px;right:18px;z-index:80;display:flex;align-items:center;gap:10px;background:#10121a;color:#fff;border-radius:11px;padding:12px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.4);animation:toastIn .25s ease;font-size:13.5px;font-weight:600">
+        <span style="width:20px;height:20px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        {{ toast.msg }}
+      </div>
+    </sc-if>
+
+    <!-- Review-only state switcher (history panel states) -->
+    <sc-if value="{{ isUtm }}" hint-placeholder-val="{{ true }}">
+      <div style="position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:4px;background:#10121a;border-radius:999px;padding:5px 6px 5px 13px;box-shadow:0 10px 30px -8px rgba(0,0,0,.4)">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;color:#6b727f;text-transform:uppercase;margin-right:4px">History</span>
+        <button onClick="{{ histGo.filled }}" style="position:relative;border:none;cursor:pointer;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;font-family:inherit;background:transparent;overflow:hidden">
+          <sc-if value="{{ histIs.filled }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;background:var(--accent,#4f46e5);border-radius:999px"></span><span style="position:relative;z-index:1;color:#fff">Filled</span></sc-if>
+          <sc-if value="{{ histNot.filled }}" hint-placeholder-val="{{ false }}"><span style="position:relative;z-index:1;color:#9aa1ad">Filled</span></sc-if>
+        </button>
+        <button onClick="{{ histGo.empty }}" style="position:relative;border:none;cursor:pointer;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;font-family:inherit;background:transparent;overflow:hidden">
+          <sc-if value="{{ histIs.empty }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:var(--accent,#4f46e5);border-radius:999px"></span><span style="position:relative;z-index:1;color:#fff">Empty</span></sc-if>
+          <sc-if value="{{ histNot.empty }}" hint-placeholder-val="{{ true }}"><span style="position:relative;z-index:1;color:#9aa1ad">Empty</span></sc-if>
+        </button>
+        <button onClick="{{ histGo.loading }}" style="position:relative;border:none;cursor:pointer;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;font-family:inherit;background:transparent;overflow:hidden">
+          <sc-if value="{{ histIs.loading }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:var(--accent,#4f46e5);border-radius:999px"></span><span style="position:relative;z-index:1;color:#fff">Loading</span></sc-if>
+          <sc-if value="{{ histNot.loading }}" hint-placeholder-val="{{ true }}"><span style="position:relative;z-index:1;color:#9aa1ad">Loading</span></sc-if>
+        </button>
+      </div>
+    </sc-if>
+
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4f46e5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#4f46e5&quot;,&quot;#2563eb&quot;,&quot;#0d9488&quot;,&quot;#ea580c&quot;,&quot;#7c3aed&quot;]},&quot;defaultCollapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  campaignHistory = ['spring_launch_2026', 'spring_launch_2025', 'brand_2026', 'brand_defense', 'retargeting_warm', 'retargeting_cold', 'lead_gen_q3', 'newsletter_jun', 'whitepaper_q2', 'creator_collab', 'webinar_invite', 'thought_leadership'];
+  baseHistory = ['https://www.acme.io/pricing', 'https://www.acme.io/demo', 'https://www.acme.io/', 'https://www.acme.io/blog/utm-guide', 'https://www.acme.io/features', 'https://www.acme.io/webinar', 'https://www.acme.io/case-studies'];
+
+  state = {
+    screen: 'app',
+    collapsed: null,
+    activeNav: 'utm',
+    loginEmail: '', loginPassword: '', loginError: false,
+    baseUrl: 'https://www.acme.io/pricing',
+    source: 'google', medium: 'cpc', campaign: 'spring_launch_2026', content: '', term: '',
+    selectedTemplate: '',
+    adSet: '', creative: '',
+    acField: null, acIndex: 0,
+    libGroupBy: 'all', libFilter: '', libCollapsed: {}, libCopiedId: null,
+    recentCopiedId: null,
+    drawerOpen: false, drawerId: null, drawerMode: 'view', drawerBusy: null, drawerCopied: false, drawerEdit: null,
+    bState: 'connected', bRange: '30d', bRangeMenu: false,
+    bSort: { key: 'spend', dir: 'desc' }, bQuery: '', bGrouped: true, bCollapsed: {}, bVisible: 8,
+    bCapEditing: false, bCapOverall: 50000, bCapMeta: 50000, bCapDraftOverall: '50000', bCapDraftMeta: '50000',
+    bLastSync: 4, bHoverDay: null, bCampDrawerId: null,
+    sourceOpen: false, mediumOpen: false,
+    historyState: 'filled',
+    toast: null,
+    templates: [
+      { id: 't1', name: 'Google Search — Brand', source: 'google', medium: 'cpc', campaign: 'brand_2026', content: null, term: 'acme' },
+      { id: 't2', name: 'Meta Retargeting', source: 'meta', medium: 'social', campaign: 'retargeting_warm', content: 'carousel_a', term: null },
+      { id: 't3', name: 'LinkedIn Lead Gen', source: 'linkedin', medium: 'cpc', campaign: 'lead_gen_q3', content: 'sidebar_ad', term: null },
+      { id: 't4', name: 'Monthly Newsletter', source: 'newsletter', medium: 'email', campaign: 'newsletter_jun', content: null, term: null },
+    ],
+    entries: [
+      { id: 'h1', base_url: 'https://www.acme.io/pricing', source: 'google', medium: 'cpc', campaign: 'spring_launch_2026', generated_url: 'https://www.acme.io/pricing?utm_source=google&utm_medium=cpc&utm_campaign=spring_launch_2026', created_at: '2h ago' },
+      { id: 'h2', base_url: 'https://www.acme.io/demo', source: 'linkedin', medium: 'cpc', campaign: 'whitepaper_q2', generated_url: 'https://www.acme.io/demo?utm_source=linkedin&utm_medium=cpc&utm_campaign=whitepaper_q2&utm_content=sidebar_ad', created_at: '5h ago' },
+      { id: 'h3', base_url: 'https://www.acme.io/', source: 'meta', medium: 'social', campaign: 'retargeting_warm', generated_url: 'https://www.acme.io/?utm_source=meta&utm_medium=social&utm_campaign=retargeting_warm&utm_content=carousel_b', created_at: 'Yesterday' },
+      { id: 'h4', base_url: 'https://www.acme.io/blog/utm-guide', source: 'newsletter', medium: 'email', campaign: 'june_digest', generated_url: 'https://www.acme.io/blog/utm-guide?utm_source=newsletter&utm_medium=email&utm_campaign=june_digest', created_at: 'Yesterday' },
+      { id: 'h5', base_url: 'https://www.acme.io/features', source: 'tiktok', medium: 'social', campaign: 'creator_collab', generated_url: 'https://www.acme.io/features?utm_source=tiktok&utm_medium=social&utm_campaign=creator_collab&utm_content=ugc_v3', created_at: '2 days ago' },
+      { id: 'h6', base_url: 'https://www.acme.io/pricing', source: 'google', medium: 'cpc', campaign: 'brand_defense', generated_url: 'https://www.acme.io/pricing?utm_source=google&utm_medium=cpc&utm_campaign=brand_defense&utm_term=acme', created_at: '3 days ago' },
+      { id: 'h7', base_url: 'https://www.acme.io/webinar', source: 'email', medium: 'email', campaign: 'webinar_invite', generated_url: 'https://www.acme.io/webinar?utm_source=email&utm_medium=email&utm_campaign=webinar_invite', created_at: '4 days ago' },
+      { id: 'h8', base_url: 'https://www.acme.io/case-studies', source: 'linkedin', medium: 'organic', campaign: 'thought_leadership', generated_url: 'https://www.acme.io/case-studies?utm_source=linkedin&utm_medium=organic&utm_campaign=thought_leadership', created_at: 'Last week' },
+    ],
+    libRows: [
+      { id: 'l1', campaign: 'summer-promo-2026', source: 'google', medium: 'cpc', adSet: '30-day-visitors', creative: 'video-15s-summer', content: 'summer_hero', term: '', base_url: 'https://www.acme.io/summer', created_at: 'Jun 24, 2026' },
+      { id: 'l2', campaign: 'summer-promo-2026', source: 'meta', medium: 'social', adSet: 'lookalike-2pct', creative: 'static-banner-blue', content: '', term: '', base_url: 'https://www.acme.io/summer', created_at: 'Jun 24, 2026' },
+      { id: 'l3', campaign: 'brand-awareness-q2', source: 'stackadapt', medium: 'display', adSet: 'interest-fitness', creative: 'dynamic-responsive', content: '', term: '', base_url: 'https://www.acme.io/brand', created_at: 'Jun 21, 2026' },
+      { id: 'l4', campaign: 'brand-awareness-q2', source: 'linkedin', medium: 'paid-social', adSet: 'lookalike-2pct', creative: 'carousel-product', content: 'sidebar', term: '', base_url: 'https://www.acme.io/brand', created_at: 'Jun 21, 2026' },
+      { id: 'l5', campaign: 'retargeting-site-visitors', source: 'meta', medium: 'paid-social', adSet: '30-day-visitors', creative: 'carousel-product', content: '', term: '', base_url: 'https://www.acme.io/pricing', created_at: 'Jun 18, 2026' },
+      { id: 'l6', campaign: 'retargeting-site-visitors', source: 'google', medium: 'display', adSet: '30-day-visitors', creative: 'dynamic-responsive', content: '', term: 'running_shoes', base_url: 'https://www.acme.io/pricing', created_at: 'Jun 18, 2026' },
+      { id: 'l7', campaign: 'competitor-conquest', source: 'google', medium: 'cpc', adSet: 'competitor-kw', creative: 'static-banner-blue', content: '', term: 'competitor_brand', base_url: 'https://www.acme.io/compare', created_at: 'Jun 14, 2026' },
+      { id: 'l8', campaign: 'competitor-conquest', source: 'stackadapt', medium: 'display', adSet: 'interest-fitness', creative: 'video-15s-summer', content: '', term: '', base_url: 'https://www.acme.io/compare', created_at: 'Jun 14, 2026' },
+    ],
+  };
+
+  componentDidMount() {
+    this._onKey = (e) => { if (e.key === 'Escape' && this.state.drawerOpen && !this.state.drawerBusy) this.closeDrawerNow(); };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._c); clearTimeout(this._r); clearTimeout(this._dw); clearTimeout(this._dwc); clearTimeout(this._bs); if (this._onKey) window.removeEventListener('keydown', this._onKey); }
+
+  drawerMeta() {
+    return [
+      { label: 'Source', key: 'utm_source', field: 'source', kind: 'source', placeholder: 'google · meta · linkedin' },
+      { label: 'Medium', key: 'utm_medium', field: 'medium', kind: 'medium', placeholder: 'cpc · social · email' },
+      { label: 'Campaign', key: 'utm_campaign', field: 'campaign', placeholder: 'campaign name' },
+      { label: 'Content', key: 'utm_content', field: 'content', placeholder: 'optional' },
+      { label: 'Term', key: 'utm_term', field: 'term', placeholder: 'optional' },
+      { label: 'Ad Set', key: 'utm_adset', field: 'adSet', placeholder: 'optional' },
+      { label: 'Creative', key: 'utm_creative', field: 'creative', placeholder: 'optional' },
+      { label: 'Base URL', key: '', field: 'base_url', isBase: true, placeholder: 'https://example.com/path' },
+    ];
+  }
+  drawerRow() { return this.state.libRows.find((r) => r.id === this.state.drawerId) || null; }
+  drawerUrlFrom(obj) {
+    const base = (obj.base_url || '').trim();
+    const parts = [];
+    if (obj.source) parts.push('utm_source=' + obj.source);
+    if (obj.medium) parts.push('utm_medium=' + obj.medium);
+    if (obj.campaign) parts.push('utm_campaign=' + obj.campaign);
+    if (obj.content) parts.push('utm_content=' + obj.content);
+    if (obj.term) parts.push('utm_term=' + obj.term);
+    if (!parts.length) return base;
+    return base + (base.includes('?') ? '&' : '?') + parts.join('&');
+  }
+  closeDrawerNow() { if (this.state.drawerBusy) return; this.setState({ drawerOpen: false, drawerMode: 'view', drawerBusy: null, drawerEdit: null }); }
+  drawerStartEdit() {
+    const r = this.drawerRow(); if (!r) return;
+    this.setState({ drawerMode: 'edit', drawerEdit: { source: r.source || '', medium: r.medium || '', campaign: r.campaign || '', content: r.content || '', term: r.term || '', adSet: r.adSet || '', creative: r.creative || '', base_url: r.base_url || '' } });
+  }
+  drawerSave() {
+    const e = this.state.drawerEdit;
+    if (!e || !/^https?:\/\//i.test((e.base_url || '').trim())) return;
+    this.setState({ drawerBusy: 'saving' });
+    clearTimeout(this._dw);
+    this._dw = setTimeout(() => {
+      this.setState((st) => ({ libRows: st.libRows.map((r) => (r.id === st.drawerId ? { ...r, ...e } : r)), drawerMode: 'view', drawerBusy: null, drawerEdit: null }));
+      this.flashToast('Changes saved');
+    }, 1000);
+  }
+  drawerDelete() {
+    this.setState({ drawerBusy: 'deleting' });
+    clearTimeout(this._dw);
+    this._dw = setTimeout(() => {
+      this.setState((st) => ({ libRows: st.libRows.filter((r) => r.id !== st.drawerId), drawerOpen: false, drawerMode: 'view', drawerBusy: null, drawerEdit: null }));
+      this.flashToast('URL deleted');
+    }, 1000);
+  }
+  drawerCopyUrl(u) { this.copy(u); this.setState({ drawerCopied: true }); clearTimeout(this._dwc); this._dwc = setTimeout(() => this.setState({ drawerCopied: false }), 1500); }
+
+  // ===== Budget Dashboard data =====
+  budgetPlatforms() {
+    return [
+      { key: 'meta', name: 'Meta', color: '#0866FF', glyph: 'M', desc: 'Facebook & Instagram Ads', status: 'connected' },
+      { key: 'google', name: 'Google Ads', color: '#34A853', glyph: 'G', desc: 'Search, Display & YouTube', status: 'soon' },
+      { key: 'linkedin', name: 'LinkedIn Ads', color: '#0A66C2', glyph: 'in', desc: 'Sponsored content', status: 'soon' },
+      { key: 'tiktok', name: 'TikTok Ads', color: '#FE2C55', glyph: 'T', desc: 'In-feed & Spark Ads', status: 'soon' },
+    ];
+  }
+  budgetCampaigns() {
+    return [
+      { id: 'c1', name: 'Summer Promo 2026 — Prospecting', status: 'active', spend: 8420, cur: 'USD', imp: 1180000, clicks: 16240 },
+      { id: 'c2', name: 'Cart Abandon Retargeting', status: 'active', spend: 5210, cur: 'USD', imp: 642000, clicks: 12880 },
+      { id: 'c3', name: 'Lookalike 1% — Conversions', status: 'active', spend: 6840, cur: 'USD', imp: 905000, clicks: 13120 },
+      { id: 'c4', name: 'Brand Awareness Q2', status: 'active', spend: 3120, cur: 'USD', imp: 1320000, clicks: 9240 },
+      { id: 'c5', name: 'Spring Launch — EU', status: 'paused', spend: 2940, cur: 'EUR', usd: 3175, imp: 410000, clicks: 6010 },
+      { id: 'c6', name: 'Reels Video Views', status: 'active', spend: 2380, cur: 'USD', imp: 720000, clicks: 5180 },
+      { id: 'c7', name: 'Catalog Sales — Dynamic', status: 'active', spend: 4610, cur: 'USD', imp: 388000, clicks: 9470 },
+      { id: 'c8', name: 'Lead Gen — Webinar', status: 'active', spend: 1890, cur: 'USD', imp: 210000, clicks: 3120 },
+      { id: 'c9', name: 'App Installs — iOS', status: 'paused', spend: 980, cur: 'USD', imp: 156000, clicks: 2240 },
+      { id: 'c10', name: 'Holiday Teaser', status: 'scheduled', spend: 0, cur: 'USD', imp: 0, clicks: 0 },
+      { id: 'c11', name: 'Influencer Whitelisting', status: 'active', spend: 2210, cur: 'USD', imp: 298000, clicks: 4360 },
+      { id: 'c12', name: 'Geo Test — West Coast', status: 'ended', spend: 1560, cur: 'USD', imp: 184000, clicks: 2980 },
+    ];
+  }
+  budgetRanges() {
+    return [
+      { key: '7d', label: 'Last 7 days', days: 7, total: 9840, delta: 8.1, prev: 'prior 7 days' },
+      { key: '14d', label: 'Last 14 days', days: 14, total: 19720, delta: 10.4, prev: 'prior 14 days' },
+      { key: '30d', label: 'Last 30 days', days: 30, total: 42380, delta: 12.4, prev: 'prior 30 days' },
+      { key: 'tm', label: 'This month', days: 26, total: 40800, delta: 6.2, prev: 'last month' },
+      { key: 'lm', label: 'Last month', days: 30, total: 47910, delta: -3.5, prev: 'two months ago' },
+      { key: 'custom', label: 'Custom range', days: 30, total: 42380, delta: 12.4, prev: 'previous period' },
+    ];
+  }
+  budgetDaily() {
+    const arr = [];
+    for (let i = 0; i < 30; i++) { const dow = (i + 2) % 7; const wk = (dow === 5 || dow === 6) ? 0.72 : 1; const trend = 1 + i * 0.006; const wave = 1 + 0.12 * Math.sin(i / 2.1); arr.push(1300 * wk * trend * wave); }
+    const sum = arr.reduce((a, b) => a + b, 0) || 1; const k = 42380 / sum; return arr.map((v) => Math.round(v * k));
+  }
+  budgetDateLabels() { const out = []; const end = new Date(2026, 5, 26); for (let i = 29; i >= 0; i--) { const d = new Date(end); d.setDate(end.getDate() - i); out.push(d.toLocaleString('en-US', { month: 'short', day: 'numeric' })); } return out; }
+  fmtUSD0(v) { return '$' + Math.round(v).toLocaleString('en-US'); }
+  fmtCur0(v, cur) { const sgn = cur === 'EUR' ? '€' : '$'; return sgn + Math.round(v).toLocaleString('en-US'); }
+  fmtCompact(v) { if (v >= 1e6) return (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M'; if (v >= 1e3) return Math.round(v / 1e3) + 'K'; return '' + Math.round(v); }
+  bSyncNow() { if (this.state.bState === 'error') return; this.setState({ bState: 'syncing' }); clearTimeout(this._bs); this._bs = setTimeout(() => this.setState({ bState: 'connected', bLastSync: 0 }), 1600); }
+
+  buildUrl() {
+    const s = this.state;
+    const base = (s.baseUrl || '').trim();
+    if (!base) return '';
+    const clean = (v) => v.trim().replace(/\s+/g, '_');
+    const parts = [];
+    if (s.source) parts.push('utm_source=' + encodeURIComponent(clean(s.source)));
+    if (s.medium) parts.push('utm_medium=' + encodeURIComponent(clean(s.medium)));
+    if (s.campaign) parts.push('utm_campaign=' + encodeURIComponent(clean(s.campaign)));
+    if (s.content) parts.push('utm_content=' + encodeURIComponent(clean(s.content)));
+    if (s.term) parts.push('utm_term=' + encodeURIComponent(clean(s.term)));
+    if (!parts.length) return base;
+    return base + (base.includes('?') ? '&' : '?') + parts.join('&');
+  }
+
+  flashToast(msg) {
+    this.setState({ toast: { msg } });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  copy(text) { try { const p = navigator.clipboard && navigator.clipboard.writeText(text); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+
+  buildTail(r) {
+    const parts = ['utm_source=' + r.source, 'utm_medium=' + r.medium, 'utm_campaign=' + r.campaign];
+    if (r.content) parts.push('utm_content=' + r.content);
+    if (r.term) parts.push('utm_term=' + r.term);
+    return '?' + parts.join('&');
+  }
+
+  suggList(field) {
+    const val = (field === 'campaign' ? this.state.campaign : this.state.baseUrl) || '';
+    if (val.trim().length < 2) return [];
+    const src = field === 'campaign' ? this.campaignHistory : this.baseHistory;
+    const v = val.toLowerCase();
+    return src.filter((x) => x.toLowerCase().includes(v) && x.toLowerCase() !== v).slice(0, 8);
+  }
+
+  applySuggestion(field, val) {
+    if (field === 'campaign') this.setState({ campaign: val, acField: null });
+    else this.setState({ baseUrl: val, acField: null });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accentColor || '#4f46e5';
+    const collapsed = s.collapsed == null ? !!this.props.defaultCollapsed : s.collapsed;
+    const titles = { home: 'Dashboard', utm: 'UTM Generator', budget: 'Budget Dashboard', camp: 'Campaigns', creative: 'Creative Assets', reports: 'Reports' };
+
+    const navBase = 'position:relative;z-index:1;display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;padding:10px 14px;font-size:14px;';
+    const txt = (id) => navBase + (s.activeNav === id ? 'color:#f5f6f8;font-weight:600' : 'color:#9aa1ad;font-weight:500');
+
+    const url = this.buildUrl();
+    const previewEmpty = !url;
+
+    const histBtnStyle = (k) => {
+      const a = s.historyState === k;
+      return 'border:none;cursor:pointer;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;font-family:inherit;transition:background .12s,color .12s;' + (a ? 'background:var(--accent,#4f46e5);color:#fff' : 'background:transparent;color:#9aa1ad');
+    };
+
+    const showList = s.historyState === 'filled' && s.entries.length > 0;
+    const showEmpty = s.historyState === 'empty' || (s.historyState === 'filled' && s.entries.length === 0);
+    const showLoading = s.historyState === 'loading';
+
+    // autocomplete
+    const acList = s.acField ? this.suggList(s.acField) : [];
+    const acOpen = acList.length > 0;
+    const acSuggestions = acList.map((label, i) => ({ label, sel: i === s.acIndex, notSel: i !== s.acIndex, idx: i }));
+
+    // url library
+    const lq = (s.libFilter || '').trim().toLowerCase();
+    const lmatch = (r) => !lq || [r.campaign, r.source, r.medium, r.adSet, r.creative, r.content, r.term, r.base_url].filter(Boolean).join(' ').toLowerCase().includes(lq);
+    const lfiltered = s.libRows.filter(lmatch);
+    const lmapRow = (r, idx) => {
+      const tail = this.buildTail(r);
+      return {
+        id: r.id, idFull: r.id + '-full', idTail: r.id + '-tail',
+        campaign: r.campaign, source: r.source, medium: r.medium,
+        adSet: r.adSet || '—', creative: r.creative || '—', content: r.content || '—', term: r.term || '—',
+        base_url: r.base_url, fullUrl: r.base_url + tail, tail: tail,
+        bg: (s.drawerOpen && s.drawerId === r.id) ? 'rgba(79,70,229,.08)' : (idx % 2 === 1 ? '#fafafa' : '#ffffff'),
+        copiedFull: s.libCopiedId === r.id + '-full', notCopiedFull: s.libCopiedId !== r.id + '-full',
+        copiedTail: s.libCopiedId === r.id + '-tail', notCopiedTail: s.libCopiedId !== r.id + '-tail',
+      };
+    };
+    let libSections = [];
+    if (s.libGroupBy === 'all') {
+      libSections = [{ key: 'all', showHeader: false, expanded: true, collapsed: false, rows: lfiltered.map((r, i) => lmapRow(r, i)) }];
+    } else {
+      const keyOf = (r) => (s.libGroupBy === 'source' ? r.source : r.campaign);
+      const order = []; const groups = {};
+      lfiltered.forEach((r) => { const k = keyOf(r); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
+      let zi = 0;
+      libSections = order.map((k) => {
+        const cl = !!s.libCollapsed[k];
+        const rows = cl ? [] : groups[k].map((r) => lmapRow(r, zi++));
+        return { key: k, showHeader: true, label: k, count: groups[k].length + (groups[k].length === 1 ? ' URL' : ' URLs'), expanded: !cl, collapsed: cl, rows };
+      });
+    }
+
+    // ---- URL detail drawer ----
+    const dwRow = s.libRows.find((r) => r.id === s.drawerId) || null;
+    const dwEditBuf = s.drawerEdit;
+    const dwBaseInvalid = !!dwEditBuf && !/^https?:\/\//i.test((dwEditBuf.base_url || '').trim());
+    const dwMeta = this.drawerMeta();
+    const dwViewParams = dwRow ? dwMeta.map((m) => {
+      const value = dwRow[m.field];
+      const empty = !value;
+      return { label: m.label, key: m.key, hasKey: !!m.key, value: value || '',
+        vSource: m.kind === 'source' && !empty, vMedium: m.kind === 'medium' && !empty,
+        vMuted: empty, vMono: !empty && m.kind !== 'source' && m.kind !== 'medium' };
+    }) : [];
+    const dwEditParams = dwMeta.map((m) => ({ label: m.label, key: m.key, hasKey: !!m.key, placeholder: m.placeholder || '',
+      editValue: dwEditBuf ? (dwEditBuf[m.field] || '') : '',
+      showWarn: !!m.isBase && dwBaseInvalid,
+      borderColor: (m.isBase && dwBaseInvalid) ? '#ef4444' : '#e1e4e9',
+      onEdit: (ev) => { const v = (ev && ev.target) ? ev.target.value : ''; this.setState((st) => ({ drawerEdit: { ...st.drawerEdit, [m.field]: v } })); } }));
+    const dwTagged = (s.drawerMode === 'edit' && dwEditBuf) ? this.drawerUrlFrom(dwEditBuf) : (dwRow ? this.drawerUrlFrom(dwRow) : '');
+    const dwSaving = s.drawerBusy === 'saving';
+    const dwDeleting = s.drawerBusy === 'deleting';
+    const dwSel = dwRow ? { campaign: dwRow.campaign, source: dwRow.source, medium: dwRow.medium, createdLong: dwRow.created_at || '' } : { campaign: '', source: '', medium: '', createdLong: '' };
+
+    // ================= BUDGET DASHBOARD =================
+    const bAccent = accent;
+    const bRanges = this.budgetRanges();
+    const bRangeCur = bRanges.find((r) => r.key === s.bRange) || bRanges[2];
+    const bDemo = s.bState;
+    const bIsLoading = bDemo === 'loading', bIsSyncing = bDemo === 'syncing', bIsError = bDemo === 'error', bIsNoSpend = bDemo === 'nospend', bIsEmpty = bDemo === 'empty';
+    const bShowDash = !bIsLoading && !bIsEmpty;
+    const bHasSpend = bShowDash && !bIsNoSpend;
+
+    const bRangeTotal = bHasSpend ? bRangeCur.total : 0;
+    const bRatio30 = bRangeCur.total / 42380;
+    const bImps = bHasSpend ? Math.round(4860000 * bRatio30) : 0;
+    const bClicks = bHasSpend ? Math.round(78400 * bRatio30) : 0;
+    const bCpc = bClicks ? bRangeTotal / bClicks : 0;
+    const bAvgDaily = bHasSpend ? bRangeTotal / bRangeCur.days : 0;
+    const bCapV = s.bCapOverall;
+    const bMtd = bHasSpend ? 40800 : 0;
+    const bPctUsed = bCapV ? bMtd / bCapV : 0;
+    const bProjected = bHasSpend ? bMtd / 26 * 30 : 0;
+    const bProjRatio = bCapV ? bProjected / bCapV : 0;
+    let bPace = 'under'; if (bProjRatio > 1) bPace = 'over'; else if (bProjRatio >= 0.9) bPace = 'ontrack';
+    const bPaceMap = { under: { label: 'Under cap', color: '#2563eb', bg: 'rgba(37,99,235,.1)' }, ontrack: { label: 'On track', color: '#16a34a', bg: 'rgba(22,163,74,.1)' }, over: { label: 'Over cap', color: '#dc2626', bg: 'rgba(220,38,38,.1)' } };
+
+    // chart geometry
+    const bDailyAll = this.budgetDaily();
+    const bLabelsAll = this.budgetDateLabels();
+    const bN = bRangeCur.days > 30 ? 30 : bRangeCur.days;
+    const bSeriesRaw = bHasSpend ? bDailyAll.slice(30 - bN) : [];
+    const bLabels = bLabelsAll.slice(30 - bN);
+    const bCW = 680, bCH = 190, bPadT = 14, bPadB = 12;
+    const bSumRaw = bSeriesRaw.reduce((a, b) => a + b, 0) || 1;
+    const bSF = bRangeTotal / bSumRaw;
+    const bSeries = bSeriesRaw.map((v) => v * bSF);
+    const bMaxV = Math.max(1, ...bSeries) * 1.15;
+    const bXAt = (i) => bSeries.length <= 1 ? bCW / 2 : (i * bCW) / (bSeries.length - 1);
+    const bYAt = (v) => bPadT + (1 - v / bMaxV) * (bCH - bPadT - bPadB);
+    let bLinePath = '', bAreaPath = '';
+    if (bSeries.length) {
+      bLinePath = 'M' + bSeries.map((v, i) => bXAt(i).toFixed(1) + ' ' + bYAt(v).toFixed(1)).join(' L');
+      bAreaPath = 'M' + bXAt(0).toFixed(1) + ' ' + bCH + ' L' + bSeries.map((v, i) => bXAt(i).toFixed(1) + ' ' + bYAt(v).toFixed(1)).join(' L') + ' L' + bXAt(bSeries.length - 1).toFixed(1) + ' ' + bCH + ' Z';
+    }
+    const bChartGrid = [1, 0.5, 0].map((f) => ({ y: bYAt(bMaxV * f).toFixed(1), label: '$' + this.fmtCompact(bMaxV * f) }));
+    const bXlCount = Math.min(5, bSeries.length);
+    const bChartXLabels = [];
+    for (let i = 0; i < bXlCount; i++) { const idx = Math.round(i * (bSeries.length - 1) / (bXlCount - 1 || 1)); bChartXLabels.push({ leftPct: (bXAt(idx) / bCW * 100) + '%', label: bLabels[idx] }); }
+    const bChartCols = bSeries.map((v, i) => ({ idx: i, onEnter: () => this.setState({ bHoverDay: i }) }));
+    const bHov = (bHasSpend && s.bHoverDay != null && s.bHoverDay < bSeries.length)
+      ? { show: true, leftPct: (bXAt(s.bHoverDay) / bCW * 100) + '%', topPct: (bYAt(bSeries[s.bHoverDay]) / bCH * 100) + '%', value: this.fmtUSD0(bSeries[s.bHoverDay]), date: bLabels[s.bHoverDay] }
+      : { show: false, leftPct: '0%', topPct: '0%', value: '', date: '' };
+
+    // platforms / donut
+    const bPlatDefs = this.budgetPlatforms();
+    const bPlatLegend = bPlatDefs.map((p) => { const connected = p.status === 'connected'; return { name: p.name, color: p.color, glyph: p.glyph, connected, soon: p.status === 'soon', amtLabel: connected ? this.fmtUSD0(bRangeTotal) : '—', pctLabel: connected ? (bRangeTotal ? '100% of spend' : '0%') : 'Coming soon', barPct: (connected && bRangeTotal) ? '100%' : '0%', chipLabel: connected ? 'Connected' : 'Soon', chipColor: connected ? '#16a34a' : '#9aa0aa', chipBg: connected ? 'rgba(22,163,74,.1)' : '#f1f2f4', sharePct: connected ? (bRangeTotal ? '100%' : '0%') : '—' }; });
+    const bCirc = 2 * Math.PI * 54;
+    const bDonutSegs = (bHasSpend && bRangeTotal > 0) ? [{ color: '#0866FF', dasharray: bCirc.toFixed(1) + ' ' + bCirc.toFixed(1), rotate: 'rotate(-90 70 70)' }] : [];
+
+    // table
+    const bStatusMap = { active: { label: 'Active', color: '#16a34a', bg: 'rgba(22,163,74,.1)' }, paused: { label: 'Paused', color: '#b45309', bg: 'rgba(180,83,9,.1)' }, scheduled: { label: 'Scheduled', color: bAccent, bg: 'rgba(79,70,229,.1)' }, ended: { label: 'Ended', color: '#6b727f', bg: '#f1f2f4' } };
+    const bCampsRaw = bHasSpend ? this.budgetCampaigns() : [];
+    const bDisplay = bCampsRaw.map((c) => { const usd = c.cur === 'EUR' ? (c.usd || 0) : c.spend; const ctr = c.imp ? (c.clicks / c.imp * 100) : 0; const cpcc = c.clicks ? (usd / c.clicks) : 0; const st = bStatusMap[c.status] || bStatusMap.active; return { id: c.id, name: c.name, statusLabel: st.label, statusColor: st.color, statusBg: st.bg, spendUSD: usd, imp: c.imp, clicks: c.clicks, ctr, cpc: cpcc, spendDisp: this.fmtCur0(c.spend, c.cur), isEUR: c.cur === 'EUR', notEUR: c.cur !== 'EUR', spendSub: c.cur === 'EUR' ? ('≈ ' + this.fmtUSD0(usd)) : '', impDisp: c.imp ? this.fmtCompact(c.imp) : '—', clicksDisp: c.clicks ? c.clicks.toLocaleString('en-US') : '—', ctrDisp: c.imp ? ctr.toFixed(2) + '%' : '—', cpcDisp: c.clicks ? '$' + cpcc.toFixed(2) : '—' }; });
+    const bQ = (s.bQuery || '').trim().toLowerCase();
+    let bFiltered = bDisplay.filter((c) => !bQ || c.name.toLowerCase().includes(bQ));
+    const bKey = s.bSort.key, bDir = s.bSort.dir === 'asc' ? 1 : -1;
+    const bValOf = (c) => bKey === 'name' ? c.name.toLowerCase() : bKey === 'imp' ? c.imp : bKey === 'clicks' ? c.clicks : bKey === 'ctr' ? c.ctr : bKey === 'cpc' ? c.cpc : c.spendUSD;
+    bFiltered = bFiltered.slice().sort((a, b) => { const av = bValOf(a), bv = bValOf(b); if (av < bv) return -1 * bDir; if (av > bv) return 1 * bDir; return 0; });
+    const bTotalFiltered = bFiltered.length;
+    const bVisibleList = bFiltered.slice(0, s.bVisible).map((c, i) => ({ ...c, rowBg: (s.bCampDrawerId === c.id) ? 'rgba(79,70,229,.07)' : (i % 2 ? '#fafafa' : '#ffffff'), onOpen: () => this.setState({ bCampDrawerId: c.id }) }));
+    const bHasMore = bTotalFiltered > s.bVisible;
+    let bCampSections;
+    if (s.bGrouped) {
+      const sub = bVisibleList.reduce((a, c) => a + c.spendUSD, 0);
+      const cl = !!s.bCollapsed.meta;
+      bCampSections = [{ key: 'meta', showHeader: true, platform: 'Meta', color: '#0866FF', glyph: 'M', countLabel: bVisibleList.length + ' shown', subtotalLabel: this.fmtUSD0(sub), expanded: !cl, collapsed: cl, arrow: cl ? '▸' : '▾', rows: cl ? [] : bVisibleList }];
+    } else {
+      bCampSections = [{ key: 'flat', showHeader: false, expanded: true, collapsed: false, rows: bVisibleList }];
+    }
+    const bMkSort = (key) => ({ onSort: () => this.setState((st) => ({ bSort: { key, dir: st.bSort.key === key && st.bSort.dir === 'desc' ? 'asc' : 'desc' } })), arrow: s.bSort.key === key ? (s.bSort.dir === 'asc' ? '↑' : '↓') : '' });
+    const bSortCols = { name: bMkSort('name'), spend: bMkSort('spend'), imp: bMkSort('imp'), clicks: bMkSort('clicks'), ctr: bMkSort('ctr'), cpc: bMkSort('cpc') };
+
+    // connections
+    const bSyncedShort = s.bLastSync === 0 ? 'just now' : s.bLastSync + 'm ago';
+    const bConnections = [
+      { id: 'm1', platform: 'Meta', color: '#0866FF', glyph: 'M', account: 'Acme Corp', accId: 'act_1029384756', currency: 'USD', expired: bIsError, notExpired: !bIsError, statusLabel: bIsError ? 'Token expired' : 'Connected', statusColor: bIsError ? '#dc2626' : '#16a34a', statusBg: bIsError ? 'rgba(220,38,38,.1)' : 'rgba(22,163,74,.1)', synced: bIsError ? '3 days ago' : bSyncedShort },
+      { id: 'm2', platform: 'Meta', color: '#0866FF', glyph: 'M', account: 'Acme EU', accId: 'act_5567120394', currency: 'EUR', expired: false, notExpired: true, statusLabel: 'Connected', statusColor: '#16a34a', statusBg: 'rgba(22,163,74,.1)', synced: bSyncedShort },
+    ];
+    const bComingConns = bPlatDefs.filter((p) => p.status === 'soon').map((p) => ({ name: p.name, color: p.color, glyph: p.glyph, desc: p.desc }));
+
+    // campaign drawer
+    const bCampSel = bCampsRaw.find((c) => c.id === s.bCampDrawerId) || null;
+    const bCdUsd = bCampSel ? (bCampSel.cur === 'EUR' ? bCampSel.usd : bCampSel.spend) : 0;
+    let bCampSpark = '', bCampSparkArea = '';
+    if (bCampSel) { const sw = 252, sh = 64; const ser = bDailyAll.slice(16); const sm = ser.reduce((a, b) => a + b, 0) || 1; const csf = bCdUsd / sm; const cv = ser.map((v) => v * csf); const cmax = Math.max(1, ...cv) * 1.2; const cx = (i) => i * sw / (cv.length - 1); const cy = (v) => 6 + (1 - v / cmax) * (sh - 12); bCampSpark = 'M' + cv.map((v, i) => cx(i).toFixed(1) + ' ' + cy(v).toFixed(1)).join(' L'); bCampSparkArea = 'M0 ' + sh + ' L' + cv.map((v, i) => cx(i).toFixed(1) + ' ' + cy(v).toFixed(1)).join(' L') + ' L' + sw + ' ' + sh + ' Z'; }
+    const bCampStatus = bCampSel ? (bStatusMap[bCampSel.status] || bStatusMap.active) : { label: '', color: '', bg: '' };
+    const bCampMetrics = bCampSel ? [
+      { label: 'Spend (range)', value: this.fmtCur0(bCampSel.spend, bCampSel.cur) },
+      { label: 'In USD', value: this.fmtUSD0(bCdUsd) },
+      { label: 'Impressions', value: bCampSel.imp ? bCampSel.imp.toLocaleString('en-US') : '—' },
+      { label: 'Clicks', value: bCampSel.clicks ? bCampSel.clicks.toLocaleString('en-US') : '—' },
+      { label: 'CTR', value: bCampSel.imp ? (bCampSel.clicks / bCampSel.imp * 100).toFixed(2) + '%' : '—' },
+      { label: 'CPC', value: bCampSel.clicks ? '$' + (bCdUsd / bCampSel.clicks).toFixed(2) : '—' },
+    ] : [];
+
+    const bStates = [{ k: 'connected', l: 'Connected' }, { k: 'loading', l: 'Loading' }, { k: 'syncing', l: 'Syncing' }, { k: 'error', l: 'Error' }, { k: 'nospend', l: 'No spend' }, { k: 'empty', l: 'Empty' }].map((x) => ({ k: x.k, l: x.l, active: s.bState === x.k, notActive: s.bState !== x.k, onPick: () => this.setState({ bState: x.k, bCampDrawerId: null }) }));
+    const bRangeOptions = bRanges.map((r) => ({ key: r.key, label: r.label, active: r.key === s.bRange, bg: r.key === s.bRange ? '#f6f7f9' : 'transparent', onPick: () => this.setState({ bRange: r.key, bRangeMenu: false, bHoverDay: null }) }));
+    const bEmptyPlatforms = bPlatDefs.map((p) => ({ name: p.name, color: p.color, glyph: p.glyph, desc: p.desc, isActive: p.status === 'connected', isSoon: p.status === 'soon', onConnect: () => this.setState({ bState: 'connected' }) }));
+
+    return {
+      // routing
+      isLogin: s.screen === 'login',
+      isApp: s.screen === 'app',
+      accent, sbw: collapsed ? '76px' : '248px',
+      collapsed, showLabels: !collapsed,
+      pageTitle: titles[s.activeNav] || '',
+      isUtm: s.activeNav === 'utm',
+      isHome: s.activeNav === 'home',
+      isBudget: s.activeNav === 'budget',
+      isOther: !['utm', 'home', 'budget'].includes(s.activeNav),
+
+      bStates, bRangeOptions, bPlatLegend, bDonutSegs, bChartCols, bChartXLabels, bChartGrid, bCampSections, bSortCols, bConnections, bComingConns, bCampMetrics, bEmptyPlatforms,
+      budget: {
+        flags: { isLoading: bIsLoading, isSyncing: bIsSyncing, isError: bIsError, isNoSpend: bIsNoSpend, isEmpty: bIsEmpty, showDash: bShowDash, hasSpend: bHasSpend, noSpendVisible: bShowDash && bIsNoSpend },
+        range: { label: bRangeCur.label, menuOpen: s.bRangeMenu },
+        sync: { label: bIsSyncing ? 'Syncing…' : 'Sync now', disabled: bIsSyncing || bIsError, spin: bIsSyncing ? 'spin .8s linear infinite' : 'none', line: bIsError ? 'Last synced 3 days ago' : (bIsSyncing ? 'Syncing now…' : 'Last synced ' + bSyncedShort) },
+        kpiTotal: { value: bHasSpend ? this.fmtUSD0(bRangeTotal) : '$0', delta: bHasSpend ? ((bRangeCur.delta >= 0 ? '+' : '') + bRangeCur.delta.toFixed(1) + '%') : '—', up: bHasSpend && bRangeCur.delta >= 0, down: bHasSpend && bRangeCur.delta < 0, prev: 'vs ' + bRangeCur.prev },
+        kpiActive: { value: bHasSpend ? '8' : '0', sub: bHasSpend ? 'of 12 · 2 paused, 2 inactive' : 'No active campaigns' },
+        kpiAvgDaily: { value: bHasSpend ? this.fmtUSD0(bAvgDaily) : '$0', sub: 'across ' + bRangeCur.days + ' days' },
+        kpiCpc: { value: bHasSpend ? '$' + bCpc.toFixed(2) : '$0.00', imp: bHasSpend ? this.fmtCompact(bImps) : '—', clicks: bHasSpend ? bClicks.toLocaleString('en-US') : '—' },
+        pacing: { mtd: this.fmtUSD0(bMtd), cap: this.fmtUSD0(bCapV), pctUsed: Math.round(bPctUsed * 100) + '%', pctWidth: Math.min(100, Math.round(bPctUsed * 100)) + '%', proj: this.fmtUSD0(bProjected), projPct: Math.round(bProjRatio * 100) + '%', projLeft: Math.min(100, Math.round(bProjRatio * 100)) + '%', daysLeft: '4 days left in June', paceLabel: bPaceMap[bPace].label, paceColor: bPaceMap[bPace].color, paceBg: bPaceMap[bPace].bg, barColor: bPaceMap[bPace].color },
+        chart: { areaPath: bAreaPath, linePath: bLinePath, w: bCW, h: bCH, hasData: bSeries.length > 0, hover: bHov },
+        donut: { centerTotal: bHasSpend ? this.fmtUSD0(bRangeTotal) : '$0', centerSub: '1 of 4 connected', hasData: bDonutSegs.length > 0 },
+        table: { query: s.bQuery, grouped: s.bGrouped, hasMore: bHasMore, remaining: Math.max(0, bTotalFiltered - s.bVisible), totalLabel: bTotalFiltered + (bTotalFiltered === 1 ? ' campaign' : ' campaigns'), isEmpty: bTotalFiltered === 0, emptyMsg: bHasSpend ? 'No campaigns match your search.' : 'No spend recorded in this range yet.', groupBtnLabel: s.bGrouped ? 'Grouped by platform' : 'Group by platform' },
+        cap: { overall: this.fmtUSD0(bCapV), metaCap: this.fmtUSD0(s.bCapMeta), mtd: this.fmtUSD0(bMtd), pctUsed: Math.round(bPctUsed * 100) + '%', pctWidth: Math.min(100, Math.round(bPctUsed * 100)) + '%', projLeft: Math.min(100, Math.round(bProjRatio * 100)) + '%', daysLeft: '4', paceLabel: bPaceMap[bPace].label, paceColor: bPaceMap[bPace].color, paceBg: bPaceMap[bPace].bg, barColor: bPaceMap[bPace].color, editing: s.bCapEditing, notEditing: !s.bCapEditing, draftOverall: s.bCapDraftOverall, draftMeta: s.bCapDraftMeta },
+        multiCur: 'Amounts shown in USD · 1 account reports in EUR (converted at €1 = $1.08)',
+        campDrawer: bCampSel
+          ? { open: true, x: '0', backdropOpacity: 1, pointer: 'auto', name: bCampSel.name, statusLabel: bCampStatus.label, statusColor: bCampStatus.color, statusBg: bCampStatus.bg, spark: bCampSpark, sparkArea: bCampSparkArea, isEUR: bCampSel.cur === 'EUR', eurNote: bCampSel.cur === 'EUR' ? 'Billed in EUR · converted to USD at €1 = $1.08' : '' }
+          : { open: false, x: '100%', backdropOpacity: 0, pointer: 'none', name: '', statusLabel: '', statusColor: '', statusBg: '', spark: '', sparkArea: '', isEUR: false, eurNote: '' },
+      },
+      bToggleRange: () => this.setState((st) => ({ bRangeMenu: !st.bRangeMenu })),
+      bSync: () => this.bSyncNow(),
+      bReconnect: () => { this.setState({ bState: 'syncing' }); clearTimeout(this._bs); this._bs = setTimeout(() => this.setState({ bState: 'connected', bLastSync: 0 }), 1600); },
+      bSetQuery: (e) => this.setState({ bQuery: e.target.value }),
+      bToggleGroup: () => this.setState((st) => ({ bGrouped: !st.bGrouped })),
+      bToggleMeta: () => this.setState((st) => ({ bCollapsed: { ...st.bCollapsed, meta: !st.bCollapsed.meta } })),
+      bLoadMore: () => this.setState((st) => ({ bVisible: st.bVisible + 6 })),
+      bChartLeave: () => this.setState({ bHoverDay: null }),
+      bCapEdit: () => this.setState((st) => ({ bCapEditing: true, bCapDraftOverall: String(st.bCapOverall), bCapDraftMeta: String(st.bCapMeta) })),
+      bCapCancel: () => this.setState({ bCapEditing: false }),
+      bCapSave: () => this.setState((st) => { const o = parseInt(st.bCapDraftOverall, 10); const m = parseInt(st.bCapDraftMeta, 10); return { bCapOverall: isNaN(o) ? st.bCapOverall : o, bCapMeta: isNaN(m) ? st.bCapMeta : m, bCapEditing: false }; }),
+      bSetCapOverall: (e) => this.setState({ bCapDraftOverall: e.target.value }),
+      bSetCapMeta: (e) => this.setState({ bCapDraftMeta: e.target.value }),
+      bCampClose: () => this.setState({ bCampDrawerId: null }),
+
+      navActive: { home: s.activeNav === 'home', utm: s.activeNav === 'utm', budget: s.activeNav === 'budget', camp: s.activeNav === 'camp', creative: s.activeNav === 'creative', reports: s.activeNav === 'reports' },
+      navTxt: { home: txt('home'), utm: txt('utm'), budget: txt('budget'), camp: txt('camp'), creative: txt('creative'), reports: txt('reports') },
+      navGo: {
+        home: () => this.setState({ activeNav: 'home' }),
+        utm: () => this.setState({ activeNav: 'utm' }),
+        budget: () => this.setState({ activeNav: 'budget' }),
+        camp: () => this.setState({ activeNav: 'camp' }),
+        creative: () => this.setState({ activeNav: 'creative' }),
+        reports: () => this.setState({ activeNav: 'reports' }),
+      },
+      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
+
+      // login
+      loginEmail: s.loginEmail, loginPassword: s.loginPassword, loginError: s.loginError,
+      setEmail: (e) => this.setState({ loginEmail: e.target.value, loginError: false }),
+      setPassword: (e) => this.setState({ loginPassword: e.target.value, loginError: false }),
+      signIn: () => {
+        if (!s.loginEmail.trim() || !s.loginPassword.trim()) { this.setState({ loginError: true }); return; }
+        this.setState({ screen: 'app', loginError: false });
+      },
+      signOut: () => this.setState({ screen: 'login' }),
+
+      // form fields
+      baseUrl: s.baseUrl, source: s.source, medium: s.medium, campaign: s.campaign, content: s.content, term: s.term,
+      selectedTemplate: s.selectedTemplate, templates: s.templates,
+      sourcePresets: ['google', 'meta', 'linkedin', 'tiktok', 'email', 'newsletter'],
+      mediumPresets: ['cpc', 'organic', 'email', 'social', 'referral'],
+      sourceOpen: s.sourceOpen, mediumOpen: s.mediumOpen,
+      campaignCount: (s.campaign || '').length + ' / 60',
+      urlInvalid: !!s.baseUrl && !/^https?:\/\//i.test(s.baseUrl.trim()),
+      previewText: url || 'Fill in the fields above — your tagged URL builds here in real time.',
+      previewColor: previewEmpty ? '#5b6273' : '#cdd3e0',
+
+      setBaseUrl: (e) => this.setState({ baseUrl: e.target.value, acField: 'baseUrl', acIndex: 0 }),
+      setSource: (e) => this.setState({ source: e.target.value }),
+      setMedium: (e) => this.setState({ medium: e.target.value }),
+      setCampaign: (e) => this.setState({ campaign: e.target.value.slice(0, 60), acField: 'campaign', acIndex: 0 }),
+      setContent: (e) => this.setState({ content: e.target.value }),
+      setTerm: (e) => this.setState({ term: e.target.value }),
+      openSource: () => this.setState({ sourceOpen: true }),
+      closeSource: () => setTimeout(() => this.setState({ sourceOpen: false }), 130),
+      openMedium: () => this.setState({ mediumOpen: true }),
+      closeMedium: () => setTimeout(() => this.setState({ mediumOpen: false }), 130),
+      chooseSource: (e) => { e.preventDefault(); this.setState({ source: e.currentTarget.dataset.val, sourceOpen: false }); },
+      chooseMedium: (e) => { e.preventDefault(); this.setState({ medium: e.currentTarget.dataset.val, mediumOpen: false }); },
+      applyTemplate: (e) => {
+        const id = e.target.value;
+        if (!id) { this.setState({ selectedTemplate: '' }); return; }
+        const t = s.templates.find((x) => x.id === id);
+        if (!t) return;
+        this.setState({ selectedTemplate: id, source: t.source || '', medium: t.medium || '', campaign: t.campaign || '', content: t.content || '', term: t.term || '' });
+      },
+      generate: () => {
+        const u = this.buildUrl();
+        this.copy(u);
+        const entry = { id: 'h' + Date.now(), base_url: s.baseUrl, source: s.source || '—', medium: s.medium || '—', campaign: s.campaign || 'untitled', generated_url: u, created_at: 'just now' };
+        this.setState((st) => ({ entries: [entry, ...st.entries], historyState: 'filled' }));
+        this.flashToast('URL generated & copied to clipboard');
+      },
+      saveTemplate: () => this.flashToast('Saved as a reusable template'),
+
+      // history
+      historyState: s.historyState,
+      showList, showEmpty, showLoading,
+      entriesView: s.entries.slice(0, 20).map((e) => {
+        const qi = (e.generated_url || '').indexOf('?');
+        const tail = qi >= 0 ? e.generated_url.slice(qi) : '';
+        return {
+          ...e, tail, idFull: e.id + '-rfull', idTail: e.id + '-rtail',
+          copiedFull: s.recentCopiedId === e.id + '-rfull', notCopiedFull: s.recentCopiedId !== e.id + '-rfull',
+          copiedTail: s.recentCopiedId === e.id + '-rtail', notCopiedTail: s.recentCopiedId !== e.id + '-rtail',
+        };
+      }),
+      copyRecent: (e) => {
+        const v = e.currentTarget.dataset.val; const id = e.currentTarget.dataset.id;
+        this.copy(v); this.setState({ recentCopiedId: id });
+        clearTimeout(this._r); this._r = setTimeout(() => this.setState({ recentCopiedId: null }), 1500);
+      },
+      entryCount: s.entries.length,
+      totalCount: s.entries.length,
+      skeletonRows: [0, 1, 2, 3, 4],
+      histIs: { filled: s.historyState === 'filled', empty: s.historyState === 'empty', loading: s.historyState === 'loading' },
+      histNot: { filled: s.historyState !== 'filled', empty: s.historyState !== 'empty', loading: s.historyState !== 'loading' },
+      histGo: {
+        filled: () => this.setState({ historyState: 'filled' }),
+        empty: () => this.setState({ historyState: 'empty' }),
+        loading: () => this.setState({ historyState: 'loading' }),
+      },
+
+      // toast
+      toast: s.toast,
+
+      // form additions
+      adSet: s.adSet, creative: s.creative,
+      setAdSet: (e) => this.setState({ adSet: e.target.value }),
+      setCreative: (e) => this.setState({ creative: e.target.value }),
+
+      // autocomplete
+      acSuggestions,
+      acOpenCampaign: acOpen && s.acField === 'campaign',
+      acOpenBase: acOpen && s.acField === 'baseUrl',
+      focusCampaign: () => this.setState({ acField: 'campaign', acIndex: 0 }),
+      focusBase: () => this.setState({ acField: 'baseUrl', acIndex: 0 }),
+      blurAc: () => setTimeout(() => this.setState({ acField: null }), 140),
+      pickSuggestion: (e) => { e.preventDefault(); this.applySuggestion(e.currentTarget.dataset.field, e.currentTarget.dataset.val); },
+      setAcIndex: (e) => this.setState({ acIndex: Number(e.currentTarget.dataset.idx) }),
+      acKeyDown: (e) => {
+        const field = this.state.acField; if (!field) return;
+        const list = this.suggList(field); if (!list.length) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState((st) => ({ acIndex: (st.acIndex + 1) % list.length })); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState((st) => ({ acIndex: (st.acIndex - 1 + list.length) % list.length })); }
+        else if (e.key === 'Enter') { e.preventDefault(); this.applySuggestion(field, list[this.state.acIndex] || list[0]); }
+        else if (e.key === 'Escape') { this.setState({ acField: null }); }
+      },
+
+      // url library
+      libTotal: s.libRows.length,
+      libFilter: s.libFilter,
+      setLibFilter: (e) => this.setState({ libFilter: e.target.value }),
+      libSections,
+      libIsEmpty: lfiltered.length === 0,
+      gbAll: s.libGroupBy === 'all', gbNotAll: s.libGroupBy !== 'all',
+      gbSource: s.libGroupBy === 'source', gbNotSource: s.libGroupBy !== 'source',
+      gbCampaign: s.libGroupBy === 'campaign', gbNotCampaign: s.libGroupBy !== 'campaign',
+      libGroupAll: () => this.setState({ libGroupBy: 'all' }),
+      libGroupSource: () => this.setState({ libGroupBy: 'source' }),
+      libGroupCampaign: () => this.setState({ libGroupBy: 'campaign' }),
+      toggleLibGroup: (e) => { const k = e.currentTarget.dataset.key; this.setState((st) => ({ libCollapsed: { ...st.libCollapsed, [k]: !st.libCollapsed[k] } })); },
+      copyLibCell: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const v = e.currentTarget.dataset.val; const id = e.currentTarget.dataset.id;
+        this.copy(v); this.setState({ libCopiedId: id });
+        clearTimeout(this._c); this._c = setTimeout(() => this.setState({ libCopiedId: null }), 1500);
+      },
+
+      // ---- URL detail drawer ----
+      drawer: {
+        x: s.drawerOpen ? '0' : '100%',
+        backdropOpacity: s.drawerOpen ? 1 : 0,
+        backdropPointer: s.drawerOpen ? 'auto' : 'none',
+        sel: dwSel,
+        taggedUrl: dwTagged,
+        copied: s.drawerCopied, notCopied: !s.drawerCopied,
+        isView: s.drawerMode === 'view', isEditing: s.drawerMode === 'edit', isDelete: s.drawerMode === 'delete', notEditing: s.drawerMode !== 'edit',
+        saving: dwSaving, saveLabel: dwSaving ? 'Saving…' : 'Save changes', saveBg: dwBaseInvalid ? '#a5a3e8' : accent, saveCursor: (dwSaving || dwBaseInvalid) ? 'not-allowed' : 'pointer', saveOpacity: dwBaseInvalid ? '.7' : '1',
+        deleting: dwDeleting, deleteLabel: dwDeleting ? 'Deleting…' : 'Delete', deleteBg: dwDeleting ? '#dc2626' : '#ef4444', deleteCursor: dwDeleting ? 'not-allowed' : 'pointer',
+        warnText: 'Include the full protocol, e.g. https://',
+      },
+      dwViewParams, dwEditParams,
+      openDrawer: (e) => { const id = e.currentTarget.dataset.id; this.setState({ drawerOpen: true, drawerId: id, drawerMode: 'view', drawerBusy: null, drawerCopied: false, drawerEdit: null }); },
+      closeDrawer: () => this.closeDrawerNow(),
+      dwCopy: () => this.drawerCopyUrl(dwTagged),
+      dwEdit: () => this.drawerStartEdit(),
+      dwCancelEdit: () => this.setState({ drawerMode: 'view', drawerEdit: null }),
+      dwSave: () => this.drawerSave(),
+      dwAskDelete: () => this.setState({ drawerMode: 'delete' }),
+      dwCancelDelete: () => this.setState({ drawerMode: 'view' }),
+      dwConfirmDelete: () => this.drawerDelete(),
+    };
+  }
+}
+</script>
+</body>
+</html>
