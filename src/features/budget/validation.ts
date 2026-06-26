@@ -10,6 +10,10 @@ export const dateRangeSchema = z
     to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD'),
   })
   .refine((r) => r.from <= r.to, { message: 'from must be on or before to' })
+  // Cap the window so a huge range can't fan out into platform rate-limit territory.
+  .refine((r) => (Date.parse(r.to) - Date.parse(r.from)) / 86_400_000 <= 365, {
+    message: 'Date range must be 365 days or less',
+  })
 
 export const syncBudgetSchema = z.object({
   platform: adPlatformSchema,

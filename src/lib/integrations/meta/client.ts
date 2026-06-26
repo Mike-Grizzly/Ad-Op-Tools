@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import type {
   AdPlatformClient,
   CanonicalCampaign,
@@ -128,7 +129,15 @@ async function metaGetAll<T>(
   }
 }
 
-export function createMetaClient(accessToken: string): AdPlatformClient {
+export function createMetaClient(accessToken: string, appSecret: string): AdPlatformClient {
+  // appsecret_proof binds each call to our app secret: a stolen token alone can't be used,
+  // and it's required if "Require App Secret" is enabled on the Meta app.
+  const proof = createHmac('sha256', appSecret).update(accessToken).digest('hex')
+  const withProof = (params: Record<string, string>): Record<string, string> => ({
+    ...params,
+    appsecret_proof: proof,
+  })
+
   // Ad account currency is immutable; fetch once per account per client instance.
   const currencyByAccount = new Map<string, string>()
 
@@ -137,7 +146,7 @@ export function createMetaClient(accessToken: string): AdPlatformClient {
     const cached = currencyByAccount.get(path)
     if (cached) return cached
     const account = await withRetry(() =>
-      metaGet<MetaAccount>(path, accessToken, { fields: 'currency' })
+      metaGet<MetaAccount>(path, accessToken, withProof({ fields: 'currency' }))
     )
     currencyByAccount.set(path, account.currency)
     return account.currency
@@ -150,7 +159,7 @@ export function createMetaClient(accessToken: string): AdPlatformClient {
       const campaigns = await metaGetAll<MetaCampaign>(
         `${actPath(accountId)}/campaigns`,
         accessToken,
-        { fields: 'id,name,status', limit: String(CAMPAIGNS_PAGE_LIMIT) }
+        withProof({ fields: 'id,name,status', limit: String(CAMPAIGNS_PAGE_LIMIT) })
       )
       return campaigns.map((c) => toCanonicalCampaign(c, accountId))
     },
@@ -160,7 +169,7 @@ export function createMetaClient(accessToken: string): AdPlatformClient {
       const insights = await metaGetAll<MetaInsight>(
         `${actPath(accountId)}/insights`,
         accessToken,
-        {
+        withProof({
           level: 'campaign',
           time_increment: '1',
           // date_start/date_stop are dimensions — must be requested explicitly or rows
@@ -168,7 +177,7 @@ export function createMetaClient(accessToken: string): AdPlatformClient {
           fields: 'campaign_id,campaign_name,spend,impressions,clicks,date_start,date_stop',
           time_range: JSON.stringify({ since: range.from, until: range.to }),
           limit: String(INSIGHTS_PAGE_LIMIT),
-        }
+        })
       )
       return insights.map((i) => toCanonicalSpendRow(i, accountId, currency))
     },

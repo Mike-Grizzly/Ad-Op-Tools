@@ -7,3 +7,7 @@ export const CAMPAIGNS_PAGE_LIMIT = 200
 export const INSIGHTS_PAGE_LIMIT = 500
 
 export const MAX_RETRIES = 4
+
+// OAuth scopes requested for Meta. Single source so the consent request and the stored
+// `scopes` can't drift. Reading spend + insights only (no write/management scope yet).
+export const META_SCOPES = ['ads_read'] as const

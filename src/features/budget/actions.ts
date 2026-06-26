@@ -31,7 +31,13 @@ export async function syncBudget(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
 
   const { platform, accountId, range: inputRange } = parsed.data
+  // Phase 1 supports Meta only. Before enabling another platform, add a client-factory
+  // branch below — do NOT just drop this guard (the code path builds a Meta client).
   if (platform !== 'meta') return { error: 'Only Meta is supported right now' }
+
+  const appSecret = process.env.META_APP_SECRET
+  if (!appSecret) return { error: 'Meta is not configured' }
+
   const range = inputRange ?? defaultRange(DEFAULT_SYNC_DAYS)
 
   // One connection if accountId is given, else every connection for this platform.
@@ -56,7 +62,7 @@ export async function syncBudget(
       continue
     }
     try {
-      const client = createMetaClient(conn.accessToken)
+      const client = createMetaClient(conn.accessToken, appSecret)
       const spend = await client.getDailySpend(external_account_id, range)
 
       if (spend.length > 0) {

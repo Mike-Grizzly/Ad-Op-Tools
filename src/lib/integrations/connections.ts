@@ -145,6 +145,48 @@ export async function saveConnection(
   return { id: data.id }
 }
 
+// Save several connections in one atomic upsert (e.g. all ad accounts from one OAuth grant),
+// so a mid-loop failure can't leave a partially-connected state. Each row is encrypted with
+// its own IV and AAD.
+export async function saveConnections(inputs: SaveConnectionInput[]): Promise<number> {
+  if (inputs.length === 0) return 0
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  const rows = inputs.map((input) => {
+    const aad = tokenAad(user.id, input.platform, input.externalAccountId)
+    const access = encryptToken(input.accessToken, aad)
+    const refresh = input.refreshToken ? encryptToken(input.refreshToken, aad) : null
+    return {
+      user_id: user.id,
+      platform: input.platform,
+      external_account_id: input.externalAccountId,
+      account_name: input.accountName ?? null,
+      scopes: input.scopes,
+      token_key_id: currentKeyId,
+      access_token_ciphertext: access.ciphertext,
+      access_token_iv: access.iv,
+      access_token_auth_tag: access.authTag,
+      refresh_token_ciphertext: refresh?.ciphertext ?? null,
+      refresh_token_iv: refresh?.iv ?? null,
+      refresh_token_auth_tag: refresh?.authTag ?? null,
+      token_expires_at: input.tokenExpiresAt ?? null,
+      status: 'connected',
+    }
+  })
+
+  const { error } = await supabase
+    .from('platform_connections')
+    .upsert(rows, { onConflict: 'user_id,platform,external_account_id' })
+
+  if (error) throw new Error(`Failed to save connections: ${error.message}`)
+  return rows.length
+}
+
 export async function markConnectionStatus(
   id: string,
   status: PlatformConnectionStatus
