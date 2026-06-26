@@ -1,7 +1,7 @@
 # Feature: UTM Generator
 
 ## Status
-**Built — not yet manually tested in production.** Base feature on `main`; edit/delete + detail drawer on branch `claude/quirky-dirac-o95ke7` (pending manual test).
+**Complete — manually tested in production (2026-06-26).** All code on `main`. The detail drawer (open from a URL Library row, view, inline edit) was verified working by the user; the live tagged URL updates correctly on save.
 
 ## Problem
 Every new campaign requires constructing tagged URLs by hand — copy-pasting base URLs, appending `?utm_source=...` etc., and keeping naming consistent across team members and platforms. Mistakes mean broken attribution.
@@ -119,6 +119,6 @@ Shared helper: `url.ts` `buildPreviewUrl` (client-side live preview, used by the
 ## Test Status
 - TypeScript: passes `tsc --noEmit` clean; `eslint` clean on the feature; `next build` passes
 - Reviewed by security-, react-, code-, and database-reviewer agents (2026-06-26) — no blocking findings; fixes applied (hook deps, copyTimer cleanup, a11y dialog role + labels, Fragment key)
-- Manual: edit/delete + drawer **not yet manually tested** (page is auth-gated; verify in a browser with a logged-in session — generate a URL, click its row, edit a field, confirm the URL updates, then delete)
+- Manual: **verified working in production (user, 2026-06-26)** — opened the drawer from a URL Library row and edited a parameter; the tagged URL updated correctly. Delete uses the same confirmed server-action path.
 - No unit tests written
 - No E2E tests written

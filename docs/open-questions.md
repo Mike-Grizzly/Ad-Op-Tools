@@ -24,9 +24,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## UTM-003 — Manual test in production not yet done
 
-**Status**: Open
-**Question**: The UTM Generator has not been manually tested end-to-end in the Vercel production deployment.
-**Action**: Open `ad-op-tools.vercel.app/utm`, generate a URL, verify it saves to history, appears in the URL Library, and copies correctly.
+**Status**: Resolved 2026-06-26 — user signed into the live app and verified the URL Library, detail drawer, and inline editing work end-to-end. The tagged URL updates correctly on save.
 **Owner**: User
 
 ---
@@ -63,6 +61,17 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - `utm-page-client.tsx` stores the toast timer in `useState` (should be `useRef`); causes a spurious re-render per toast. Pre-existing.
 - `utm-url-library.tsx` computes an unused `totalFiltered`; dead code.
 **Owner**: Claude (next UTM maintenance pass)
+
+---
+
+## AUTH-001 — No in-app password reset / change flow
+
+**Status**: Open (deferred to a user-features slice, per user 2026-06-26)
+**Question**: The app has only a login page — no "Forgot password" or "Change password" UI. A locked-out user can't self-serve; recovery currently requires an admin password set directly on `auth.users`.
+**Context**: On 2026-06-26 the user's password was reset via an admin `UPDATE auth.users SET encrypted_password = crypt(...)` (bcrypt, pgcrypto in the `extensions` schema) as a one-off stopgap to regain access.
+**Action**: In the user-features slice, add `resetPasswordForEmail` + a reset page and an account "Change password" screen. Confirm Supabase SMTP for reset-link delivery, or use magic-link/OTP sign-in (works without custom SMTP).
+**Security note**: The temporary admin-set password is visible in session chat history — rotate it once the change-password flow exists.
+**Owner**: User / Claude (next user-features slice)
 
 ---
 

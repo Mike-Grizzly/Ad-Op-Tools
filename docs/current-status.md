@@ -1,8 +1,8 @@
 # Current Status
 
 ## Project Phase
-**Feature Slice 1: UTM Generator — Built, not yet manually tested in production.**
-Base feature on `main`, deployed to Vercel. UTM edit/delete + detail drawer added on branch `claude/quirky-dirac-o95ke7` (pending manual test). Next deliverable: manual-test the edit/delete slice, then pick the next feature.
+**Feature Slice 1: UTM Generator — Built and manually tested. Complete.**
+All code on `main`, deployed to Vercel. UTM edit/delete + detail drawer verified working in production by the user (2026-06-26). Next deliverable: pick the next feature slice (candidate: a user-features slice — password reset / change password, see open-questions AUTH-001).
 
 ## What Exists — Code
 
@@ -62,6 +62,7 @@ Base feature on `main`, deployed to Vercel. UTM edit/delete + detail drawer adde
 - Dev/prod Supabase project split
 
 ## Last Updated
+2026-06-26 (final) — User manually verified the URL Library detail drawer + inline editing in production; all working. Marked the UTM edit/delete slice complete and merged `claude/quirky-dirac-o95ke7` → `main`.
 2026-06-26 (later) — Merged the new Claude Design export (URL Library + drawer) from main and reskinned `utm-detail-drawer.tsx` to match it; the grouped URL Library table and the generator form were left untouched, per direction (only the drawer was in scope). Added a guardrail in `.claude/rules/working-style.md` so design exports are integrated additively, never used to wholesale-replace existing UI. Renamed the export subfolder → `Ad Op Tools UI Design/detail-drawer/`.
 2026-06-26 — UTM history edit/delete + detail drawer added on branch `claude/quirky-dirac-o95ke7`. New `updateUTMHistory`/`deleteUTMHistory` actions, `utm-detail-drawer.tsx`, shared `url.ts`, UPDATE-policy migration (tracked only). type-check/lint/build green; reviewed by security/react/code/database agents. Pending manual test.
 2026-06-25 — UTM Generator feature slice complete: form, history sidebar, URL Library spreadsheet, autocomplete, Ad Set/Creative fields. All committed and pushed to main.
