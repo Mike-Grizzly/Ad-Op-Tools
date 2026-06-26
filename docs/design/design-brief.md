@@ -54,6 +54,16 @@ and whether they're on pace against their monthly cap — replacing the spreadsh
 **Meta** first (Google/LinkedIn/TikTok shown as "coming soon"), and is **read-only** (no editing
 campaigns from here).
 
+**Design as an additive feature inside the existing shell** (per `.claude/rules/working-style.md`
+→ "Claude Design Exports — Additive, Never Replace"): the app already has a dark left sidebar +
+top header and a built UTM screen. Design ONLY the Budget Dashboard content area that drops into
+that shell — do not redesign the sidebar, header, nav, or any other page. This is a feature-scoped
+mock, not an app redesign.
+
+**Reuse existing patterns** for consistency: the white card + hairline-border style, the indigo
+`#4f46e5` accent, the grouped/filterable/collapsible table from the UTM URL Library, and the
+right-side slide-over detail drawer (a campaign row can open a drawer with that campaign's detail).
+
 Design the following, including all states.
 
 ### A. Page header (inside the existing shell)
