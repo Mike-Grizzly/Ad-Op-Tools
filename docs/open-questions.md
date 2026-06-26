@@ -31,7 +31,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## SETUP-006 — Meta app registration (Phase 1 prerequisite, user action)
 
-**Status**: In progress — user **registered the Meta app 2026-06-26** (has dashboard access). Remaining before wiring OAuth: provide `META_APP_ID` / `META_APP_SECRET`, add the redirect URIs (Facebook Login → Settings), and confirm the `ads_read` permission. One-time, **once-per-platform** setup — later features add OAuth *scopes* to the same app, never a new registration (see decision-log "One App Per Platform; Scopes Per Feature").
+**Status**: ✅ Resolved 2026-06-26 — Meta app live: `META_APP_ID`/`META_APP_SECRET` set in Vercel, redirect URI `https://ad-op-tools.vercel.app/api/integrations/meta/callback` registered, `ads_read` working. Connected a real ad account + synced real spend in production. One-time, **once-per-platform** setup — later features add OAuth *scopes* to the same app, never a new registration (see decision-log "One App Per Platform; Scopes Per Feature").
 **Context**: The Meta Marketing API requires a registered Meta app (App ID + Secret) to power the OAuth "Connect" flow. This is the product-side app behind the connect button (cf. a Looker Studio Meta connector or the Claude GitHub App — the vendor registers it once, users authorize it per account). Created once for the whole product; per-account connection is the OAuth click-flow.
 **Action**: User creates a Meta app at developers.facebook.com (type **Business** → add the **Marketing API** product), sets the OAuth redirect URI to `…/api/integrations/meta/callback` for both Vercel domains, and provides `META_APP_ID` / `META_APP_SECRET`. Phase 1 (owner's own ad account, dev mode) needs **no Meta App Review**; App Review + Business Verification are required later to onboard external paying users.
 **Owner**: User
@@ -56,8 +56,8 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## NAV-001 — Dead nav links in the dashboard shell
 
-**Status**: Open (cosmetic; resolves as features land)
-**Question**: `src/components/ui/dashboard-shell.tsx` links to `/budget`, `/campaigns`, `/creative`, `/reports` — all 404 today — and has **no** `/gtm` link. Clicking them shows a 404.
+**Status**: Open (cosmetic; resolves as features land). `/budget` is now live; `/campaigns`, `/creative`, `/reports` still 404.
+**Question**: `src/components/ui/dashboard-shell.tsx` links to `/campaigns`, `/creative`, `/reports` (still 404 until their phases) and has **no** `/gtm` link.
 **Action**: These resolve naturally as phases land (Budget in Phase 1, etc.). Add the `/gtm` nav item in Phase 3. If a 404 in the meantime is undesirable, gate the unbuilt links or add "coming soon" placeholder routes — flag if you want this done now.
 **Owner**: Claude (per phase)
 
@@ -118,6 +118,15 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - Key rotation: `token-crypto.getKey()` is single-key (`v1`); extend it to a key map before the first rotation.
 - Platform values are CHECK-constrained in three tables (`platform_connections`, `budget_entries`, `budget_caps`); adding a platform means updating all three in sync. Consider a lookup table or domain type when the next platform is added.
 **Owner**: Claude (during Budget UI / pre-launch hardening)
+
+---
+
+## BUDGET-002 — Budget Dashboard customization features (backlog)
+
+**Status**: Open (backlog; user-requested 2026-06-26 — revisit after more is built)
+**Question**: User wants small customization features for the Budget Dashboard. Specifics TBD.
+**Action**: Pick up after Phase 2; gather the concrete wishlist from the user then (likely candidates: configurable/reorderable KPI tiles, a default date range, per-platform cap presets, saved views, column visibility).
+**Owner**: User (define) / Claude (build later)
 
 ---
 

@@ -7,14 +7,12 @@
 
 ## Where we are
 
-Slice 1 — **UTM Generator** — is the only feature built. The foundation (Supabase SSR
-clients, auth + middleware gate, dashboard shell) is in place. Everything ad-platform
-related is **unbuilt**: no `src/lib/integrations/`, no `src/types/integrations.ts`, no
-`AdPlatformClient` interface, no `platform_connections` table, no OAuth flow.
-
-Four of the five remaining features touch external platform APIs, so the roadmap is
-shaped by one fact: **three of them (Budget, Reporting, Creative) block on a shared
-OAuth + integration layer that does not exist yet.**
+**Updated 2026-06-26:** Slices done — **UTM Generator** and **Phase 0+1 (integration foundation +
+Budget Dashboard, Meta)** — both live and manually verified in production. The shared
+OAuth/integration layer (`src/lib/integrations/`, `AdPlatformClient`, `platform_connections`,
+app-side token encryption, Meta client) now exists and is proven end-to-end (real Meta connect +
+sync). Remaining: **Phase 2** (next), **Phase 3**, **Phase 4**. The original framing below
+(written 2026-06-25, when nothing ad-platform existed) is kept for context.
 
 ## Guiding principle
 
@@ -29,8 +27,8 @@ the working-style rules forbid).
 
 | Phase | What | Risk | Size |
 |-------|------|------|------|
-| **0+1** | Integration foundation + **Budget Dashboard (Meta, read-only)** | Read-only — worst case is a wrong number on screen | XL |
-| **2** | Widen the read-path: **add Google Ads** to Budget and/or **Custom Reporting** on the canonical data | Low — read-only, rides the same model | M each |
+| **0+1** ✅ | Integration foundation + **Budget Dashboard (Meta, read-only)** — **DONE & LIVE (2026-06-26)** | Read-only | XL |
+| **2** ⬅ next | Widen the read-path: **add Google Ads** to Budget and/or **Custom Reporting** on the canonical data | Low — read-only, rides the same model | M each |
 | **3** | **GTM Automation** — first write-path feature; reuses Google OAuth | Medium — writes to a live GTM workspace (never auto-publish) | L |
 | **4** | **Creative Asset Manager** — last, by design | High — mutates live ad accounts, spends real money | XL |
 

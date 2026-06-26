@@ -5,17 +5,17 @@
 UTM generator + URL Library + edit/delete + detail drawer verified working in production by the
 user (2026-06-26).
 
-**Phase 0+1 — integration foundation + Budget Dashboard (Meta, read-only): BUILT.**
-(`docs/roadmap.md`). Backend + UI complete and reviewed (database + security×2 + ad-platform +
-react/code agents; type-check/lint/build green): canonical types, AES-256-GCM token store, Meta
-Marketing API client, budget queries/actions (sync/disconnect/setCaps), Meta OAuth routes, monthly
-caps, and the full `/budget` dashboard UI. The three budget tables are now **applied to `ad-op-tools`**
-(RLS verified), so `/budget` loads (connect/empty state). **Remaining to go live:** set env vars
-(`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`) in Vercel and register the
-Meta app redirect URI, then a live OAuth + sync test.
-Phase 1 gating decisions are **confirmed**: Meta first; app-side AES-256-GCM token encryption; and
-**one shared Supabase project for now — dev/prod split deferred to launch** (per user 2026-06-26;
-RLS already gives per-user isolation within the single DB).
+**Phase 0+1 — integration foundation + Budget Dashboard (Meta, read-only): COMPLETE & LIVE.**
+(`docs/roadmap.md`). Shipped to production (`main` → `ad-op-tools.vercel.app`) and **manually verified
+end-to-end on 2026-06-26**: connected a real Meta account via OAuth and Sync pulled real spend into the
+dashboard. Backend + UI were reviewed (database + security×2 + ad-platform + react/code); migrations
+applied to `ad-op-tools` (RLS verified). Includes AES-256-GCM token store, Meta Marketing API client,
+budget queries/actions (sync/disconnect/setCaps), Meta OAuth routes, monthly caps, and the full
+`/budget` UI.
+Phase 1 gating decisions (settled): Meta first; app-side AES-256-GCM token encryption; one shared
+Supabase project for now (dev/prod split deferred to launch). **Next:** Phase 2 — widen the read-path
+(add Google Ads and/or Custom Reporting). User also wants small Budget Dashboard customization features
+later (after more is built) — see open-questions BUDGET-002.
 
 ## What Exists — Code
 
@@ -49,9 +49,10 @@ RLS already gives per-user isolation within the single DB).
 - `components/utm-page-client.tsx` — client shell wiring all components together; owns drawer state + optimistic update/delete
 - `app/(dashboard)/utm/page.tsx` — server component fetching templates + history, rendering `UTMPageClient`
 
-### Budget Dashboard (Phase 0+1) — backend + UI BUILT
+### Budget Dashboard (Phase 0+1) — COMPLETE & LIVE (manually verified in production 2026-06-26)
 Reviewed by database, security (token layer + OAuth), ad-platform, and react/code agents;
-type-check/lint/build green. **Migrations not yet applied; runtime untested until Meta creds exist.**
+type-check/lint/build green. Migrations applied to `ad-op-tools`; Meta OAuth connect + Sync verified
+pulling real spend on `ad-op-tools.vercel.app`.
 - `src/types/integrations.ts` — `AD_PLATFORMS`/`AdPlatform`, `CanonicalSpendRow` + `CanonicalCampaign` (mirror `budget_entries`), `AdPlatformClient` interface (read-only)
 - `src/lib/integrations/token-crypto.ts` — AES-256-GCM encrypt/decrypt (fresh IV, AAD-bound, key-versioned via `token_key_id`)
 - `src/lib/integrations/connections.ts` — server-only token store + sole decrypt path: `getConnectionWithTokens`, `saveConnection`/`saveConnections`, `markConnectionStatus`
@@ -66,8 +67,10 @@ type-check/lint/build green. **Migrations not yet applied; runtime untested unti
 - Vercel project linked to GitHub
   - Domains: `ad-op-tools.vercel.app` (primary) + `ad-op-tools-mike-grigsby-s-projects.vercel.app`
   - Env vars set: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-  - Env vars NEEDED for Budget (not yet set): `TOKEN_ENCRYPTION_KEY` (32-byte base64), `APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`
+  - Budget env vars set: `TOKEN_ENCRYPTION_KEY` (32-byte base64), `APP_ORIGIN` (= `https://ad-op-tools.vercel.app`), `META_APP_ID`, `META_APP_SECRET`
+  - **`ad-op-tools.vercel.app` is the production alias for `main`** (Option A; the alias had drifted to a stale deployment and was re-pointed — the cause of the earlier prod 404s)
 - Supabase Auth URL config: Site URL + redirect URLs for both Vercel domains
+- Meta app registered (dev mode, owner's own ad account); OAuth redirect URI `https://ad-op-tools.vercel.app/api/integrations/meta/callback` registered. `ads_read` scope.
 
 ## Database State
 - Migrations tracked in `supabase/migrations/`:
@@ -83,13 +86,14 @@ type-check/lint/build green. **Migrations not yet applied; runtime untested unti
 
 ## Not Built Yet
 (See `docs/roadmap.md` for build order.)
-- Budget Dashboard **go-live** — migrations applied; needs env vars (`TOKEN_ENCRYPTION_KEY`/`APP_ORIGIN`/`META_APP_ID`/`META_APP_SECRET`) + Meta redirect URI set, then a live OAuth + sync test
-- Custom reporting / additional platforms (Phase 2)
+- Custom reporting / additional platforms (Phase 2 — next)
+- Budget Dashboard customization features (user-requested; backlog after more is built — see open-questions BUDGET-002)
 - GTM automation (Phase 3)
 - Creative asset manager (Phase 4)
 - Dev/prod Supabase project split (deferred to launch — one shared project for now, per user 2026-06-26)
 
 ## Last Updated
+2026-06-26 — **Budget Dashboard SHIPPED & manually verified in production.** Merged the slice to `main`; fixed the production domain alias (Option A — `ad-op-tools.vercel.app` re-pointed to serve `main`, which was the cause of the prod 404s); set the 4 Budget env vars; connected a real Meta account via OAuth and Sync pulled real spend into the dashboard. **Phase 0+1 COMPLETE.** (Operational learning: the OAuth flow needs `APP_ORIGIN` + the Meta redirect URI + the login domain to be the same working origin — see decision-log.)
 2026-06-26 — Applied the budget migrations to `ad-op-tools` (`platform_connections`, `budget_entries`, `budget_caps` + RLS; hardened `set_updated_at` search_path per the security advisor). `/budget` now loads (connect/empty state) — the earlier production 500 was the missing tables. Security advisors clean except a pre-existing Auth "leaked password protection" toggle. Remaining to go live: env vars + Meta creds.
 2026-06-26 — Phase 0+1 Budget Dashboard COMPLETE (backend + UI). Added the caps backend (`budget_caps` + `getCaps`/`setCaps`) and built the full `/budget` UI from the Claude Design export (pacing hero, KPI row, spend-over-time chart, by-platform donut, monthly-cap widget, grouped/sortable campaign table, connection management, per-campaign detail drawer). Additive; reviewed by database (caps) + react/code agents; type-check/lint/build green. Both budget migrations still UNAPPLIED. Remaining to go live: apply migrations to `ad-op-tools`, set env vars + Meta creds, live OAuth + sync test.
 2026-06-26 — Phase 0+1 backend COMPLETE: integration foundation (canonical types, AES-256-GCM token crypto + connection store), Meta Marketing API client, budget queries/actions (sync + disconnect), and Meta OAuth routes. Reviewed by database + security (token layer & OAuth) + ad-platform agents — all findings applied (incl. 2 CRITICAL OAuth fixes). type-check/lint/build green; migration NOT yet applied. Pending: `/budget` UI (Claude Design export), apply migration to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`/`APP_ORIGIN`/`META_APP_ID`/`META_APP_SECRET`) + live test. Branch synced with main; budget design brief written.

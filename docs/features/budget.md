@@ -1,14 +1,13 @@
 # Feature: Budget Dashboard
 
-**Status**: Backend + UI complete & reviewed (Phase 0+1). The integration foundation + budget
-data/sync/OAuth layer + monthly caps + the full `/budget` dashboard UI are built and passed database
-+ security×2 + ad-platform + react/code reviews (type-check/lint/build green). Gating decisions
-confirmed 2026-06-26: Meta first; app-side AES-256-GCM token encryption; **one shared Supabase
-project for now** (dev/prod split deferred to launch — INFRA-001 re-resolved). Migrations **applied
-to `ad-op-tools` 2026-06-26** (RLS verified via the security advisor; `/budget` loads the
-connect/empty state). **Remaining to go live:** set env vars (`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`,
-`META_APP_ID`, `META_APP_SECRET`) in Vercel and register the Meta app redirect URI (SETUP-006), then a
-live OAuth + sync test. See `docs/roadmap.md`.
+**Status**: ✅ **COMPLETE & LIVE** — manually verified in production **2026-06-26**: connected a real
+Meta account via OAuth and Sync pulled real spend into the dashboard on `ad-op-tools.vercel.app`.
+Integration foundation + budget data/sync/OAuth layer + monthly caps + the full `/budget` UI; passed
+database + security×2 + ad-platform + react/code reviews (type-check/lint/build green); migrations
+applied to `ad-op-tools` (RLS verified). Gating decisions (settled): Meta first; app-side AES-256-GCM
+token encryption; one shared Supabase project for now (dev/prod split deferred to launch).
+**Future (backlog):** user wants small Budget Dashboard customization features after more is built
+(open-questions BUDGET-002). See `docs/roadmap.md`.
 
 ## Goal & user value
 

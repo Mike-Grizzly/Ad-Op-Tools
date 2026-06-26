@@ -229,3 +229,13 @@ Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
 **Rationale** (per user): there is no real production yet — `ad-op-tools` holds only the owner's own test data, zero real users. The split was meant to avoid polluting *real* production with test OAuth tokens / schema churn; that risk doesn't exist until launch. RLS already enforces per-user data isolation within one database, so the multi-tenant security model is built correctly from day one regardless of project count. The org is on Supabase's free plan (2 active projects, both used), so a dedicated dev project would mean Pro (~$25/mo) for no benefit at this stage.
 
 **Plan**: build/test on `ad-op-tools` and apply the Phase 1 migration there. At launch (first real user), stand up a fresh production project with its own keys + its own `TOKEN_ENCRYPTION_KEY`; today's project becomes dev. Closes SETUP-007; re-resolves INFRA-001.
+
+---
+
+## 2026-06-26 — Phase 0+1 Shipped; OAuth Needs One Consistent Origin (operational)
+
+**Milestone**: Phase 0+1 (integration foundation + Budget Dashboard, Meta) shipped to production and **manually verified** — real Meta OAuth connect + Sync pulling real spend on `ad-op-tools.vercel.app`. Merged the feature branch to `main`; production tracks `main`.
+
+**Operational learning (applies to every future ad-platform OAuth integration — Google, LinkedIn, TikTok, GTM)**: the OAuth round-trip only works when three things share the **same working origin**: (1) the domain the user is logged into, (2) `APP_ORIGIN` (which builds the `redirect_uri`), and (3) the redirect URI registered in the platform's app. The production 404s during testing were **not a code bug** — `ad-op-tools.vercel.app` (the production alias) had drifted to a stale Vercel deployment while the correct build was only reachable via the branch/`git-main` preview URL, so the Meta callback landed on a dead origin. Fix: re-point the production domain to the latest `main` deployment (Vercel "Promote to Production").
+
+**Next time**: keep the production domain alias on the latest `main` deployment; set `APP_ORIGIN` to that exact production origin; register the matching `…/api/integrations/<platform>/callback` redirect URI; test the OAuth flow on that one origin, not a preview URL.
