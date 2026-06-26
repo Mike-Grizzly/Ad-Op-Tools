@@ -1,13 +1,13 @@
 # Feature: Budget Dashboard
 
-**Status**: Backend complete & reviewed (Phase 0+1); UI pending. The integration foundation +
-budget data/sync/OAuth layer is built and passed database + security×2 + ad-platform reviews
-(type-check/lint/build green). Gating decisions confirmed 2026-06-26: Meta first; app-side
-AES-256-GCM token encryption; **one shared Supabase project for now** (dev/prod split deferred to
-launch — INFRA-001 re-resolved). **Remaining:** the `/budget` UI (from a Claude Design export),
-applying the migration to `ad-op-tools`, setting env vars (`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`,
-`META_APP_ID`, `META_APP_SECRET`), and a live end-to-end test once Meta creds exist (SETUP-006).
-See `docs/roadmap.md`.
+**Status**: Backend + UI complete & reviewed (Phase 0+1). The integration foundation + budget
+data/sync/OAuth layer + monthly caps + the full `/budget` dashboard UI are built and passed database
++ security×2 + ad-platform + react/code reviews (type-check/lint/build green). Gating decisions
+confirmed 2026-06-26: Meta first; app-side AES-256-GCM token encryption; **one shared Supabase
+project for now** (dev/prod split deferred to launch — INFRA-001 re-resolved). **Remaining to go
+live:** apply the two budget migrations to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`,
+`APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`), register the Meta app redirect URIs (SETUP-006),
+then a live OAuth + sync test. See `docs/roadmap.md`.
 
 ## Goal & user value
 
