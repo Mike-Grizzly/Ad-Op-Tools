@@ -9,9 +9,10 @@ user (2026-06-26).
 (`docs/roadmap.md`). Backend + UI complete and reviewed (database + security×2 + ad-platform +
 react/code agents; type-check/lint/build green): canonical types, AES-256-GCM token store, Meta
 Marketing API client, budget queries/actions (sync/disconnect/setCaps), Meta OAuth routes, monthly
-caps, and the full `/budget` dashboard UI. **Remaining to go live:** apply the two budget migrations
-to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`),
-register the Meta app redirect URIs, then a live OAuth + sync test.
+caps, and the full `/budget` dashboard UI. The three budget tables are now **applied to `ad-op-tools`**
+(RLS verified), so `/budget` loads (connect/empty state). **Remaining to go live:** set env vars
+(`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`) in Vercel and register the
+Meta app redirect URI, then a live OAuth + sync test.
 Phase 1 gating decisions are **confirmed**: Meta first; app-side AES-256-GCM token encryption; and
 **one shared Supabase project for now — dev/prod split deferred to launch** (per user 2026-06-26;
 RLS already gives per-user isolation within the single DB).
@@ -73,21 +74,23 @@ type-check/lint/build green. **Migrations not yet applied; runtime untested unti
   - `20260624000000_create_utm_tables.sql` — creates `utm_templates` and `utm_history` with RLS
   - `20260625000000_utm_history_add_columns.sql` — adds `ad_set`, `creative` columns; adds prefix-search indexes
   - `20260626000000_utm_history_update_policy.sql` — granular UPDATE RLS policy on `utm_history` (for the edit feature). **Not applied to remote** — see note below.
-  - `20260626000000_create_platform_connections_and_budget.sql` — `platform_connections` (encrypted OAuth tokens, key-versioned, `set_updated_at` trigger) + `budget_entries` (spend, idempotent upsert key); RLS on both with `(select auth.uid())`. **NOT applied to remote yet** — will apply to `ad-op-tools` when Budget testing starts.
-  - `20260626010000_create_budget_caps.sql` — `budget_caps` (monthly cap per user per scope, amount in micros; RLS + `set_updated_at` trigger). **NOT applied to remote yet.**
+  - `20260626000000_create_platform_connections_and_budget.sql` — `platform_connections` (encrypted OAuth tokens, key-versioned, `set_updated_at` trigger) + `budget_entries` (spend, idempotent upsert key); RLS on both with `(select auth.uid())`. **Applied to `ad-op-tools` 2026-06-26.**
+  - `20260626010000_create_budget_caps.sql` — `budget_caps` (monthly cap per user per scope, amount in micros; RLS + `set_updated_at` trigger). **Applied to `ad-op-tools` 2026-06-26.**
+  - `20260626020000_harden_set_updated_at_search_path.sql` — pins `set_updated_at` `search_path` (Supabase security advisor 0011). **Applied 2026-06-26.**
 - RLS enabled on both tables; policies are user-scoped (`user_id = auth.uid()`)
 - **Tracked-vs-remote RLS divergence**: the remote DB was provisioned manually with a single consolidated `FOR ALL` policy per table (`users manage own utm_*`, `USING`/`WITH CHECK = auth.uid() = user_id`), which already permits UPDATE/DELETE. The tracked migrations instead use granular per-command policies. Effective permissions are identical; the new UPDATE-policy migration keeps the granular tracked lineage complete for fresh environments (e.g. dev/prod split). Do not `supabase db pull` over the tracked migrations. See decision-log 2026-06-26 and open-questions UTM-004.
 - `src/types/database.ts` is hand-maintained (not auto-generated from Supabase CLI); reflects current schema
 
 ## Not Built Yet
 (See `docs/roadmap.md` for build order.)
-- Budget Dashboard **go-live** — code is built; needs the two budget migrations applied to `ad-op-tools`, env vars + Meta creds set, then a live OAuth + sync test
+- Budget Dashboard **go-live** — migrations applied; needs env vars (`TOKEN_ENCRYPTION_KEY`/`APP_ORIGIN`/`META_APP_ID`/`META_APP_SECRET`) + Meta redirect URI set, then a live OAuth + sync test
 - Custom reporting / additional platforms (Phase 2)
 - GTM automation (Phase 3)
 - Creative asset manager (Phase 4)
 - Dev/prod Supabase project split (deferred to launch — one shared project for now, per user 2026-06-26)
 
 ## Last Updated
+2026-06-26 — Applied the budget migrations to `ad-op-tools` (`platform_connections`, `budget_entries`, `budget_caps` + RLS; hardened `set_updated_at` search_path per the security advisor). `/budget` now loads (connect/empty state) — the earlier production 500 was the missing tables. Security advisors clean except a pre-existing Auth "leaked password protection" toggle. Remaining to go live: env vars + Meta creds.
 2026-06-26 — Phase 0+1 Budget Dashboard COMPLETE (backend + UI). Added the caps backend (`budget_caps` + `getCaps`/`setCaps`) and built the full `/budget` UI from the Claude Design export (pacing hero, KPI row, spend-over-time chart, by-platform donut, monthly-cap widget, grouped/sortable campaign table, connection management, per-campaign detail drawer). Additive; reviewed by database (caps) + react/code agents; type-check/lint/build green. Both budget migrations still UNAPPLIED. Remaining to go live: apply migrations to `ad-op-tools`, set env vars + Meta creds, live OAuth + sync test.
 2026-06-26 — Phase 0+1 backend COMPLETE: integration foundation (canonical types, AES-256-GCM token crypto + connection store), Meta Marketing API client, budget queries/actions (sync + disconnect), and Meta OAuth routes. Reviewed by database + security (token layer & OAuth) + ad-platform agents — all findings applied (incl. 2 CRITICAL OAuth fixes). type-check/lint/build green; migration NOT yet applied. Pending: `/budget` UI (Claude Design export), apply migration to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`/`APP_ORIGIN`/`META_APP_ID`/`META_APP_SECRET`) + live test. Branch synced with main; budget design brief written.
 2026-06-26 (final) — User manually verified the URL Library detail drawer + inline editing in production; all working. Marked the UTM edit/delete slice complete and merged `claude/quirky-dirac-o95ke7` → `main`.

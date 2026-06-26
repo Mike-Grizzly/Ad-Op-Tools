@@ -4,10 +4,11 @@
 data/sync/OAuth layer + monthly caps + the full `/budget` dashboard UI are built and passed database
 + security×2 + ad-platform + react/code reviews (type-check/lint/build green). Gating decisions
 confirmed 2026-06-26: Meta first; app-side AES-256-GCM token encryption; **one shared Supabase
-project for now** (dev/prod split deferred to launch — INFRA-001 re-resolved). **Remaining to go
-live:** apply the two budget migrations to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`,
-`APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`), register the Meta app redirect URIs (SETUP-006),
-then a live OAuth + sync test. See `docs/roadmap.md`.
+project for now** (dev/prod split deferred to launch — INFRA-001 re-resolved). Migrations **applied
+to `ad-op-tools` 2026-06-26** (RLS verified via the security advisor; `/budget` loads the
+connect/empty state). **Remaining to go live:** set env vars (`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`,
+`META_APP_ID`, `META_APP_SECRET`) in Vercel and register the Meta app redirect URI (SETUP-006), then a
+live OAuth + sync test. See `docs/roadmap.md`.
 
 ## Goal & user value
 
