@@ -8,7 +8,7 @@ create table if not exists public.budget_caps (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references auth.users(id) on delete cascade,
   scope         text not null check (scope in ('overall', 'meta', 'google_ads', 'linkedin', 'tiktok')),
-  amount_micros bigint not null check (amount_micros >= 0),
+  amount_micros bigint not null check (amount_micros >= 0),  -- non-negative; contrast budget_entries.spend_micros, which allows negatives for credits
   currency      text not null default 'USD' check (currency ~ '^[A-Z]{3}$'),
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),

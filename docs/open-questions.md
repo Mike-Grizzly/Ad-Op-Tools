@@ -116,6 +116,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - **Verify against the live API once Meta creds exist**: `date_start` returned with `time_increment=1`; `v21.0` still in Meta's support window; default `/campaigns` excludes deleted; the BUC rate-limit header name.
 - Next 16 deprecates the `middleware` file convention in favor of `proxy` (pre-existing build warning). Migrate when convenient.
 - Key rotation: `token-crypto.getKey()` is single-key (`v1`); extend it to a key map before the first rotation.
+- Platform values are CHECK-constrained in three tables (`platform_connections`, `budget_entries`, `budget_caps`); adding a platform means updating all three in sync. Consider a lookup table or domain type when the next platform is added.
 **Owner**: Claude (during Budget UI / pre-launch hardening)
 
 ---
