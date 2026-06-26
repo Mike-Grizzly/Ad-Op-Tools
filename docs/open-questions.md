@@ -29,15 +29,47 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## ARCH-002 — Next feature slice
+## SETUP-006 — Meta app registration (Phase 1 prerequisite, user action)
+
+**Status**: ✅ Resolved 2026-06-26 — Meta app live: `META_APP_ID`/`META_APP_SECRET` set in Vercel, redirect URI `https://ad-op-tools.vercel.app/api/integrations/meta/callback` registered, `ads_read` working. Connected a real ad account + synced real spend in production. One-time, **once-per-platform** setup — later features add OAuth *scopes* to the same app, never a new registration (see decision-log "One App Per Platform; Scopes Per Feature").
+**Context**: The Meta Marketing API requires a registered Meta app (App ID + Secret) to power the OAuth "Connect" flow. This is the product-side app behind the connect button (cf. a Looker Studio Meta connector or the Claude GitHub App — the vendor registers it once, users authorize it per account). Created once for the whole product; per-account connection is the OAuth click-flow.
+**Action**: User creates a Meta app at developers.facebook.com (type **Business** → add the **Marketing API** product), sets the OAuth redirect URI to `…/api/integrations/meta/callback` for both Vercel domains, and provides `META_APP_ID` / `META_APP_SECRET`. Phase 1 (owner's own ad account, dev mode) needs **no Meta App Review**; App Review + Business Verification are required later to onboard external paying users.
+**Owner**: User
+
+---
+
+## SETUP-007 — Create dev Supabase project (Phase 1 prerequisite)
+
+**Status**: Resolved 2026-06-26 — NOT creating a separate dev project now. Per user, we build and test on the single shared `ad-op-tools` project (RLS isolates per user), and stand up a clean production project at launch (when real users exist). The Phase 1 migration will be applied to `ad-op-tools`. Set a distinct `TOKEN_ENCRYPTION_KEY` per environment when the split happens. See decision-log "Supabase: One Shared Project Now."
+**Owner**: User
+
+---
+
+## TEST-001 — Testing posture (no test runner installed)
 
 **Status**: Open
-**Question**: What do we build next? Candidates:
-- Budget Dashboard (high value, but requires OAuth + Google/Meta/LinkedIn/TikTok API setup first)
-- GTM Automation (API-based, no creative assets needed)
-- Creative Asset Manager (requires storage + platform APIs)
-**Recommendation**: GTM Automation — bounded scope, API-only, no OAuth credential complexity if using service accounts.
+**Question**: `package.json` has no Vitest/Playwright despite docs referencing them, and there are no `test`/`test:e2e` scripts. The real quality gate today is manual testing + `type-check`/`lint`/`build`.
+**Action**: Confirm manual-only is acceptable for the upcoming slices, or budget a sub-task to stand up Vitest for the highest-value pure functions (the per-platform `transforms.ts` spend mappers, where an off-by-1000 currency error is exactly the kind of bug a unit test catches cheaply).
 **Owner**: User
+
+---
+
+## NAV-001 — Dead nav links in the dashboard shell
+
+**Status**: Open (cosmetic; resolves as features land). `/budget` is now live; `/campaigns`, `/creative`, `/reports` still 404.
+**Question**: `src/components/ui/dashboard-shell.tsx` links to `/campaigns`, `/creative`, `/reports` (still 404 until their phases) and has **no** `/gtm` link.
+**Action**: These resolve naturally as phases land (Budget in Phase 1, etc.). Add the `/gtm` nav item in Phase 3. If a 404 in the meantime is undesirable, gate the unbuilt links or add "coming soon" placeholder routes — flag if you want this done now.
+**Owner**: Claude (per phase)
+
+---
+
+## QUAL-001 — Pre-existing lint errors block the "lint passes" gate
+
+**Status**: Open
+**Question**: `npm run lint` currently reports ~35 errors + warnings that pre-date Phase 1 — mostly `require()`-style imports in `scripts/lib/resolve-formatter.js` (ECC hook tooling, CommonJS), plus a few UTM warnings (unused vars, `react-hooks/exhaustive-deps`). `npm run type-check` is clean.
+**Impact**: The working-style pre-commit gate expects lint to pass. New code is kept lint-clean, but the gate can't be honestly green until these are resolved or scoped out.
+**Action**: Address separately from feature work (not during a slice) — e.g. an eslint override/ignore for ECC `scripts/` tooling + fix the UTM warnings, or formally accept lint-as-advisory. Do not bundle into Phase 1.
+**Owner**: Claude (separate cleanup pass)
 
 ---
 
@@ -75,24 +107,14 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## ENC-001 — OAuth token encryption approach
-
-**Status**: Open
-**Question**: `platform_connections` will store OAuth access + refresh tokens — the most sensitive
-data in the app. Supabase does not encrypt columns by default; RLS alone does not protect
-tokens-at-rest. Choose: Supabase Vault (pgsodium) vs. app-layer AES-GCM with a server-only key.
-**Action**: Decide with `security-reviewer` when building `platform_connections`.
-**Owner**: Claude + user (at foundation build)
-
----
-
-## INFRA-001 — Email provider + cron plan
+## INFRA-002 — Email provider + cron plan
 
 **Status**: Open
 **Question**: All alerts + the Morning Digest need a transactional email provider
 (Resend / Postmark / SendGrid) — not yet chosen. Phase-3 monitors need Vercel Cron at sub-daily
-cadence (Pro plan; Hobby cron is daily-only).
-**Action**: Pick an email provider before Phase 3; confirm Vercel Pro for "every 4 hours" crons.
+cadence (Pro plan; Hobby cron is daily-only). (Renamed from INFRA-001 to avoid collision with the
+resolved Supabase-split INFRA-001.)
+**Action**: Pick an email provider before the monitors/digest; confirm Vercel Pro for sub-daily crons.
 **Owner**: User (accounts) / Claude (integration)
 
 ---
@@ -101,23 +123,46 @@ cadence (Pro plan; Hobby cron is daily-only).
 
 **Status**: Open
 **Question**: Should the GTM tool call `versions.publish` (after explicit user confirm), or only
-create the draft and let the user publish in the GTM UI (safest)?
+create the draft and let the user publish in the GTM UI (safest)? (main's roadmap already leans
+"never auto-publish" — consistent with draft-only.)
 **Action**: Decide when building GTM Automation. Default to draft-only unless the user wants
 one-click publish.
 **Owner**: User / Claude (at GTM build)
 
 ---
 
-## API-001 — Platform API access applications pending
+## API-001 — Platform API access applications
 
-**Status**: Open (in progress)
-**Question**: Google Ads (developer token + Basic Access, 2–6 wks), Meta (App Review for
-`ads_read`, 1–2 wks), GTM (scope only, no review). LinkedIn deferred; StackAdapt is CSV-only.
-These gate all platform-data features (Budget, monitors, reporting, search-term triage).
-**Action**: User submits applications immediately (see `roadmap.md` sequencing). Claude can draft
-the Google Basic Access justification, the Meta App Review use-case + screencast script, and the
-OAuth consent-screen copy.
-**Owner**: User (submit) / Claude (draft application copy)
+**Status**: Open (in progress). **Meta done** (SETUP-006: app live, `ads_read`, real account synced).
+**Question**: Remaining: **Google Ads** (developer token + Basic Access, 2–6 wks) and **GTM**
+(scope only, no review) — both on one Google OAuth client. LinkedIn deferred; StackAdapt is CSV-only.
+Google Ads gates the budget read-path widen (Phase 2), monitors, reporting, and search-term triage.
+**Action**: User submits the Google Ads application immediately (see `docs/api-access-applications.md`
+for paste-ready copy + where the API Center lives). Claude drafted the application copy.
+**Owner**: User (submit) / Claude (drafted application copy)
+
+---
+
+## BUDGET-001 — Phase 1 backend follow-ups (deferred, non-blocking)
+
+**Status**: Open (deferred; captured from the database/security/ad-platform review passes)
+**Items**:
+- Meta OAuth `state` is not user-bound (defense-in-depth only — the callback re-auths, so the connection is always attributed to the logged-in user). Consider embedding the user id in `state`.
+- Campaigns use raw `status`, not `effective_status` — decide whether delivery-state accuracy matters for the dashboard before relying on it.
+- **Verify against the live API once Meta creds exist**: `date_start` returned with `time_increment=1`; `v21.0` still in Meta's support window; default `/campaigns` excludes deleted; the BUC rate-limit header name.
+- Next 16 deprecates the `middleware` file convention in favor of `proxy` (pre-existing build warning). Migrate when convenient.
+- Key rotation: `token-crypto.getKey()` is single-key (`v1`); extend it to a key map before the first rotation.
+- Platform values are CHECK-constrained in three tables (`platform_connections`, `budget_entries`, `budget_caps`); adding a platform means updating all three in sync. Consider a lookup table or domain type when the next platform is added.
+**Owner**: Claude (during Budget UI / pre-launch hardening)
+
+---
+
+## BUDGET-002 — Budget Dashboard customization features (backlog)
+
+**Status**: Open (backlog; user-requested 2026-06-26 — revisit after more is built)
+**Question**: User wants small customization features for the Budget Dashboard. Specifics TBD.
+**Action**: Pick up after Phase 2; gather the concrete wishlist from the user then (likely candidates: configurable/reorderable KPI tiles, a default date range, per-platform cap presets, saved views, column visibility).
+**Owner**: User (define) / Claude (build later)
 
 ---
 
@@ -130,3 +175,8 @@ OAuth consent-screen copy.
 - **SETUP-005** — All three env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) added to Vercel project settings. Resolved 2026-06-24.
 - **DATA-001** — Remote DB schema ahead of repo. Resolved 2026-06-25: two migrations now track `utm_templates`, `utm_history`, all columns, RLS, and prefix-search indexes.
 - **ARCH-001** — First slice selection. Resolved 2026-06-25: UTM Generator built first.
+- **INT-001** — First platform. Resolved 2026-06-26: **Meta** confirmed by user. See decision-log "Phase 1 Gating Decisions Confirmed."
+- **SEC-001** — OAuth token encryption at rest. Resolved 2026-06-26: **app-side AES-256-GCM** confirmed (key in `TOKEN_ENCRYPTION_KEY`, server-only, per-env; RLS stays on as defense-in-depth; RLS-only not acceptable for token columns). See decision-log.
+- **ENC-001** — OAuth token encryption for `platform_connections` (raised in the foundation-planning session). Resolved 2026-06-26: a duplicate of SEC-001 — already built as app-side AES-256-GCM (`src/lib/integrations/token-crypto.ts`, key-versioned via `token_key_id`). No separate work needed; the multi-client foundation reuses it.
+- **INFRA-001** — dev/prod Supabase split. Re-resolved 2026-06-26: **one shared `ad-op-tools` project for now; dev/prod split deferred to launch** (per user — RLS gives per-user isolation and there is no real production data yet). Supersedes the earlier "split before Phase 1." See decision-log "Supabase: One Shared Project Now."
+- **ARCH-002** — Next feature slice. Resolved 2026-06-25: **Budget Dashboard (Meta, read-only) next**, behind a thin integration foundation built through one platform. Full order in `docs/roadmap.md`. The prior GTM-first recommendation was rejected — its "no OAuth complexity / use service accounts" premise is incorrect: the GTM API requires Google OAuth, and service accounts are the wrong auth model for multi-tenant GTM (a service account is *our* GTM, not the user's). See decision-log "Build Roadmap & Feature Order."

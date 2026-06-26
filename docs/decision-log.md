@@ -118,6 +118,83 @@ Significant architecture and product decisions. Append; never delete.
 
 ---
 
+## 2026-06-25 — Build Roadmap & Feature Order
+
+**Decision**: After the UTM Generator, build in this order — **Phase 0+1**: integration foundation + Budget Dashboard (Meta, read-only); **Phase 2**: widen the read-path (add Google Ads to Budget and/or Custom Reporting); **Phase 3**: GTM Automation (first write-path); **Phase 4**: Creative Asset Manager (last). LinkedIn/TikTok are repeat-the-pattern increments, not separate phases. Full plan in `docs/roadmap.md`.
+
+**Rationale**: Three of the four remaining features (Budget, Reporting, Creative) block on a shared OAuth + integration layer that doesn't exist. Budget is the highest-value feature, is read-only (lowest blast radius to prove the foundation on), and defines the canonical `campaigns`/`budget_entries` model the others inherit. Reporting is cheap afterward. GTM is dependency-isolated and write-oriented, so sequenced on value. Creative is last — it mutates live ad accounts and spends real money.
+
+**Process**: Produced by an `architect` + `planner` review that ran independently and converged on the same order.
+
+**Supersedes**: The earlier ARCH-002 lean toward GTM-first (see open-questions; that rationale was incorrect).
+
+---
+
+## 2026-06-25 — Integration Foundation Built Through One Platform (Meta), Not As a Framework
+
+**Decision**: The OAuth/token/sync foundation ships *with* the first feature that consumes it (Budget Dashboard on Meta), not as a standalone abstract framework. We do not build all four platform clients up front. The shared pieces designed once: `platform_connections` schema, the encryption format, and the `AdPlatformClient` *interface*. The Meta adapter, OAuth flow, refresh, and rate-limit are proven end-to-end before a second platform is added.
+
+**Rationale**: An OAuth layer with zero consumers can't be manually tested, and "nothing is complete until manually tested" is a hard rule. Designing the `AdPlatformClient` interface against one real implementation (then correcting it with the second platform) avoids baking in the wrong abstraction. Building four adapters speculatively would violate the "no speculative abstractions" rule.
+
+**First platform = Meta** (recommended, pending confirmation — see open-questions INT-001): Meta's Marketing API yields a usable token immediately; Google Ads requires a Developer Token approval that can take days and blocks all testing. Start the Google Developer Token application during Phase 1 so it's ready for Phase 2.
+
+---
+
+## 2026-06-25 — Canonical Spend Model: Integer Minor Units + Per-Row Currency
+
+**Decision**: Spend is stored as integer minor units (`spend_micros`, matching Google's native `cost_micros`) with an explicit per-row `currency`. Never floats. `budget_entries` uses an idempotent upsert key (`user_id, platform, campaign_external_id, entry_date`) so on-demand and scheduled syncs cannot double-count. Platform-specific mapping is confined to each platform's `transforms.ts`.
+
+**Rationale**: Money in floats is a data-integrity bug waiting to happen; multi-platform means mixed currencies (normalize for display, never at rest). These are low-reversibility choices (re-typing a populated money column is migration pain), so they're settled now as a standing guardrail for every platform phase.
+
+---
+
+## 2026-06-25 — Doc/Code Drift Corrections
+
+**Decision**: Fixed three factual drifts surfaced during the roadmap review: (1) `src/types/database.ts` header now states it is hand-maintained (it previously claimed to be auto-generated, which would have led a contributor to clobber hand edits); (2) `CLAUDE.md` tech-stack table now reads "Next.js 16 App Router (React 19)" (was "Next.js 14+"); (3) recorded that `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel but intentionally unused — nothing reads it, and the integration phase should keep it that way unless a background sync job with no user session forces the question.
+
+---
+
+## 2026-06-26 — Phase 1 Gating Decisions Confirmed
+
+**Decision**: User confirmed the three Phase 1 gating items: (1) **first platform = Meta**; (2) **OAuth token encryption = app-side AES-256-GCM** — encrypt token columns in server code before insert, key in a server-only env var `TOKEN_ENCRYPTION_KEY` (never `NEXT_PUBLIC_*`), distinct per environment; RLS stays on as defense-in-depth; RLS-only is not acceptable for token columns; (3) **dev/prod Supabase split happens before Phase 1** (the first phase to write live credentials). Closes open-questions INT-001, SEC-001, INFRA-001.
+
+**Meta app prerequisite (clarification)**: Pulling spend via the Meta Marketing API requires a registered Meta app (App ID + Secret) owned by the product — this is the SaaS-side application that *powers* the "Connect" button, not an alternative to it. Compare a Looker Studio Meta connector, or the GitHub App authorized for Claude: in those cases the vendor already registered the app, so the user only saw the "authorize" step; here we are the vendor, so we register it once. App registration is a one-time human setup (matches the documented "first-time OAuth connection per platform is manual"); per-account connection is the OAuth click-flow. Phase 1 testing against the owner's own ad account works in dev mode **without** Meta App Review; App Review + Business Verification are required before onboarding external users. Tracked as SETUP-006; dev Supabase project creation tracked as SETUP-007.
+
+---
+
+## 2026-06-26 — One App Per Platform; Scopes Per Feature
+
+**Decision**: Each ad platform needs exactly one registered developer app, created once — **not one per feature/slice**. Across the whole product that's ~4 registrations total (Meta; Google — one OAuth client can cover both Google Ads and GTM via separate scopes; LinkedIn; TikTok). Capabilities are governed by the OAuth **scopes** a feature requests on the existing app, never by re-registering:
+- Meta budget + analytics reading → `ads_read` (Insights API: spend, impressions, clicks, conversions, breakdowns).
+- Meta writing (Creative Asset Manager) → add `ads_management` to the same app; the user re-consents with one click.
+- Google Ads read + write → single `adwords` scope; GTM → `tagmanager.*` scope, same Google project.
+
+**Scope strategy**: request scopes incrementally (least privilege — read scopes now, write scopes when Creative ships). Re-consent is a single click; least privilege gives better security and better consent rates. Meta App Review (only needed for *external* users) is per advanced permission on the same app, done once per permission — never per slice; the owner's own accounts work in dev mode without review.
+
+**Implication for the user**: a human registers once per platform (≈4 times ever), and never per feature. This is why pinning the Meta registration (SETUP-006) costs us nothing now — adding it later unlocks every Meta feature, not just Budget.
+
+---
+
+## 2026-06-26 — Token Storage Schema Hardened (database + security review)
+
+**Decision**: After `database-reviewer` + `security-reviewer` passes on the `platform_connections` / `budget_entries` migration (changes made while tables are empty, so zero migration cost):
+- **Key rotation**: a `token_key_id` column (default `'v1'`) records which `TOKEN_ENCRYPTION_KEY` encrypted each row, so the key can be rotated by an incremental re-encrypt instead of a forced data migration.
+- **Token split**: access and refresh tokens are encrypted independently (separate ciphertext/iv/auth_tag column sets; refresh columns nullable — Meta long-lived tokens have no refresh token). Different lifetimes/threat models; the refresh path only touches access columns.
+- **Encoding**: token columns are base64 `text`, not `bytea` — chosen for supabase-js ergonomics. The base64 + 12-byte-IV + 16-byte-tag contract is enforced in the crypto helper, not the DB.
+- **RLS**: all policies use `(select auth.uid())` (evaluated once as an init-plan), not bare `auth.uid()` (per-row). `budget_entries` has no delete policy (sync is upsert-only; a user session can't erase spend history). `platform_connections` gets an `updated_at` trigger via a new `public.set_updated_at()` function — the first trigger in the project; token refresh/status updates make it load-bearing.
+- **Integrity**: `external_account_id NOT NULL` (the nullable-in-unique gap allowed duplicate connections); `currency` ISO-4217 check; negative `spend_micros` allowed (platforms report credits/clawbacks); `created_at` added to `budget_entries` for convention.
+
+**App-code obligations the schema cannot enforce** (must hold when the crypto helper + queries are built):
+1. Fresh random IV per encryption — never reuse (GCM nonce reuse with one key is catastrophic).
+2. Decrypt must propagate the auth-tag-mismatch error, never swallow it.
+3. Token columns never appear in a client-facing SELECT — enforce via a `PlatformConnectionPublic` type that omits them + explicit column lists in `queries.ts`.
+4. `TOKEN_ENCRYPTION_KEY` is a 32-byte random value (documented in `.env.example`), distinct per environment.
+5. Any service-role sync path must not SELECT token columns.
+
+Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
+
+---
+
 ## 2026-06-26 — UTM History Edit/Delete + Detail Drawer; RLS Lineage Divergence
 
 **Decision**: Add edit and delete for `utm_history` entries via a right-side detail drawer opened by clicking a row in the URL Library. This reverses the earlier "editing or deleting history entries — out of scope" note in the UTM spec, at user request.
@@ -142,6 +219,26 @@ Significant architecture and product decisions. Append; never delete.
 **Decision**: Treat every design export as a feature-scoped mock to integrate **additively**. Never delete/replace existing components, pages, or the original design files based on a new export. Preserve existing functionality unless the user explicitly asks to remove it; flag any feature an export drops before removing it. Keep the original full design as the source of truth and store feature mocks in clearly-named subfolders (do not auto-replace the parent folder). Codified in `.claude/rules/working-style.md` → "Claude Design Exports — Additive, Never Replace" (auto-loaded every session). This supersedes the folder-replacement step in the 2026-06-25 "Design-First Workflow" entry.
 
 **Applied here**: Built only the detail-drawer reskin from the new export onto the existing UTM page; left the generator form, Recent URLs sidebar, and the grouped URL Library table untouched, per user direction. Renamed the export subfolder `Ad Op Tools UI Design (2)/` → `Ad Op Tools UI Design/detail-drawer/` for clarity.
+
+---
+
+## 2026-06-26 — Supabase: One Shared Project Now, Split Deferred to Launch
+
+**Decision**: Use the single shared `ad-op-tools` Supabase project for all build/test now; defer the dev/prod split to launch. Supersedes the "dev/prod split before Phase 1" part of the 2026-06-26 "Phase 1 Gating Decisions Confirmed" entry.
+
+**Rationale** (per user): there is no real production yet — `ad-op-tools` holds only the owner's own test data, zero real users. The split was meant to avoid polluting *real* production with test OAuth tokens / schema churn; that risk doesn't exist until launch. RLS already enforces per-user data isolation within one database, so the multi-tenant security model is built correctly from day one regardless of project count. The org is on Supabase's free plan (2 active projects, both used), so a dedicated dev project would mean Pro (~$25/mo) for no benefit at this stage.
+
+**Plan**: build/test on `ad-op-tools` and apply the Phase 1 migration there. At launch (first real user), stand up a fresh production project with its own keys + its own `TOKEN_ENCRYPTION_KEY`; today's project becomes dev. Closes SETUP-007; re-resolves INFRA-001.
+
+---
+
+## 2026-06-26 — Phase 0+1 Shipped; OAuth Needs One Consistent Origin (operational)
+
+**Milestone**: Phase 0+1 (integration foundation + Budget Dashboard, Meta) shipped to production and **manually verified** — real Meta OAuth connect + Sync pulling real spend on `ad-op-tools.vercel.app`. Merged the feature branch to `main`; production tracks `main`.
+
+**Operational learning (applies to every future ad-platform OAuth integration — Google, LinkedIn, TikTok, GTM)**: the OAuth round-trip only works when three things share the **same working origin**: (1) the domain the user is logged into, (2) `APP_ORIGIN` (which builds the `redirect_uri`), and (3) the redirect URI registered in the platform's app. The production 404s during testing were **not a code bug** — `ad-op-tools.vercel.app` (the production alias) had drifted to a stale Vercel deployment while the correct build was only reachable via the branch/`git-main` preview URL, so the Meta callback landed on a dead origin. Fix: re-point the production domain to the latest `main` deployment (Vercel "Promote to Production").
+
+**Next time**: keep the production domain alias on the latest `main` deployment; set `APP_ORIGIN` to that exact production origin; register the matching `…/api/integrations/<platform>/callback` redirect URI; test the OAuth flow on that one origin, not a preview URL.
 
 ---
 
@@ -175,3 +272,26 @@ nullable. `product-spec.md` is the feature source; `roadmap.md` is the decision/
 **Write surfaces**: only two API writes exist in the whole product — GTM (gated publish) and
 Search Term Triage negatives (live). RSA Builder and Negative Keyword export are CSV-only by
 design. (Corrected an earlier mischaracterization that Search Term Triage was the sole write.)
+
+---
+
+## 2026-06-26 — Post-merge reconciliation: expanded roadmap meets shipped Budget Dashboard
+
+**Context**: The "Product roadmap locked" decision above was made on a branch cut before `main`
+shipped Phase 0+1. Merging `main` back in reconciled the two plans.
+
+**Reconciliation**:
+- `main` independently shipped the integration foundation + Budget Dashboard (Meta):
+  `platform_connections` + `budget_entries`, app-side AES-256-GCM `token-crypto.ts`,
+  the `AdPlatformClient` interface, the Meta client. This **resolves ENC-001** — it is the same
+  decision as SEC-001, already built.
+- The **multi-client foundation now EXTENDS the existing `platform_connections`** (currently
+  per-user, no `client_id`) by adding a nullable `client_id` — an ALTER — rather than creating the
+  table fresh as the architect/planner design assumed. The `clients`/`campaigns` portion of that
+  design stands; the connections portion reduces to an ALTER + reuse of `token-crypto.ts`.
+- The expanded ~25-feature inventory (`roadmap.md`) is the plan of record; `main`'s original
+  Phase 2/3/4 (Google Ads read-path, GTM, Creative→Fatigue Monitor) are subsumed into it. `main`'s
+  architectural guardrails (integer-micros money, idempotent upserts, `transforms.ts` isolation,
+  RLS-in-migration, one-app-per-platform) carry forward unchanged.
+- open-questions **INFRA-001 collided** (main: Supabase split; ours: email/cron) — our email/cron
+  item renamed **INFRA-002**. ENC-001 moved to Resolved.

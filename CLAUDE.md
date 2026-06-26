@@ -10,7 +10,7 @@ Every new campaign requires 10–20 repeated manual steps across multiple platfo
 
 | Layer | Choice |
 |-------|--------|
-| Framework | Next.js 14+ App Router |
+| Framework | Next.js 16 App Router (React 19) |
 | Language | TypeScript strict |
 | Database / Auth | Supabase (PostgreSQL + Auth + Storage) |
 | Styling | Tailwind CSS |
