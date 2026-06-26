@@ -159,3 +159,16 @@ Significant architecture and product decisions. Append; never delete.
 **Decision**: User confirmed the three Phase 1 gating items: (1) **first platform = Meta**; (2) **OAuth token encryption = app-side AES-256-GCM** — encrypt token columns in server code before insert, key in a server-only env var `TOKEN_ENCRYPTION_KEY` (never `NEXT_PUBLIC_*`), distinct per environment; RLS stays on as defense-in-depth; RLS-only is not acceptable for token columns; (3) **dev/prod Supabase split happens before Phase 1** (the first phase to write live credentials). Closes open-questions INT-001, SEC-001, INFRA-001.
 
 **Meta app prerequisite (clarification)**: Pulling spend via the Meta Marketing API requires a registered Meta app (App ID + Secret) owned by the product — this is the SaaS-side application that *powers* the "Connect" button, not an alternative to it. Compare a Looker Studio Meta connector, or the GitHub App authorized for Claude: in those cases the vendor already registered the app, so the user only saw the "authorize" step; here we are the vendor, so we register it once. App registration is a one-time human setup (matches the documented "first-time OAuth connection per platform is manual"); per-account connection is the OAuth click-flow. Phase 1 testing against the owner's own ad account works in dev mode **without** Meta App Review; App Review + Business Verification are required before onboarding external users. Tracked as SETUP-006; dev Supabase project creation tracked as SETUP-007.
+
+---
+
+## 2026-06-26 — One App Per Platform; Scopes Per Feature
+
+**Decision**: Each ad platform needs exactly one registered developer app, created once — **not one per feature/slice**. Across the whole product that's ~4 registrations total (Meta; Google — one OAuth client can cover both Google Ads and GTM via separate scopes; LinkedIn; TikTok). Capabilities are governed by the OAuth **scopes** a feature requests on the existing app, never by re-registering:
+- Meta budget + analytics reading → `ads_read` (Insights API: spend, impressions, clicks, conversions, breakdowns).
+- Meta writing (Creative Asset Manager) → add `ads_management` to the same app; the user re-consents with one click.
+- Google Ads read + write → single `adwords` scope; GTM → `tagmanager.*` scope, same Google project.
+
+**Scope strategy**: request scopes incrementally (least privilege — read scopes now, write scopes when Creative ships). Re-consent is a single click; least privilege gives better security and better consent rates. Meta App Review (only needed for *external* users) is per advanced permission on the same app, done once per permission — never per slice; the owner's own accounts work in dev mode without review.
+
+**Implication for the user**: a human registers once per platform (≈4 times ever), and never per feature. This is why pinning the Meta registration (SETUP-006) costs us nothing now — adding it later unlocks every Meta feature, not just Budget.
