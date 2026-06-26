@@ -33,7 +33,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## SETUP-006 — Meta app registration (Phase 1 prerequisite, user action)
 
-**Status**: Deferred — pinned by user 2026-06-26 until the Budget UI is further along (revisit later today/tomorrow). This is a one-time, **once-per-platform** setup, **not per-feature** — later features (writing, more read types) add OAuth *scopes* to the same app, never a new registration (see decision-log "One App Per Platform; Scopes Per Feature").
+**Status**: In progress — user **registered the Meta app 2026-06-26** (has dashboard access). Remaining before wiring OAuth: provide `META_APP_ID` / `META_APP_SECRET`, add the redirect URIs (Facebook Login → Settings), and confirm the `ads_read` permission. One-time, **once-per-platform** setup — later features add OAuth *scopes* to the same app, never a new registration (see decision-log "One App Per Platform; Scopes Per Feature").
 **Context**: The Meta Marketing API requires a registered Meta app (App ID + Secret) to power the OAuth "Connect" flow. This is the product-side app behind the connect button (cf. a Looker Studio Meta connector or the Claude GitHub App — the vendor registers it once, users authorize it per account). Created once for the whole product; per-account connection is the OAuth click-flow.
 **Action**: User creates a Meta app at developers.facebook.com (type **Business** → add the **Marketing API** product), sets the OAuth redirect URI to `…/api/integrations/meta/callback` for both Vercel domains, and provides `META_APP_ID` / `META_APP_SECRET`. Phase 1 (owner's own ad account, dev mode) needs **no Meta App Review**; App Review + Business Verification are required later to onboard external paying users.
 **Owner**: User
