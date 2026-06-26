@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, Fragment } from 'react'
 import type { Database } from '@/types/database'
 
 type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
@@ -8,6 +8,7 @@ type GroupBy = 'all' | 'source' | 'campaign'
 
 type ProcessedRow = {
   id: string
+  entry: UTMHistoryEntry
   idFull: string
   idTail: string
   campaign: string
@@ -53,6 +54,7 @@ function buildSections(
 
   const mapRow = (e: UTMHistoryEntry, idx: number): ProcessedRow => ({
     id: e.id,
+    entry: e,
     idFull: e.id + '-full',
     idTail: e.id + '-tail',
     campaign: e.campaign,
@@ -114,7 +116,7 @@ function CopyButton({ value, id, copiedId, onCopy }: CopyButtonProps) {
   return (
     <button
       type="button"
-      onClick={() => onCopy(value, id)}
+      onClick={(e) => { e.stopPropagation(); onCopy(value, id) }}
       title={copied ? 'Copied!' : 'Copy'}
       style={{ flexShrink: 0, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e9ebef', background: '#fff', borderRadius: 7, color: copied ? '#22c55e' : '#9aa0aa', cursor: 'pointer' }}
     >
@@ -137,9 +139,9 @@ function GroupToggle({ label, active, onClick }: GroupToggleProps) {
   )
 }
 
-type Props = { entries: UTMHistoryEntry[] }
+type Props = { entries: UTMHistoryEntry[]; onRowClick?: (entry: UTMHistoryEntry) => void }
 
-export function UTMUrlLibrary({ entries }: Props) {
+export function UTMUrlLibrary({ entries, onRowClick }: Props) {
   const [groupBy, setGroupBy] = useState<GroupBy>('all')
   const [filter, setFilter] = useState('')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
@@ -234,7 +236,7 @@ export function UTMUrlLibrary({ entries }: Props) {
             )}
 
             {sections.map((sec) => (
-              <>
+              <Fragment key={sec.key}>
                 {/* Group header */}
                 {sec.showHeader && (
                   <tr key={sec.key + '-header'} onClick={() => toggleGroup(sec.key)} style={{ cursor: 'pointer', background: '#f3f4f7' }}>
@@ -252,7 +254,7 @@ export function UTMUrlLibrary({ entries }: Props) {
 
                 {/* Data rows */}
                 {sec.rows.map((r) => (
-                  <tr key={r.id} style={{ height: 48, background: r.bg, borderBottom: '1px solid #f1f2f4' }}>
+                  <tr key={r.id} className="utm-row" onClick={() => onRowClick?.(r.entry)} style={{ height: 48, background: r.bg, borderBottom: '1px solid #f1f2f4' }}>
                     <td style={{ padding: '0 14px', overflow: 'hidden' }}>
                       <div title={r.campaign} style={{ fontSize: 13.5, fontWeight: 700, color: '#161922', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign}</div>
                     </td>
@@ -291,7 +293,7 @@ export function UTMUrlLibrary({ entries }: Props) {
                     </td>
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

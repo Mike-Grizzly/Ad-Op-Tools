@@ -2,10 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { utmParamsSchema, saveTemplateSchema } from './validation'
+import { utmParamsSchema, saveTemplateSchema, utmHistoryIdSchema } from './validation'
 import type { UTMParamsInput, SaveTemplateInput } from './validation'
+import type { Database } from '@/types/database'
 
 type ActionResult<T> = { data: T; error?: undefined } | { data?: undefined; error: string }
+type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
 
 export async function generateAndSaveURL(
   input: unknown
@@ -37,6 +39,69 @@ export async function generateAndSaveURL(
 
   revalidatePath('/utm')
   return { data: { generated_url } }
+}
+
+export async function updateUTMHistory(
+  id: unknown,
+  input: unknown
+): Promise<ActionResult<UTMHistoryEntry>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const idParsed = utmHistoryIdSchema.safeParse(id)
+  if (!idParsed.success) return { error: 'Invalid id' }
+
+  const parsed = utmParamsSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+
+  const params = parsed.data
+  const generated_url = buildUTMUrl(params)
+
+  const { data, error } = await supabase
+    .from('utm_history')
+    .update({
+      base_url: params.base_url,
+      source: params.source,
+      medium: params.medium,
+      campaign: params.campaign,
+      content: params.content || null,
+      term: params.term || null,
+      ad_set: params.ad_set || null,
+      creative: params.creative || null,
+      generated_url,
+    })
+    .eq('id', idParsed.data)
+    .eq('user_id', user.id)
+    .select('*')
+    .single()
+
+  if (error || !data) return { error: 'Failed to update URL' }
+
+  revalidatePath('/utm')
+  return { data }
+}
+
+export async function deleteUTMHistory(
+  id: unknown
+): Promise<ActionResult<null>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const idParsed = utmHistoryIdSchema.safeParse(id)
+  if (!idParsed.success) return { error: 'Invalid id' }
+
+  const { error } = await supabase
+    .from('utm_history')
+    .delete()
+    .eq('id', idParsed.data)
+    .eq('user_id', user.id)
+
+  if (error) return { error: 'Failed to delete URL' }
+
+  revalidatePath('/utm')
+  return { data: null }
 }
 
 export async function saveTemplate(

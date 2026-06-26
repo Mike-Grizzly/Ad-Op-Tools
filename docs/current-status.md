@@ -1,13 +1,17 @@
 # Current Status
 
 ## Project Phase
-**Feature Slice 1: UTM Generator — Built, not yet manually tested in production.**
-All code is on `main`, deployed to Vercel.
+**Feature Slice 1: UTM Generator — Built and manually tested in production. Complete.**
+UTM generator + URL Library + edit/delete + detail drawer verified working in production by the
+user (2026-06-26).
 
-**Roadmap is set** (`docs/roadmap.md`): next deliverable is **Phase 0+1 — integration
-foundation + Budget Dashboard (Meta, read-only)**. Three gating decisions must be confirmed
-before that build starts (open-questions INT-001 first platform, SEC-001 token encryption,
-INFRA-001 dev/prod Supabase split). No Phase 1 code has been written yet.
+**Now building Phase 0+1 — integration foundation + Budget Dashboard (Meta, read-only)**
+(`docs/roadmap.md`). Landed so far (backend; not yet wired to UI): the `AdPlatformClient`
+canonical types, the `platform_connections` + `budget_entries` migration (database + security
+reviewed; **not yet applied to any DB**), and the budget feature's `validation.ts` / `constants.ts`.
+Phase 1 gating decisions are **confirmed**: Meta first; app-side AES-256-GCM token encryption; and
+**one shared Supabase project for now — dev/prod split deferred to launch** (per user 2026-06-26;
+RLS already gives per-user isolation within the single DB).
 
 ## What Exists — Code
 
@@ -23,18 +27,22 @@ INFRA-001 dev/prod Supabase split). No Phase 1 code has been written yet.
 - `.env.example` — all env vars documented with placeholders
 
 ### UTM Generator (`src/features/utm/`)
-- `validation.ts` — Zod schemas for `utmParamsSchema` (includes `ad_set`, `creative`) and `saveTemplateSchema`
+- `validation.ts` — Zod schemas: `utmParamsSchema` (includes `ad_set`, `creative`), `saveTemplateSchema`, `utmHistoryIdSchema` (uuid for edit/delete)
 - `constants.ts` — `UTM_SOURCES`, `UTM_MEDIUMS` dropdown options
-- `actions.ts` — four server actions:
+- `actions.ts` — six server actions:
   - `generateAndSaveURL` — builds and persists tagged URL
+  - `updateUTMHistory` — edits a history entry's params, rebuilds `generated_url` server-side (user-scoped)
+  - `deleteUTMHistory` — removes a history entry (user-scoped)
   - `saveTemplate` — saves reusable parameter template
   - `deleteTemplate` — removes template (user-scoped)
   - `getAutocompleteSuggestions` — prefix search on `campaign` or `base_url` with field whitelist
+- `url.ts` — shared client-side preview URL builder (`buildPreviewUrl`), used by the form and the detail drawer
 - `queries.ts` — `getUTMTemplates()`, `getUTMHistory(limit=500)`
 - `components/utm-form.tsx` — form with `AutocompleteInput` on Campaign + Base URL, optional Ad Set + Creative fields, live URL preview, template load/save
 - `components/utm-history-table.tsx` — Recent URLs sidebar; shows last 20; UTM tail + full URL copy buttons with 1.5s green checkmark feedback
-- `components/utm-url-library.tsx` — spreadsheet table for all entries; group-by (All / Source / Campaign), collapsible headers, text filter, copy buttons
-- `components/utm-page-client.tsx` — client shell wiring all components together
+- `components/utm-url-library.tsx` — spreadsheet table for all entries; group-by (All / Source / Campaign), collapsible headers, text filter, copy buttons; rows are clickable and open the detail drawer
+- `components/utm-detail-drawer.tsx` — right-side slide-over styled to the `Ad Op Tools UI Design/detail-drawer/` Claude Design export; view all params, edit any field (live preview, rebuilds URL on save), delete with inline confirm; disabled analytics placeholder for later
+- `components/utm-page-client.tsx` — client shell wiring all components together; owns drawer state + optimistic update/delete
 - `app/(dashboard)/utm/page.tsx` — server component fetching templates + history, rendering `UTMPageClient`
 
 ## What Exists — Infrastructure
@@ -46,10 +54,12 @@ INFRA-001 dev/prod Supabase split). No Phase 1 code has been written yet.
 - Supabase Auth URL config: Site URL + redirect URLs for both Vercel domains
 
 ## Database State
-- Two migrations applied to remote DB (tracked in `supabase/migrations/`):
+- Migrations tracked in `supabase/migrations/`:
   - `20260624000000_create_utm_tables.sql` — creates `utm_templates` and `utm_history` with RLS
   - `20260625000000_utm_history_add_columns.sql` — adds `ad_set`, `creative` columns; adds prefix-search indexes
+  - `20260626000000_utm_history_update_policy.sql` — granular UPDATE RLS policy on `utm_history` (for the edit feature). **Not applied to remote** — see note below.
 - RLS enabled on both tables; policies are user-scoped (`user_id = auth.uid()`)
+- **Tracked-vs-remote RLS divergence**: the remote DB was provisioned manually with a single consolidated `FOR ALL` policy per table (`users manage own utm_*`, `USING`/`WITH CHECK = auth.uid() = user_id`), which already permits UPDATE/DELETE. The tracked migrations instead use granular per-command policies. Effective permissions are identical; the new UPDATE-policy migration keeps the granular tracked lineage complete for fresh environments (e.g. dev/prod split). Do not `supabase db pull` over the tracked migrations. See decision-log 2026-06-26 and open-questions UTM-004.
 - `src/types/database.ts` is hand-maintained (not auto-generated from Supabase CLI); reflects current schema
 
 ## Not Built Yet
@@ -60,10 +70,12 @@ no `src/types/integrations.ts`, no `AdPlatformClient`, no `platform_connections`
 - Custom reporting / additional platforms (Phase 2)
 - GTM automation (Phase 3)
 - Creative asset manager (Phase 4)
-- Dev/prod Supabase project split (recommended before Phase 1 — INFRA-001)
+- Dev/prod Supabase project split (deferred to launch — one shared project for now, per user 2026-06-26)
 
 ## Last Updated
-2026-06-25 — Roadmap session: `architect` + `planner` review set the build order
-(`docs/roadmap.md`); ARCH-002 re-resolved to Budget-first; gating decisions recorded
-(INT-001/SEC-001/INFRA-001); `docs/features/budget.md` spec drafted; fixed doc drift
-(`database.ts` header, `CLAUDE.md` Next.js version). No feature code changed.
+2026-06-26 — Phase 0+1 backend foundation underway: `AdPlatformClient` canonical types, `platform_connections` + `budget_entries` migration (database + security reviewed; hardened with key-versioning, split token columns, RLS init-plan; **not yet applied**), budget `validation.ts`/`constants.ts`. Supabase dev/prod split deferred to launch (one shared project for now, per user). Budget design brief written (`docs/design/design-brief.md`). Branch synced with main (UTM edit/delete slice).
+2026-06-26 (final) — User manually verified the URL Library detail drawer + inline editing in production; all working. Marked the UTM edit/delete slice complete and merged `claude/quirky-dirac-o95ke7` → `main`.
+2026-06-26 (later) — Merged the new Claude Design export (URL Library + drawer) from main and reskinned `utm-detail-drawer.tsx` to match it; the grouped URL Library table and the generator form were left untouched, per direction (only the drawer was in scope). Added a guardrail in `.claude/rules/working-style.md` so design exports are integrated additively, never used to wholesale-replace existing UI. Renamed the export subfolder → `Ad Op Tools UI Design/detail-drawer/`.
+2026-06-26 — UTM history edit/delete + detail drawer added on branch `claude/quirky-dirac-o95ke7`. New `updateUTMHistory`/`deleteUTMHistory` actions, `utm-detail-drawer.tsx`, shared `url.ts`, UPDATE-policy migration (tracked only). type-check/lint/build green; reviewed by security/react/code/database agents.
+2026-06-25 — Roadmap session: `architect` + `planner` review set the build order (`docs/roadmap.md`); ARCH-002 re-resolved to Budget-first; gating decisions recorded.
+2026-06-25 — UTM Generator feature slice complete: form, history sidebar, URL Library spreadsheet, autocomplete, Ad Set/Creative fields. All committed and pushed to main.

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#dfe2e7;border-radius:999px;border:3px solid transparent;background-clip:padding-box}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f6f7f9;font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased">
+
+  <!-- spreadsheet app -->
+  <div style="padding:40px 48px 80px;max-width:1240px;margin:0 auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:26px">
+      <div>
+        <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9aa0aa;font-weight:600;font-family:'JetBrains Mono',monospace;margin-bottom:10px">Ad Op Tools · UTM Generator</div>
+        <div style="font-size:25px;font-weight:800;color:#161922;letter-spacing:-.015em">URL Library</div>
+        <div style="font-size:14px;color:#6b727f;margin-top:6px">{{ rowCountLabel }} · click any row to open its detail drawer</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9aa0aa;background:#fff;border:1px solid #e9ebef;border-radius:9px;padding:10px 13px;width:180px">Search URLs…</div>
+        <button style="font-size:13.5px;font-weight:600;color:#fff;background:#4f46e5;border:none;border-radius:9px;padding:11px 16px;cursor:pointer" style-hover="background:#4338ca">+ New URL</button>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e9ebef;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(22,25,34,.04)">
+      <div style="display:grid;grid-template-columns:1.7fr .9fr .9fr 2.6fr .7fr;padding:13px 22px;border-bottom:1px solid #e9ebef;background:#fbfbfc;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9aa0aa;font-weight:600">
+        <div>Campaign</div><div>Source</div><div>Medium</div><div>Tagged URL</div><div>Created</div>
+      </div>
+      <sc-for list="{{ rows }}" as="row" hint-placeholder-count="6">
+        <div onClick="{{ row.onOpen }}" style="display:grid;grid-template-columns:1.7fr .9fr .9fr 2.6fr .7fr;padding:15px 22px;border-bottom:1px solid #f1f2f4;align-items:center;cursor:pointer;background:{{ row.bg }};transition:background .12s ease" style-hover="background:rgba(79,70,229,.05)">
+          <div style="font-size:13.5px;font-weight:600;color:#161922;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px">{{ row.campaign }}</div>
+          <div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;background:rgba(79,70,229,.09);color:#4f46e5;display:inline-block">{{ row.source }}</span></div>
+          <div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;background:#f1f2f4;color:#5b626e;display:inline-block">{{ row.medium }}</span></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#6b727f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px">{{ row.shortUrl }}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9aa0aa">{{ row.createdShort }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noRows }}">
+        <div style="padding:40px;text-align:center;font-size:14px;color:#9aa0aa">No URLs yet. <span onClick="{{ resetRows }}" style="color:#4f46e5;font-weight:600;cursor:pointer">Restore sample data</span></div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- backdrop -->
+  <div onClick="{{ onBackdrop }}" style="position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:{{ backdropOpacity }};pointer-events:{{ backdropPointer }};transition:opacity .26s ease;z-index:40"></div>
+
+  <!-- drawer -->
+  <div style="position:fixed;top:0;right:0;bottom:0;width:440px;background:#fff;display:flex;flex-direction:column;box-shadow:-26px 0 54px -22px rgba(22,25,34,.45);transform:translateX({{ drawerX }});transition:transform .26s cubic-bezier(.32,.72,0,1);z-index:50">
+
+    <!-- header -->
+    <div style="padding:20px 22px 16px;border-bottom:1px solid #e9ebef">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:#161922;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em">{{ sel.campaign }}</div>
+          <div style="display:flex;gap:7px;margin-top:10px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:rgba(79,70,229,.09);color:#4f46e5">{{ sel.source }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:#f1f2f4;color:#5b626e">{{ sel.medium }}</span>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9aa0aa;margin-top:11px">Created {{ sel.createdLong }}</div>
+        </div>
+        <button onClick="{{ onClose }}" style="flex:none;width:32px;height:32px;border:none;background:transparent;color:#6b727f;border-radius:8px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f1f2f4;color:#161922">✕</button>
+      </div>
+    </div>
+
+    <!-- body -->
+    <div style="flex:1;overflow-y:auto;padding:18px 22px 8px;display:flex;flex-direction:column;gap:22px">
+
+      <!-- tagged url card -->
+      <div style="background:#0f1118;border:1px solid #1d2030;border-radius:12px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6b727f;font-weight:600">Tagged URL</span>
+          <button onClick="{{ onCopy }}" style="display:inline-flex;align-items:center;gap:6px;background:#1d2030;color:#cdd3e0;border:1px solid #2a2f42;border-radius:7px;padding:5px 11px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;cursor:pointer" style-hover="background:#262b3d">
+            <sc-if value="{{ notCopied }}" hint-placeholder-val="{{ true }}"><span>Copy</span></sc-if>
+            <sc-if value="{{ copied }}"><span style="color:#22c55e;font-weight:600">✓ Copied</span></sc-if>
+          </button>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;color:#cdd3e0;word-break:break-all">{{ taggedUrl }}</div>
+      </div>
+
+      <!-- parameters -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9aa0aa;font-weight:600;margin-bottom:8px">Parameters</div>
+
+        <sc-if value="{{ isEditing }}">
+          <div style="animation:fadeUp .24s ease">
+            <sc-for list="{{ editParams }}" as="param" hint-placeholder-count="8">
+              <div style="padding:12px 0;border-bottom:1px solid #f1f2f4;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:baseline;gap:9px">
+                  <span style="font-size:13px;font-weight:600;color:#161922">{{ param.label }}</span>
+                  <sc-if value="{{ param.hasKey }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa0aa">{{ param.key }}</span></sc-if>
+                </div>
+                <input value="{{ param.editValue }}" onChange="{{ param.onEdit }}" placeholder="{{ param.placeholder }}" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#161922;background:#fff;border:1px solid {{ param.borderColor }};border-radius:9px;padding:9px 11px;outline:none" style-focus="border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.12)" />
+                <sc-if value="{{ param.showWarn }}">
+                  <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#c2410c;margin-top:1px">
+                    <span style="flex:none;width:15px;height:15px;border-radius:999px;background:rgba(239,68,68,.13);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">!</span>
+                    <span>{{ warnText }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ notEditing }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <sc-for list="{{ viewParams }}" as="param" hint-placeholder-count="8">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #f1f2f4">
+                <div style="min-width:0;flex:none">
+                  <div style="font-size:13.5px;font-weight:600;color:#161922">{{ param.label }}</div>
+                  <sc-if value="{{ param.hasKey }}"><div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9aa0aa;margin-top:2px">{{ param.key }}</div></sc-if>
+                </div>
+                <div style="text-align:right;max-width:240px;min-width:0">
+                  <sc-if value="{{ param.vSource }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:rgba(79,70,229,.09);color:#4f46e5;display:inline-block">{{ param.value }}</span></sc-if>
+                  <sc-if value="{{ param.vMedium }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:#f1f2f4;color:#5b626e;display:inline-block">{{ param.value }}</span></sc-if>
+                  <sc-if value="{{ param.vMuted }}"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#9aa0aa">—</span></sc-if>
+                  <sc-if value="{{ param.vMono }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#161922;word-break:break-all">{{ param.value }}</span></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- analytics (future) -->
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9aa0aa;font-weight:600">Analytics</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:3px 9px;border-radius:999px;background:#f1f2f4;color:#9aa0aa;font-weight:600;letter-spacing:.08em;text-transform:uppercase">Coming soon</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;opacity:.5">
+          <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">Clicks</span>
+            <div style="height:18px;width:70%;background:#eceef1;border-radius:6px"></div>
+          </div>
+          <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">CTR</span>
+            <div style="height:18px;width:55%;background:#eceef1;border-radius:6px"></div>
+          </div>
+          <div style="border:1px dashed #e1e4e9;border-radius:12px;padding:13px;background:#fafbfc;display:flex;flex-direction:column;gap:11px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa0aa">Last seen</span>
+            <div style="height:18px;width:80%;background:#eceef1;border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- footer: VIEW -->
+    <sc-if value="{{ isView }}">
+      <div style="border-top:1px solid #e9ebef;padding:14px 22px;display:flex;gap:10px;animation:fadeUp .2s ease">
+        <button onClick="{{ onEdit }}" style="flex:1;background:#4f46e5;color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#4338ca">Edit</button>
+        <button onClick="{{ onAskDelete }}" style="background:#fff;color:#ef4444;border:1px solid #e9ebef;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.04)">Delete</button>
+      </div>
+    </sc-if>
+
+    <!-- footer: EDIT -->
+    <sc-if value="{{ isEditing }}">
+      <div style="border-top:1px solid #e9ebef;padding:14px 22px;display:flex;gap:10px;animation:fadeUp .2s ease">
+        <button onClick="{{ onSave }}" disabled="{{ saving }}" style="flex:1;background:{{ saveBg }};color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:{{ saveCursor }};display:inline-flex;align-items:center;justify-content:center;gap:9px;opacity:{{ saveOpacity }}" style-hover="background:#4338ca">
+          <sc-if value="{{ saving }}"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .6s linear infinite"></span></sc-if>
+          <span>{{ saveLabel }}</span>
+        </button>
+        <button onClick="{{ onCancelEdit }}" disabled="{{ saving }}" style="background:#fff;color:#4b5563;border:1px solid #e1e4e9;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#f6f7f9">Cancel</button>
+      </div>
+    </sc-if>
+
+    <!-- footer: DELETE -->
+    <sc-if value="{{ isDelete }}">
+      <div style="border-top:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.05);padding:16px 22px;display:flex;flex-direction:column;gap:13px;animation:fadeUp .2s ease">
+        <div style="font-size:13.5px;color:#161922;font-weight:600">Delete this URL? <span style="font-weight:500;color:#6b727f">This can't be undone.</span></div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ onConfirmDelete }}" disabled="{{ deleting }}" style="flex:1;background:{{ deleteBg }};color:#fff;border:none;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:{{ deleteCursor }};display:inline-flex;align-items:center;justify-content:center;gap:9px" style-hover="background:#dc2626">
+            <sc-if value="{{ deleting }}"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .6s linear infinite"></span></sc-if>
+            <span>{{ deleteLabel }}</span>
+          </button>
+          <button onClick="{{ onCancelDelete }}" disabled="{{ deleting }}" style="background:#fff;color:#4b5563;border:1px solid #e1e4e9;border-radius:9px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#fff8f8">Cancel</button>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <!-- toast -->
+  <sc-if value="{{ toast.show }}">
+    <div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;background:#161922;color:#fff;border-radius:11px;padding:12px 18px;box-shadow:0 12px 30px -8px rgba(22,25,34,.45);animation:toastIn .22s ease;font-size:13.5px;font-weight:600">
+      <span style="width:18px;height:18px;border-radius:999px;background:{{ toast.dot }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">{{ toast.icon }}</span>
+      <span>{{ toast.msg }}</span>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  initialRows(){
+    return [
+      { id:1, campaign:'Summer Sale 2026 — Email Blast', createdShort:'Jun 24', createdLong:'Jun 24, 2026',
+        p:{ source:'newsletter', medium:'email', campaign:'summer_sale_2026', content:'hero_cta', term:'', adset:'vip_segment', creative:'animated_banner', base:'https://shop.adoptools.com/summer' } },
+      { id:2, campaign:'Spring Launch Retargeting', createdShort:'Jun 21', createdLong:'Jun 21, 2026',
+        p:{ source:'meta', medium:'cpc', campaign:'spring_launch', content:'carousel_v2', term:'', adset:'lookalike_1pct', creative:'', base:'https://adoptools.com/spring' } },
+      { id:3, campaign:'Q3 Webinar Reminder', createdShort:'Jun 19', createdLong:'Jun 19, 2026',
+        p:{ source:'newsletter', medium:'email', campaign:'q3_webinar', content:'reminder_24h', term:'', adset:'', creative:'', base:'https://adoptools.com/webinar' } },
+      { id:4, campaign:'Brand Awareness — Display', createdShort:'Jun 15', createdLong:'Jun 15, 2026',
+        p:{ source:'google', medium:'display', campaign:'brand_2026', content:'', term:'', adset:'prospecting', creative:'leaderboard_728', base:'https://adoptools.com/brand' } },
+      { id:5, campaign:'Referral Program Invite', createdShort:'Jun 12', createdLong:'Jun 12, 2026',
+        p:{ source:'partner', medium:'referral', campaign:'referral_invite', content:'', term:'', adset:'', creative:'', base:'https://adoptools.com/refer' } },
+      { id:6, campaign:'Product Hunt Launch', createdShort:'Jun 09', createdLong:'Jun 09, 2026',
+        p:{ source:'producthunt', medium:'social', campaign:'ph_launch', content:'launch_day', term:'', adset:'', creative:'', base:'https://adoptools.com/ph' } }
+    ];
+  }
+
+  state = {
+    rows: this.initialRows(),
+    open: true,
+    selectedId: 1,
+    mode: 'view',      // view | edit | delete
+    busy: null,        // saving | deleting
+    copied: false,
+    edit: null,        // edit buffer
+    toast: null
+  };
+
+  componentDidMount(){
+    this._onKey = (e) => { if (e.key === 'Escape' && this.state.open && !this.state.busy) this.close(); };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount(){
+    window.removeEventListener('keydown', this._onKey);
+    clearTimeout(this._copyT); clearTimeout(this._busyT); clearTimeout(this._toastT);
+  }
+
+  getSel(){ return this.state.rows.find(r => r.id === this.state.selectedId) || this.state.rows[0] || null; }
+
+  computeUrl(p){
+    const order = [['utm_source',p.source],['utm_medium',p.medium],['utm_campaign',p.campaign],['utm_content',p.content],['utm_term',p.term],['utm_adset',p.adset],['utm_creative',p.creative]];
+    const qs = order.filter(x => x[1]).map(x => x[0] + '=' + encodeURIComponent(x[1])).join('&');
+    return (p.base || '') + (qs ? ('?' + qs) : '');
+  }
+
+  showToast(icon, msg, dot){
+    clearTimeout(this._toastT);
+    this.setState({ toast: { icon, msg, dot } });
+    this._toastT = setTimeout(() => this.setState({ toast: null }), 2200);
+  }
+
+  open(id){ this.setState({ open:true, selectedId:id, mode:'view', busy:null, copied:false, edit:null }); }
+  close(){ if (this.state.busy) return; this.setState({ open:false, mode:'view', busy:null, edit:null }); }
+  startEdit(){ const s = this.getSel(); this.setState({ mode:'edit', edit:{ ...s.p } }); }
+  cancelEdit(){ this.setState({ mode:'view', edit:null }); }
+  askDelete(){ this.setState({ mode:'delete' }); }
+  cancelDelete(){ this.setState({ mode:'view' }); }
+
+  saveEdit(){
+    const e = this.state.edit;
+    if (!/^https?:\/\//.test(e.base || '')) return; // invalid base — inline warning already shown
+    this.setState({ busy:'saving' });
+    clearTimeout(this._busyT);
+    this._busyT = setTimeout(() => {
+      this.setState(st => ({
+        rows: st.rows.map(r => r.id === st.selectedId ? { ...r, p:{ ...e }, source:e.source, medium:e.medium } : r),
+        mode:'view', busy:null, edit:null
+      }));
+      this.showToast('✓', 'Changes saved', '#16a34a');
+    }, 1100);
+  }
+
+  confirmDelete(){
+    this.setState({ busy:'deleting' });
+    clearTimeout(this._busyT);
+    this._busyT = setTimeout(() => {
+      this.setState(st => ({
+        rows: st.rows.filter(r => r.id !== st.selectedId),
+        open:false, mode:'view', busy:null, edit:null
+      }));
+      this.showToast('✓', 'URL deleted', '#c2410c');
+    }, 1100);
+  }
+
+  copy(url){
+    try { if (navigator.clipboard) navigator.clipboard.writeText(url); } catch(e){}
+    this.setState({ copied:true });
+    clearTimeout(this._copyT);
+    this._copyT = setTimeout(() => this.setState({ copied:false }), 1500);
+  }
+
+  buildViewParams(p){
+    const meta = this.meta();
+    return meta.map(m => {
+      const value = p[m.field];
+      const empty = !value;
+      return {
+        label:m.label, key:m.key, hasKey:!!m.key, value,
+        vSource:m.kind==='source', vMedium:m.kind==='medium',
+        vMuted:empty, vMono: !empty && m.kind!=='source' && m.kind!=='medium'
+      };
+    });
+  }
+
+  meta(){
+    return [
+      { label:'Source',   key:'utm_source',   field:'source',  kind:'source', placeholder:'newsletter · paid_social · referral' },
+      { label:'Medium',   key:'utm_medium',   field:'medium',  kind:'medium', placeholder:'email · cpc · social · organic' },
+      { label:'Campaign', key:'utm_campaign', field:'campaign', placeholder:'campaign name' },
+      { label:'Content',  key:'utm_content',  field:'content',  placeholder:'optional' },
+      { label:'Term',     key:'utm_term',     field:'term',     placeholder:'optional' },
+      { label:'Ad Set',   key:'utm_adset',    field:'adset',    placeholder:'optional' },
+      { label:'Creative', key:'utm_creative', field:'creative', placeholder:'optional' },
+      { label:'Base URL', key:'',             field:'base', isBase:true, placeholder:'https://example.com/path' }
+    ];
+  }
+
+  renderVals(){
+    const st = this.state;
+    const sel = this.getSel() || { campaign:'', source:'', medium:'', createdLong:'', p:{} };
+    const e = st.edit;
+    const baseInvalid = !!e && !/^https?:\/\//.test(e.base || '');
+
+    const editParams = this.meta().map(m => ({
+      label:m.label, key:m.key, hasKey:!!m.key, placeholder:m.placeholder || '',
+      editValue: e ? e[m.field] : '',
+      showWarn: !!m.isBase && baseInvalid,
+      borderColor: (m.isBase && baseInvalid) ? '#ef4444' : '#e1e4e9',
+      onEdit: (ev) => { const v = (ev && ev.target) ? ev.target.value : ''; this.setState(s => ({ edit:{ ...s.edit, [m.field]: v } })); }
+    }));
+
+    const viewParams = this.buildViewParams(sel.p);
+    const taggedUrl = (st.mode === 'edit' && e) ? this.computeUrl(e) : this.computeUrl(sel.p);
+
+    const rows = st.rows.map(r => ({
+      ...r,
+      source: r.p.source, medium: r.p.medium,
+      shortUrl: this.computeUrl(r.p).replace(/^https?:\/\//,'').slice(0,42) + '…',
+      bg: (st.open && r.id === st.selectedId) ? 'rgba(79,70,229,.07)' : '#fff',
+      onOpen: () => this.open(r.id)
+    }));
+
+    const saving = st.busy === 'saving';
+    const deleting = st.busy === 'deleting';
+
+    return {
+      rows, noRows: rows.length === 0,
+      rowCountLabel: rows.length + (rows.length === 1 ? ' tagged URL' : ' tagged URLs'),
+      resetRows: () => this.setState({ rows: this.initialRows() }),
+
+      sel: { ...sel, source: sel.p.source, medium: sel.p.medium },
+      drawerX: st.open ? '0' : '100%',
+      backdropOpacity: st.open ? 1 : 0,
+      backdropPointer: st.open ? 'auto' : 'none',
+      onBackdrop: () => this.close(),
+      onClose: () => this.close(),
+
+      isView: st.mode === 'view',
+      isEditing: st.mode === 'edit',
+      isDelete: st.mode === 'delete',
+      notEditing: st.mode !== 'edit',
+
+      taggedUrl,
+      copied: st.copied, notCopied: !st.copied,
+      onCopy: () => this.copy(taggedUrl),
+
+      viewParams, editParams,
+      warnText: 'Include the full protocol, e.g. https://',
+
+      onEdit: () => this.startEdit(),
+      onCancelEdit: () => this.cancelEdit(),
+      onSave: () => this.saveEdit(),
+      saving,
+      saveLabel: saving ? 'Saving…' : 'Save changes',
+      saveBg: baseInvalid ? '#a5a3e8' : '#4f46e5',
+      saveCursor: (saving || baseInvalid) ? 'not-allowed' : 'pointer',
+      saveOpacity: baseInvalid ? '.7' : '1',
+
+      onAskDelete: () => this.askDelete(),
+      onCancelDelete: () => this.cancelDelete(),
+      onConfirmDelete: () => this.confirmDelete(),
+      deleting,
+      deleteLabel: deleting ? 'Deleting…' : 'Delete',
+      deleteBg: deleting ? '#dc2626' : '#ef4444',
+      deleteCursor: deleting ? 'not-allowed' : 'pointer',
+
+      toast: st.toast ? { show:true, icon:st.toast.icon, msg:st.toast.msg, dot:st.toast.dot } : { show:false, icon:'', msg:'', dot:'' }
+    };
+  }
+}
+</script>
+</body>
+</html>

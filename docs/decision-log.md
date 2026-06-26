@@ -192,3 +192,40 @@ Significant architecture and product decisions. Append; never delete.
 5. Any service-role sync path must not SELECT token columns.
 
 Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
+
+---
+
+## 2026-06-26 — UTM History Edit/Delete + Detail Drawer; RLS Lineage Divergence
+
+**Decision**: Add edit and delete for `utm_history` entries via a right-side detail drawer opened by clicking a row in the URL Library. This reverses the earlier "editing or deleting history entries — out of scope" note in the UTM spec, at user request.
+
+**Architecture**:
+- New server actions `updateUTMHistory` / `deleteUTMHistory` — auth-guarded, scoped with `.eq('user_id', user.id)`, Zod-validated (`utmHistoryIdSchema` for the id + `utmParamsSchema` for the body). `updateUTMHistory` rebuilds `generated_url` server-side via the existing strict `buildUTMUrl` and returns the full row so the client syncs state from the source of truth.
+- The drawer (`utm-detail-drawer.tsx`) is mounted with `key={entry.id}` and initializes local state from props, rather than resetting via an effect — idiomatic React, avoids set-state-in-effect and stale state when switching rows.
+- Extracted the client preview builder to `url.ts` (`buildPreviewUrl`), shared by the form and drawer (behavior-preserving move out of `utm-form.tsx`).
+
+**RLS decision**: The remote DB was provisioned manually with a single consolidated `FOR ALL` policy per UTM table (`USING`/`WITH CHECK = auth.uid() = user_id`), which already permits UPDATE/DELETE — so edit/delete work on remote with no DB change. The tracked migrations use granular per-command policies and lacked an UPDATE policy. Added `20260626000000_utm_history_update_policy.sql` (granular UPDATE) to keep the tracked lineage complete for fresh environments, but **did not apply it to remote** (would create a redundant overlapping policy on an already-working table).
+
+**Risk**: tracked migrations and remote now differ in policy *shape* (granular vs consolidated) though not in effect. Do not `supabase db pull` over the tracked lineage. Reconciling the two is deferred — see open-questions UTM-004.
+
+**Out of scope (deferred)**: per-UTM analytics in the drawer — a disabled "coming soon" placeholder is rendered so the layout reserves space for it.
+
+---
+
+## 2026-06-26 — Guardrail: Design exports are additive, never page replacements
+
+**Context**: A new Claude Design export (`Ad Op Tools UI Design (2)/`) was a standalone, feature-scoped redesign of just the URL Library + detail drawer — it dropped the generator form and simplified the table. The prior "Design-First Workflow" note (2026-06-25) said to "move files to replace the parent folder and delete the subfolder" on each new export, which would have clobbered the original full-page design and implied wholesale-replacing existing components. The user flagged this as a foot-gun.
+
+**Decision**: Treat every design export as a feature-scoped mock to integrate **additively**. Never delete/replace existing components, pages, or the original design files based on a new export. Preserve existing functionality unless the user explicitly asks to remove it; flag any feature an export drops before removing it. Keep the original full design as the source of truth and store feature mocks in clearly-named subfolders (do not auto-replace the parent folder). Codified in `.claude/rules/working-style.md` → "Claude Design Exports — Additive, Never Replace" (auto-loaded every session). This supersedes the folder-replacement step in the 2026-06-25 "Design-First Workflow" entry.
+
+**Applied here**: Built only the detail-drawer reskin from the new export onto the existing UTM page; left the generator form, Recent URLs sidebar, and the grouped URL Library table untouched, per user direction. Renamed the export subfolder `Ad Op Tools UI Design (2)/` → `Ad Op Tools UI Design/detail-drawer/` for clarity.
+
+---
+
+## 2026-06-26 — Supabase: One Shared Project Now, Split Deferred to Launch
+
+**Decision**: Use the single shared `ad-op-tools` Supabase project for all build/test now; defer the dev/prod split to launch. Supersedes the "dev/prod split before Phase 1" part of the 2026-06-26 "Phase 1 Gating Decisions Confirmed" entry.
+
+**Rationale** (per user): there is no real production yet — `ad-op-tools` holds only the owner's own test data, zero real users. The split was meant to avoid polluting *real* production with test OAuth tokens / schema churn; that risk doesn't exist until launch. RLS already enforces per-user data isolation within one database, so the multi-tenant security model is built correctly from day one regardless of project count. The org is on Supabase's free plan (2 active projects, both used), so a dedicated dev project would mean Pro (~$25/mo) for no benefit at this stage.
+
+**Plan**: build/test on `ad-op-tools` and apply the Phase 1 migration there. At launch (first real user), stand up a fresh production project with its own keys + its own `TOKEN_ENCRYPTION_KEY`; today's project becomes dev. Closes SETUP-007; re-resolves INFRA-001.

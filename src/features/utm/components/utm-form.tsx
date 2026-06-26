@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import type { Database } from '@/types/database'
 import { UTM_SOURCES, UTM_MEDIUMS } from '../constants'
+import { buildPreviewUrl } from '../url'
 
 type UTMTemplate = Database['public']['Tables']['utm_templates']['Row']
 type ActionResult<T> = { data: T; error?: undefined } | { data?: undefined; error: string }
@@ -15,25 +16,6 @@ type Props = {
   generateAction: (input: unknown) => Promise<ActionResult<{ generated_url: string }>>
   saveTemplateAction: (input: unknown) => Promise<ActionResult<{ id: string }>>
   autocompleteAction: (field: unknown, prefix: unknown) => Promise<ActionResult<string[]>>
-}
-
-function buildURL(
-  base: string, source: string, medium: string, campaign: string,
-  content: string, term: string, adSet: string, creative: string
-): string {
-  const trimmed = base.trim()
-  if (!trimmed) return ''
-  const clean = (v: string) => v.trim().replace(/\s+/g, '_')
-  const parts: string[] = []
-  if (source) parts.push('utm_source=' + encodeURIComponent(clean(source)))
-  if (medium) parts.push('utm_medium=' + encodeURIComponent(clean(medium)))
-  if (campaign) parts.push('utm_campaign=' + encodeURIComponent(clean(campaign)))
-  if (content) parts.push('utm_content=' + encodeURIComponent(clean(content)))
-  if (term) parts.push('utm_term=' + encodeURIComponent(clean(term)))
-  if (adSet) parts.push('utm_adset=' + encodeURIComponent(clean(adSet)))
-  if (creative) parts.push('utm_creative=' + encodeURIComponent(clean(creative)))
-  if (!parts.length) return trimmed
-  return trimmed + (trimmed.includes('?') ? '&' : '?') + parts.join('&')
 }
 
 const inputStyle: React.CSSProperties = {
@@ -160,7 +142,7 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
   const [savePending, setSavePending] = useState(false)
   const templateNameRef = useRef<HTMLInputElement>(null)
 
-  const generatedUrl = buildURL(baseUrl, source, medium, campaign, content, term, adSet, creative)
+  const generatedUrl = buildPreviewUrl(baseUrl, source, medium, campaign, content, term, adSet, creative)
   const urlInvalid = !!baseUrl && !/^https?:\/\//i.test(baseUrl.trim())
 
   const fetchCampaignSuggestions = useCallback(async (prefix: string) => {

@@ -24,9 +24,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## UTM-003 — Manual test in production not yet done
 
-**Status**: Open
-**Question**: The UTM Generator has not been manually tested end-to-end in the Vercel production deployment.
-**Action**: Open `ad-op-tools.vercel.app/utm`, generate a URL, verify it saves to history, appears in the URL Library, and copies correctly.
+**Status**: Resolved 2026-06-26 — user signed into the live app and verified the URL Library, detail drawer, and inline editing work end-to-end. The tagged URL updates correctly on save.
 **Owner**: User
 
 ---
@@ -42,10 +40,8 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## SETUP-007 — Create dev Supabase project (Phase 1 prerequisite)
 
-**Status**: Open — required before Phase 1 (per INFRA-001, now resolved).
-**Question**: Who creates the new dev Supabase project — user via the dashboard, or Claude via the Supabase tool (note: a new project may incur cost; would be confirmed first)?
-**Action**: Stand up a second Supabase project for development; the Phase 1 migration targets it. Set a distinct `TOKEN_ENCRYPTION_KEY` per environment.
-**Owner**: User to decide creation path.
+**Status**: Resolved 2026-06-26 — NOT creating a separate dev project now. Per user, we build and test on the single shared `ad-op-tools` project (RLS isolates per user), and stand up a clean production project at launch (when real users exist). The Phase 1 migration will be applied to `ad-op-tools`. Set a distinct `TOKEN_ENCRYPTION_KEY` per environment when the split happens. See decision-log "Supabase: One Shared Project Now."
+**Owner**: User
 
 ---
 
@@ -77,6 +73,40 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## UTM-004 — Tracked-vs-remote RLS policy shape divergence
+
+**Status**: Open
+**Question**: Remote uses one consolidated `FOR ALL` policy per UTM table; the tracked migrations use granular per-command policies (now including UPDATE). Effective permissions match, but the shapes differ.
+**Risk**: Low. `supabase db pull` would overwrite the granular tracked lineage with the consolidated form. A fresh environment built from the tracked migrations gets the granular policies (correct, UPDATE included).
+**Action**: At the dev/prod Supabase split, pick one canonical policy shape and reconcile. Until then, do not `db pull` over `supabase/migrations/`.
+**Owner**: Claude (at dev/prod split)
+
+---
+
+## UTM-005 — Minor tech debt surfaced in 2026-06-26 review
+
+**Status**: Open
+**Items** (none blocking, found while adding edit/delete):
+- `deleteTemplate` takes `id: string` with no uuid validation, unlike the new `deleteUTMHistory` (`utmHistoryIdSchema`). Align for consistency.
+- `utm_history.template_id` FK has no index; add a `(template_id)` index in a future migration.
+- `utm_templates.updated_at` has no auto-update trigger; the value never changes after insert unless set in app code.
+- `utm-page-client.tsx` stores the toast timer in `useState` (should be `useRef`); causes a spurious re-render per toast. Pre-existing.
+- `utm-url-library.tsx` computes an unused `totalFiltered`; dead code.
+**Owner**: Claude (next UTM maintenance pass)
+
+---
+
+## AUTH-001 — No in-app password reset / change flow
+
+**Status**: Open (deferred to a user-features slice, per user 2026-06-26)
+**Question**: The app has only a login page — no "Forgot password" or "Change password" UI. A locked-out user can't self-serve; recovery currently requires an admin password set directly on `auth.users`.
+**Context**: On 2026-06-26 the user's password was reset via an admin `UPDATE auth.users SET encrypted_password = crypt(...)` (bcrypt, pgcrypto in the `extensions` schema) as a one-off stopgap to regain access.
+**Action**: In the user-features slice, add `resetPasswordForEmail` + a reset page and an account "Change password" screen. Confirm Supabase SMTP for reset-link delivery, or use magic-link/OTP sign-in (works without custom SMTP).
+**Security note**: The temporary admin-set password is visible in session chat history — rotate it once the change-password flow exists.
+**Owner**: User / Claude (next user-features slice)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
@@ -88,5 +118,5 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - **ARCH-001** — First slice selection. Resolved 2026-06-25: UTM Generator built first.
 - **INT-001** — First platform. Resolved 2026-06-26: **Meta** confirmed by user. See decision-log "Phase 1 Gating Decisions Confirmed."
 - **SEC-001** — OAuth token encryption at rest. Resolved 2026-06-26: **app-side AES-256-GCM** confirmed (key in `TOKEN_ENCRYPTION_KEY`, server-only, per-env; RLS stays on as defense-in-depth; RLS-only not acceptable for token columns). See decision-log.
-- **INFRA-001** — dev/prod Supabase split. Resolved 2026-06-26: **split before Phase 1** confirmed. Execution tracked in SETUP-007. See decision-log.
+- **INFRA-001** — dev/prod Supabase split. Re-resolved 2026-06-26: **one shared `ad-op-tools` project for now; dev/prod split deferred to launch** (per user — RLS gives per-user isolation and there is no real production data yet). Supersedes the earlier "split before Phase 1." See decision-log "Supabase: One Shared Project Now."
 - **ARCH-002** — Next feature slice. Resolved 2026-06-25: **Budget Dashboard (Meta, read-only) next**, behind a thin integration foundation built through one platform. Full order in `docs/roadmap.md`. The prior GTM-first recommendation was rejected — its "no OAuth complexity / use service accounts" premise is incorrect: the GTM API requires Google OAuth, and service accounts are the wrong auth model for multi-tenant GTM (a service account is *our* GTM, not the user's). See decision-log "Build Roadmap & Feature Order."
