@@ -2,7 +2,11 @@
 // Each platform's transforms.ts maps its native API responses into these shapes,
 // so consumers (Budget Dashboard, Reporting) stay platform-blind.
 
-export type AdPlatform = 'meta' | 'google_ads' | 'linkedin' | 'tiktok'
+// The ad platforms we integrate with. Single source of truth — the AdPlatform
+// type and the runtime Zod validators both derive from this one list so they
+// can't drift when a platform is added.
+export const AD_PLATFORMS = ['meta', 'google_ads', 'linkedin', 'tiktok'] as const
+export type AdPlatform = (typeof AD_PLATFORMS)[number]
 
 export type PlatformConnectionStatus = 'connected' | 'expired' | 'error' | 'revoked'
 
@@ -14,7 +18,7 @@ export type DateRange = {
 
 export type CanonicalCampaign = {
   platform: AdPlatform
-  account_id: string
+  external_account_id: string
   external_id: string
   name: string
   status: string | null
@@ -26,10 +30,10 @@ export type CanonicalCampaign = {
 // so an upsert needs no renaming.
 export type CanonicalSpendRow = {
   platform: AdPlatform
-  account_id: string
+  external_account_id: string
   campaign_external_id: string
   campaign_name: string
-  date: string
+  entry_date: string
   spend_micros: number
   currency: string
   impressions: number | null
