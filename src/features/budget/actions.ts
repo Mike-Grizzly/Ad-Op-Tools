@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getConnectionWithTokens, markConnectionStatus } from '@/lib/integrations/connections'
 import { createMetaClient, MetaApiError } from '@/lib/integrations/meta/client'
-import { syncBudgetSchema, connectionIdSchema } from './validation'
+import { syncBudgetSchema, connectionIdSchema, setCapsSchema } from './validation'
 import { DEFAULT_SYNC_DAYS } from './constants'
 import type { DateRange } from '@/types/integrations'
 
@@ -127,4 +127,30 @@ export async function disconnectPlatform(id: unknown): Promise<ActionResult<{ id
 
   revalidatePath('/budget')
   return { data: { id: parsed.data } }
+}
+
+export async function setCaps(input: unknown): Promise<ActionResult<{ count: number }>> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const parsed = setCapsSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+
+  const rows = parsed.data.caps.map((c) => ({
+    user_id: user.id,
+    scope: c.scope,
+    amount_micros: Math.round(c.amount * 1_000_000),
+  }))
+  if (rows.length === 0) return { data: { count: 0 } }
+
+  const { error } = await supabase
+    .from('budget_caps')
+    .upsert(rows, { onConflict: 'user_id,scope' })
+  if (error) return { error: 'Failed to save caps' }
+
+  revalidatePath('/budget')
+  return { data: { count: rows.length } }
 }

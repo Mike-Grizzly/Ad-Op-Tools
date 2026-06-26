@@ -28,6 +28,23 @@ export const oauthCallbackSchema = z.object({
 
 export const connectionIdSchema = z.string().uuid()
 
+// Cap scopes: 'overall' (total) or a specific platform. Amounts are entered in whole
+// currency units (dollars); the action converts to integer micros for storage.
+const CAP_SCOPES = ['overall', ...AD_PLATFORMS] as const
+
+export const setCapsSchema = z.object({
+  caps: z
+    .array(
+      z.object({
+        scope: z.enum(CAP_SCOPES),
+        amount: z.number().nonnegative().max(1_000_000_000),
+      })
+    )
+    .max(8),
+})
+
+export type SetCapsInput = z.infer<typeof setCapsSchema>
+
 export type DateRangeInput = z.infer<typeof dateRangeSchema>
 export type SyncBudgetInput = z.infer<typeof syncBudgetSchema>
 export type OAuthCallbackInput = z.infer<typeof oauthCallbackSchema>

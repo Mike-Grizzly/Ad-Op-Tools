@@ -19,6 +19,7 @@ export type PlatformConnectionPublic = Pick<
 >
 
 export type BudgetEntry = Database['public']['Tables']['budget_entries']['Row']
+export type BudgetCap = Database['public']['Tables']['budget_caps']['Row']
 
 export async function getConnections(): Promise<PlatformConnectionPublic[]> {
   const supabase = await createClient()
@@ -53,5 +54,17 @@ export async function getBudgetEntries(range: DateRange): Promise<BudgetEntry[]>
     .order('entry_date', { ascending: false })
 
   if (error) throw new Error(`Failed to fetch budget entries: ${error.message}`)
+  return data
+}
+
+export async function getCaps(): Promise<BudgetCap[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data, error } = await supabase.from('budget_caps').select('*')
+  if (error) throw new Error(`Failed to fetch caps: ${error.message}`)
   return data
 }
