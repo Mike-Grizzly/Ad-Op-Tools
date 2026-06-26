@@ -22,6 +22,8 @@ export const oauthCallbackSchema = z.object({
   state: z.string().min(1),
 })
 
+export const connectionIdSchema = z.string().uuid()
+
 export type DateRangeInput = z.infer<typeof dateRangeSchema>
 export type SyncBudgetInput = z.infer<typeof syncBudgetSchema>
 export type OAuthCallbackInput = z.infer<typeof oauthCallbackSchema>
