@@ -1,9 +1,10 @@
 # Feature: Budget Dashboard
 
 **Status**: Planned (Phase 0+1). Not started. This slice also delivers the shared ad-platform
-integration foundation. See `docs/roadmap.md` for sequencing and `docs/open-questions.md` for
-the gating decisions (INT-001 first platform, SEC-001 token encryption, INFRA-001 dev/prod split)
-that must be confirmed before build.
+integration foundation. Gating decisions **confirmed 2026-06-26** (Meta first; app-side
+AES-256-GCM token encryption; dev/prod Supabase split before this phase — see decision-log).
+Remaining setup before the slice can be tested: register the Meta app (SETUP-006) and create the
+dev Supabase project (SETUP-007). See `docs/roadmap.md` for sequencing.
 
 ## Goal & user value
 

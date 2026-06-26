@@ -31,33 +31,21 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## INT-001 — First platform to integrate (Phase 1)
+## SETUP-006 — Meta app registration (Phase 1 prerequisite, user action)
 
-**Status**: Open — recommended path documented; confirm before Phase 1 build.
-**Question**: Which ad platform do we integrate first behind the new foundation?
-**Recommendation**: **Meta.** Marketing API yields a usable long-lived token immediately. Google Ads requires a Developer Token approval (can take days) that blocks all testing. If Google is preferred instead, start that application today.
-**Action**: Confirm Meta (or Google). Either way, start the Google Developer Token application during Phase 1 so it's ready for Phase 2.
+**Status**: Open — required before Phase 1 can be tested.
+**Context**: The Meta Marketing API requires a registered Meta app (App ID + Secret) to power the OAuth "Connect" flow. This is the product-side app behind the connect button (cf. a Looker Studio Meta connector or the Claude GitHub App — the vendor registers it once, users authorize it per account). Created once for the whole product; per-account connection is the OAuth click-flow.
+**Action**: User creates a Meta app at developers.facebook.com (type **Business** → add the **Marketing API** product), sets the OAuth redirect URI to `…/api/integrations/meta/callback` for both Vercel domains, and provides `META_APP_ID` / `META_APP_SECRET`. Phase 1 (owner's own ad account, dev mode) needs **no Meta App Review**; App Review + Business Verification are required later to onboard external paying users.
 **Owner**: User
 
 ---
 
-## SEC-001 — OAuth token encryption at rest
+## SETUP-007 — Create dev Supabase project (Phase 1 prerequisite)
 
-**Status**: Open — recommended path documented; **security boundary, must be settled before the first token is written.**
-**Question**: How are OAuth access/refresh tokens protected at rest in `platform_connections`? RLS controls who can *read a row* but does not encrypt the stored bytes — anyone with the service-role key or DB/backup access would see plaintext.
-**Recommendation**: **App-side AES-256-GCM** — encrypt token columns in server code before insert, key in a server-only env var (e.g. `TOKEN_ENCRYPTION_KEY`, never `NEXT_PUBLIC_*`), distinct per environment; RLS stays on as defense-in-depth. Alternatives: Supabase Vault / `pgcrypto` (DB-side; confirm plan-tier support). RLS-only is **not** acceptable for token columns.
-**Action**: Confirm the mechanism — it changes the `platform_connections` migration.
-**Owner**: User
-
----
-
-## INFRA-001 — dev/prod Supabase split timing
-
-**Status**: Open — recommended path documented; confirm before Phase 1 build.
-**Question**: When do we split into separate dev/prod Supabase projects? (decision-log "No Local Supabase" / SETUP-003 deferred this to "before launch.")
-**Recommendation**: **Before Phase 1.** Phase 1 is the first phase that writes live OAuth tokens and churns schema (`platform_connections`). UTM was safe on one shared project; credentials are not. Use a distinct `TOKEN_ENCRYPTION_KEY` per environment so a leaked dev key can't decrypt prod tokens.
-**Action**: Confirm we do the split now, or accept and document the risk of deferring.
-**Owner**: User
+**Status**: Open — required before Phase 1 (per INFRA-001, now resolved).
+**Question**: Who creates the new dev Supabase project — user via the dashboard, or Claude via the Supabase tool (note: a new project may incur cost; would be confirmed first)?
+**Action**: Stand up a second Supabase project for development; the Phase 1 migration targets it. Set a distinct `TOKEN_ENCRYPTION_KEY` per environment.
+**Owner**: User to decide creation path.
 
 ---
 
@@ -88,4 +76,7 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 - **SETUP-005** — All three env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) added to Vercel project settings. Resolved 2026-06-24.
 - **DATA-001** — Remote DB schema ahead of repo. Resolved 2026-06-25: two migrations now track `utm_templates`, `utm_history`, all columns, RLS, and prefix-search indexes.
 - **ARCH-001** — First slice selection. Resolved 2026-06-25: UTM Generator built first.
+- **INT-001** — First platform. Resolved 2026-06-26: **Meta** confirmed by user. See decision-log "Phase 1 Gating Decisions Confirmed."
+- **SEC-001** — OAuth token encryption at rest. Resolved 2026-06-26: **app-side AES-256-GCM** confirmed (key in `TOKEN_ENCRYPTION_KEY`, server-only, per-env; RLS stays on as defense-in-depth; RLS-only not acceptable for token columns). See decision-log.
+- **INFRA-001** — dev/prod Supabase split. Resolved 2026-06-26: **split before Phase 1** confirmed. Execution tracked in SETUP-007. See decision-log.
 - **ARCH-002** — Next feature slice. Resolved 2026-06-25: **Budget Dashboard (Meta, read-only) next**, behind a thin integration foundation built through one platform. Full order in `docs/roadmap.md`. The prior GTM-first recommendation was rejected — its "no OAuth complexity / use service accounts" premise is incorrect: the GTM API requires Google OAuth, and service accounts are the wrong auth model for multi-tenant GTM (a service account is *our* GTM, not the user's). See decision-log "Build Roadmap & Feature Order."

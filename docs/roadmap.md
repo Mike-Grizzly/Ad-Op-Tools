@@ -66,10 +66,11 @@ against a structurally different API), then Reporting.
 **Goal / value:** Connect a Meta Ads account via OAuth and see real spend in a unified
 dashboard. First feature touching money data; the consumer that proves the foundation.
 
-**Prerequisites (gating decisions — see `docs/open-questions.md`):**
-- First platform = **Meta** (recommended: usable token immediately, no Developer-Token approval gate).
-- Token-at-rest encryption approach settled (recommended: **app-side AES-256-GCM**; RLS alone does not encrypt stored bytes).
-- dev/prod Supabase split done (recommended: **before this phase** — it's the first phase that writes live credentials to the DB).
+**Prerequisites (gating decisions confirmed 2026-06-26 — see decision-log):**
+- First platform = **Meta** (confirmed).
+- Token-at-rest encryption = **app-side AES-256-GCM** (confirmed); key in `TOKEN_ENCRYPTION_KEY` (server-only, per-env).
+- **dev/prod Supabase split before this phase** (confirmed); migration targets the new dev project (SETUP-007).
+- **Meta app registered** (SETUP-006, user action): App ID + Secret, redirect URI `…/api/integrations/meta/callback`.
 
 **Work breakdown (vertical slice):**
 - **Shared types** — `src/types/integrations.ts` (new): `AdPlatform` enum, `CanonicalSpendRow`
