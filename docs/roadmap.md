@@ -51,6 +51,41 @@ deterministic logic. LLMs are additive/optional, never the headline. Flat pricin
 - **RSA Builder is NOT an API write** (CSV by design). A direct-write upgrade is possible later
   (convenience vs. risk) — keep CSV for v1.
 
+## Feature inventory (full set — logged)
+Status: ✅ shipped · 📋 planned (in original CLAUDE.md 5) · 🆕 new (from spec) · 🔄 changed.
+Full detail for each lives in `product-spec.md` at the cited section.
+
+| Feature | Phase | Status | Spec § |
+|---|---|---|---|
+| UTM Generator | 0 | ✅ | 0.1 |
+| UTM extensions (per-client templates, validator, checklist auto-complete) | 0 | 🆕 | 0.1 |
+| Clients entity + Client Dashboard | Foundation | 🆕 | 6.1 |
+| Platform Connections + Connection Health | Foundation | 🆕 | 6.2 |
+| Cross-Platform Spend Tracker (Budget Dashboard) | 1 | 📋 | 1.1 |
+| Budget Allocation View (book-of-business grid) | 1 | 🆕 | 1.2 |
+| Pacing alerts (email) | 1 | 🆕 | 1.1 |
+| Campaign Checklist Engine + editable templates | 2 | 🆕 | 2.1 |
+| Campaign Naming Generator | 2 | 🆕 | 2.2 |
+| GTM Automation (bounded; gated publish) | 2 | 📋 | 2.3 |
+| Disapproval Scanner | 3 | 🆕 | 3.1 |
+| Landing Page Monitor | 3 | 🆕 | 3.2 |
+| Conversion Tracking Monitor | 3 | 🆕 | 3.3 |
+| Account Change Log | 3 | 🆕 | 3.4 |
+| Creative Fatigue Monitor (replaces Creative Asset Manager) | 3 | 🔄 | 3.5 |
+| Ad Copy Asset Bank | 4 | 🆕 | 4.1 |
+| RSA Builder (CSV export) | 4 | 🆕 | 4.2 |
+| Headline Variation Generator (optional LLM, labeled) | 4 | 🆕 | 4.3 |
+| Negative Keyword Library (editable seed packs) | 5 | 🆕 | 5.1 |
+| Search Term Triage Tool (the one live Google write) | 5 | 🆕 | 5.2 |
+| Campaign Performance Dashboard (customizable + saved configs + PDF) | 7 | 🔄 | 7.1 |
+| Morning Digest Email (stickiness) | 7 | 🆕 | 7.2 |
+| Account Health Audit (15-check, on-demand) | 8 | 🆕 | 8.1 |
+| Budget Pacing Alert Rules Builder | 8 | 🆕 | 8.2 |
+| Pricing tiers + Stripe billing | 7 | 🆕 | Pricing |
+
+Note: "Custom Reporting Dashboards" and "Creative Asset Manager" from the original CLAUDE.md
+5 are superseded by the 🔄 rows above (customizable reporting; fatigue monitoring).
+
 ## Build sequence (critical-path aware)
 **Now — no external blockers:**
 - **Apply for platform API access immediately** (human action, the long pole) — see API-001.
