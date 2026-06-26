@@ -1,10 +1,13 @@
 # Feature: Budget Dashboard
 
-**Status**: Planned (Phase 0+1). Not started. This slice also delivers the shared ad-platform
-integration foundation. Gating decisions **confirmed 2026-06-26** (Meta first; app-side
-AES-256-GCM token encryption; dev/prod Supabase split before this phase — see decision-log).
-Remaining setup before the slice can be tested: register the Meta app (SETUP-006) and create the
-dev Supabase project (SETUP-007). See `docs/roadmap.md` for sequencing.
+**Status**: Backend complete & reviewed (Phase 0+1); UI pending. The integration foundation +
+budget data/sync/OAuth layer is built and passed database + security×2 + ad-platform reviews
+(type-check/lint/build green). Gating decisions confirmed 2026-06-26: Meta first; app-side
+AES-256-GCM token encryption; **one shared Supabase project for now** (dev/prod split deferred to
+launch — INFRA-001 re-resolved). **Remaining:** the `/budget` UI (from a Claude Design export),
+applying the migration to `ad-op-tools`, setting env vars (`TOKEN_ENCRYPTION_KEY`, `APP_ORIGIN`,
+`META_APP_ID`, `META_APP_SECRET`), and a live end-to-end test once Meta creds exist (SETUP-006).
+See `docs/roadmap.md`.
 
 ## Goal & user value
 

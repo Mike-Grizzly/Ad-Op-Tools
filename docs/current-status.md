@@ -5,10 +5,12 @@
 UTM generator + URL Library + edit/delete + detail drawer verified working in production by the
 user (2026-06-26).
 
-**Now building Phase 0+1 — integration foundation + Budget Dashboard (Meta, read-only)**
-(`docs/roadmap.md`). Landed so far (backend; not yet wired to UI): the `AdPlatformClient`
-canonical types, the `platform_connections` + `budget_entries` migration (database + security
-reviewed; **not yet applied to any DB**), and the budget feature's `validation.ts` / `constants.ts`.
+**Building Phase 0+1 — integration foundation + Budget Dashboard (Meta, read-only)**
+(`docs/roadmap.md`). The **backend is complete and reviewed** (database + security×2 + ad-platform
+agents; type-check/lint/build green): canonical types, AES-256-GCM token store, Meta Marketing API
+client, budget queries/actions (sync + disconnect), and Meta OAuth routes. **Remaining:** the
+`/budget` UI (awaiting a Claude Design export), applying the migration to `ad-op-tools`, and the env
+vars + a live end-to-end test once Meta credentials exist.
 Phase 1 gating decisions are **confirmed**: Meta first; app-side AES-256-GCM token encryption; and
 **one shared Supabase project for now — dev/prod split deferred to launch** (per user 2026-06-26;
 RLS already gives per-user isolation within the single DB).
@@ -45,12 +47,25 @@ RLS already gives per-user isolation within the single DB).
 - `components/utm-page-client.tsx` — client shell wiring all components together; owns drawer state + optimistic update/delete
 - `app/(dashboard)/utm/page.tsx` — server component fetching templates + history, rendering `UTMPageClient`
 
+### Budget Dashboard — backend (Phase 0+1; UI pending design)
+Integration foundation + budget data layer. Reviewed by database, security (token layer + OAuth),
+and ad-platform agents; type-check/lint/build green. **Migration not yet applied; runtime untested
+until Meta creds exist.**
+- `src/types/integrations.ts` — `AD_PLATFORMS`/`AdPlatform`, `CanonicalSpendRow` + `CanonicalCampaign` (mirror `budget_entries`), `AdPlatformClient` interface (read-only)
+- `src/lib/integrations/token-crypto.ts` — AES-256-GCM encrypt/decrypt (fresh IV, AAD-bound to row identity, key-versioned via `token_key_id`)
+- `src/lib/integrations/connections.ts` — server-only token store + sole decrypt path: `getConnectionWithTokens`, `saveConnection`/`saveConnections`, `markConnectionStatus`
+- `src/lib/integrations/meta/{client,types,transforms,constants}.ts` — Meta Marketing API client implementing `AdPlatformClient` (campaigns + daily spend); typed `MetaApiError`, retry/backoff, `appsecret_proof`
+- `src/features/budget/{validation,constants,queries,actions}.ts` — Zod schemas, `getConnections` (token-free) + `getBudgetEntries`, `syncBudget` + `disconnectPlatform`
+- `src/app/api/integrations/meta/{connect,callback}/route.ts` — Meta OAuth: CSRF state, code → long-lived token, save a connection per ad account
+- Not built: `/budget` route + UI (awaiting Claude Design export)
+
 ## What Exists — Infrastructure
 - GitHub repo: `mike-grizzly/ad-op-tools`
 - Supabase project `ad-op-tools` (us-east-1, id `fwzltthkcwthuuptqlby`)
 - Vercel project linked to GitHub
   - Domains: `ad-op-tools.vercel.app` (primary) + `ad-op-tools-mike-grigsby-s-projects.vercel.app`
   - Env vars set: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+  - Env vars NEEDED for Budget (not yet set): `TOKEN_ENCRYPTION_KEY` (32-byte base64), `APP_ORIGIN`, `META_APP_ID`, `META_APP_SECRET`
 - Supabase Auth URL config: Site URL + redirect URLs for both Vercel domains
 
 ## Database State
@@ -58,22 +73,22 @@ RLS already gives per-user isolation within the single DB).
   - `20260624000000_create_utm_tables.sql` — creates `utm_templates` and `utm_history` with RLS
   - `20260625000000_utm_history_add_columns.sql` — adds `ad_set`, `creative` columns; adds prefix-search indexes
   - `20260626000000_utm_history_update_policy.sql` — granular UPDATE RLS policy on `utm_history` (for the edit feature). **Not applied to remote** — see note below.
+  - `20260626000000_create_platform_connections_and_budget.sql` — `platform_connections` (encrypted OAuth tokens, key-versioned, `set_updated_at` trigger) + `budget_entries` (spend, idempotent upsert key); RLS on both with `(select auth.uid())`. **NOT applied to remote yet** — will apply to `ad-op-tools` when Budget testing starts.
 - RLS enabled on both tables; policies are user-scoped (`user_id = auth.uid()`)
 - **Tracked-vs-remote RLS divergence**: the remote DB was provisioned manually with a single consolidated `FOR ALL` policy per table (`users manage own utm_*`, `USING`/`WITH CHECK = auth.uid() = user_id`), which already permits UPDATE/DELETE. The tracked migrations instead use granular per-command policies. Effective permissions are identical; the new UPDATE-policy migration keeps the granular tracked lineage complete for fresh environments (e.g. dev/prod split). Do not `supabase db pull` over the tracked migrations. See decision-log 2026-06-26 and open-questions UTM-004.
 - `src/types/database.ts` is hand-maintained (not auto-generated from Supabase CLI); reflects current schema
 
 ## Not Built Yet
-(See `docs/roadmap.md` for build order. Confirmed: nothing under `src/lib/integrations/`,
-no `src/types/integrations.ts`, no `AdPlatformClient`, no `platform_connections` table.)
-- Ad platform integration foundation / OAuth (Phase 0+1)
-- Budget dashboard (Phase 0+1; Meta first)
+(See `docs/roadmap.md` for build order.)
+- Budget Dashboard **UI** — `/budget` route + components (backend done; awaiting Claude Design export)
+- Budget Dashboard **live test** — needs the migration applied + Meta creds + env vars set
 - Custom reporting / additional platforms (Phase 2)
 - GTM automation (Phase 3)
 - Creative asset manager (Phase 4)
 - Dev/prod Supabase project split (deferred to launch — one shared project for now, per user 2026-06-26)
 
 ## Last Updated
-2026-06-26 — Phase 0+1 backend foundation underway: `AdPlatformClient` canonical types, `platform_connections` + `budget_entries` migration (database + security reviewed; hardened with key-versioning, split token columns, RLS init-plan; **not yet applied**), budget `validation.ts`/`constants.ts`. Supabase dev/prod split deferred to launch (one shared project for now, per user). Budget design brief written (`docs/design/design-brief.md`). Branch synced with main (UTM edit/delete slice).
+2026-06-26 — Phase 0+1 backend COMPLETE: integration foundation (canonical types, AES-256-GCM token crypto + connection store), Meta Marketing API client, budget queries/actions (sync + disconnect), and Meta OAuth routes. Reviewed by database + security (token layer & OAuth) + ad-platform agents — all findings applied (incl. 2 CRITICAL OAuth fixes). type-check/lint/build green; migration NOT yet applied. Pending: `/budget` UI (Claude Design export), apply migration to `ad-op-tools`, set env vars (`TOKEN_ENCRYPTION_KEY`/`APP_ORIGIN`/`META_APP_ID`/`META_APP_SECRET`) + live test. Branch synced with main; budget design brief written.
 2026-06-26 (final) — User manually verified the URL Library detail drawer + inline editing in production; all working. Marked the UTM edit/delete slice complete and merged `claude/quirky-dirac-o95ke7` → `main`.
 2026-06-26 (later) — Merged the new Claude Design export (URL Library + drawer) from main and reskinned `utm-detail-drawer.tsx` to match it; the grouped URL Library table and the generator form were left untouched, per direction (only the drawer was in scope). Added a guardrail in `.claude/rules/working-style.md` so design exports are integrated additively, never used to wholesale-replace existing UI. Renamed the export subfolder → `Ad Op Tools UI Design/detail-drawer/`.
 2026-06-26 — UTM history edit/delete + detail drawer added on branch `claude/quirky-dirac-o95ke7`. New `updateUTMHistory`/`deleteUTMHistory` actions, `utm-detail-drawer.tsx`, shared `url.ts`, UPDATE-policy migration (tracked only). type-check/lint/build green; reviewed by security/react/code/database agents.

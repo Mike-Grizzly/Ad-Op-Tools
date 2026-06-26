@@ -107,6 +107,19 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## BUDGET-001 — Phase 1 backend follow-ups (deferred, non-blocking)
+
+**Status**: Open (deferred; captured from the database/security/ad-platform review passes)
+**Items**:
+- Meta OAuth `state` is not user-bound (defense-in-depth only — the callback re-auths, so the connection is always attributed to the logged-in user). Consider embedding the user id in `state`.
+- Campaigns use raw `status`, not `effective_status` — decide whether delivery-state accuracy matters for the dashboard before relying on it.
+- **Verify against the live API once Meta creds exist**: `date_start` returned with `time_increment=1`; `v21.0` still in Meta's support window; default `/campaigns` excludes deleted; the BUC rate-limit header name.
+- Next 16 deprecates the `middleware` file convention in favor of `proxy` (pre-existing build warning). Migrate when convenient.
+- Key rotation: `token-crypto.getKey()` is single-key (`v1`); extend it to a key map before the first rotation.
+**Owner**: Claude (during Budget UI / pre-launch hardening)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
