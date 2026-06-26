@@ -22,6 +22,11 @@ export type BudgetEntry = Database['public']['Tables']['budget_entries']['Row']
 
 export async function getConnections(): Promise<PlatformConnectionPublic[]> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
   const { data, error } = await supabase
     .from('platform_connections')
     .select(
@@ -35,6 +40,11 @@ export async function getConnections(): Promise<PlatformConnectionPublic[]> {
 
 export async function getBudgetEntries(range: DateRange): Promise<BudgetEntry[]> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
   const { data, error } = await supabase
     .from('budget_entries')
     .select('*')
