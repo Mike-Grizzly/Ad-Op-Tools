@@ -142,3 +142,36 @@ Significant architecture and product decisions. Append; never delete.
 **Decision**: Treat every design export as a feature-scoped mock to integrate **additively**. Never delete/replace existing components, pages, or the original design files based on a new export. Preserve existing functionality unless the user explicitly asks to remove it; flag any feature an export drops before removing it. Keep the original full design as the source of truth and store feature mocks in clearly-named subfolders (do not auto-replace the parent folder). Codified in `.claude/rules/working-style.md` → "Claude Design Exports — Additive, Never Replace" (auto-loaded every session). This supersedes the folder-replacement step in the 2026-06-25 "Design-First Workflow" entry.
 
 **Applied here**: Built only the detail-drawer reskin from the new export onto the existing UTM page; left the generator form, Recent URLs sidebar, and the grouped URL Library table untouched, per user direction. Renamed the export subfolder `Ad Op Tools UI Design (2)/` → `Ad Op Tools UI Design/detail-drawer/` for clarity.
+
+---
+
+## 2026-06-26 — Product roadmap locked: multi-client pivot, scope confirmations, sequencing
+
+**Context**: An external deep-research product spec (archived to `docs/product-spec.md`) proposed
+a full feature set and a best-guess architecture. Reviewed it against the real codebase and
+confirmed direction with the user. Plan of record now lives in `docs/roadmap.md`.
+
+**Decisions**:
+- **Multi-client model adopted.** `clients` becomes a first-class entity; `client_id` threads
+  through all feature tables, including nullable additions to the shipped UTM tables (plus a
+  nullable `campaign_id` for checklist integration). Built first as the schema spine. Reverses the
+  implicit single-tenant assumption of the UTM slice.
+- **Vertical-agnostic.** The app is not real-estate-specific; real-estate / home-builder content
+  ships only as editable seed/template data. No hardcoded vertical logic.
+- **Creative = fatigue monitoring (read-only).** The API creative upload/swap/clone idea from
+  CLAUDE.md is shelved (high-risk writes).
+- **Reporting = simplified + user-customizable.** Choose metrics/variables, save named report
+  configs per client (via the `reports` table), PDF export. Not a drag-and-drop builder. Clarifies
+  the original "Looker-style" intent (which always meant simplified, customizable views).
+- **Dependencies approved in principle**: email provider, Vercel Pro cron, Claude API (later),
+  Stripe (later).
+- **Sequencing**: build no-API features first while API approvals pend; apply for Google Ads +
+  Meta access immediately (critical path).
+
+**Architecture note**: The spec's data models are best-guesses. Real schema governs — keep our
+discrete UTM columns (not the spec's `params_json`/`full_url`); add `client_id`/`campaign_id` as
+nullable. `product-spec.md` is the feature source; `roadmap.md` is the decision/correction layer.
+
+**Write surfaces**: only two API writes exist in the whole product — GTM (gated publish) and
+Search Term Triage negatives (live). RSA Builder and Negative Keyword export are CSV-only by
+design. (Corrected an earlier mischaracterization that Search Term Triage was the sole write.)

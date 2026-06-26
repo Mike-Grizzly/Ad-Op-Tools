@@ -1,8 +1,15 @@
 # Current Status
 
 ## Project Phase
-**Feature Slice 1: UTM Generator — Built and manually tested. Complete.**
-All code on `main`, deployed to Vercel. UTM edit/delete + detail drawer verified working in production by the user (2026-06-26). Next deliverable: pick the next feature slice (candidate: a user-features slice — password reset / change password, see open-questions AUTH-001).
+**Planning locked; building the multi-client foundation next.**
+UTM Generator (Slice 1) is complete and live on `main`. A full product roadmap is now the plan of
+record — see `docs/roadmap.md` (decisions + architecture corrections) and `docs/product-spec.md`
+(external feature spec, archived). Next deliverable: the **multi-client foundation** (`clients`
+entity, `platform_connections` + RLS, client CRUD) — needs no external API access — followed by
+the no-API feature wave (checklist engine, naming generator, negative-keyword library,
+ad-copy / RSA builder) while Google Ads + Meta API approvals are pending. The earlier
+"next slice = user-features / password reset (AUTH-001)" candidate is deferred behind the
+foundation.
 
 ## What Exists — Code
 

@@ -75,6 +75,52 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## ENC-001 — OAuth token encryption approach
+
+**Status**: Open
+**Question**: `platform_connections` will store OAuth access + refresh tokens — the most sensitive
+data in the app. Supabase does not encrypt columns by default; RLS alone does not protect
+tokens-at-rest. Choose: Supabase Vault (pgsodium) vs. app-layer AES-GCM with a server-only key.
+**Action**: Decide with `security-reviewer` when building `platform_connections`.
+**Owner**: Claude + user (at foundation build)
+
+---
+
+## INFRA-001 — Email provider + cron plan
+
+**Status**: Open
+**Question**: All alerts + the Morning Digest need a transactional email provider
+(Resend / Postmark / SendGrid) — not yet chosen. Phase-3 monitors need Vercel Cron at sub-daily
+cadence (Pro plan; Hobby cron is daily-only).
+**Action**: Pick an email provider before Phase 3; confirm Vercel Pro for "every 4 hours" crons.
+**Owner**: User (accounts) / Claude (integration)
+
+---
+
+## GTM-001 — GTM publish: API vs. draft-only
+
+**Status**: Open
+**Question**: Should the GTM tool call `versions.publish` (after explicit user confirm), or only
+create the draft and let the user publish in the GTM UI (safest)?
+**Action**: Decide when building GTM Automation. Default to draft-only unless the user wants
+one-click publish.
+**Owner**: User / Claude (at GTM build)
+
+---
+
+## API-001 — Platform API access applications pending
+
+**Status**: Open (in progress)
+**Question**: Google Ads (developer token + Basic Access, 2–6 wks), Meta (App Review for
+`ads_read`, 1–2 wks), GTM (scope only, no review). LinkedIn deferred; StackAdapt is CSV-only.
+These gate all platform-data features (Budget, monitors, reporting, search-term triage).
+**Action**: User submits applications immediately (see `roadmap.md` sequencing). Claude can draft
+the Google Basic Access justification, the Meta App Review use-case + screencast script, and the
+OAuth consent-screen copy.
+**Owner**: User (submit) / Claude (draft application copy)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
