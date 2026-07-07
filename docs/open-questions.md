@@ -121,6 +121,24 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## SEC-002 — Security findings from the 2026-07-07 audit (fixes pending)
+
+**Status**: Open
+**Context**: A full architecture + security review (2026-07-07) produced `docs/security-plan.md`. Three concrete code findings await fixes: (1) **HIGH** — open redirect via the unvalidated `next` param in `src/app/auth/callback/route.ts` (exploitable once reset/magic-link emails ship); (2) **MEDIUM** — `src/features/utm/queries.ts` has no auth check and relies on RLS alone; (3) **LOW** — `src/features/budget/queries.ts` lacks explicit `.eq('user_id', ...)` scoping. All sized S.
+**Action**: Apply the "Now" checklist in `docs/security-plan.md` §4 (items 1–7) in a small hardening slice.
+**Owner**: Claude (next session; user to approve the Vitest dependency)
+
+---
+
+## ARCH-003 — Blueprint decisions needing owner sign-off
+
+**Status**: Open
+**Context**: `docs/architecture-blueprint.md` (2026-07-07) recommends: build the **organization/workspace layer before Phase 2** (near-free now, expensive later); use **Vercel Cron** (not Supabase Edge Functions or a queue) for background sync; do the client-factory + sync-core extraction + token-refresh seam before adding Google Ads.
+**Action**: User confirms/adjusts: (1) org layer now; (2) Vercel Cron approach; (3) dependency approvals per blueprint §6 (`@sentry/nextjs`, `resend`, `stripe`, `@upstash/ratelimit`, `vitest`); (4) start the Google Ads Developer Token application and Meta App Review now (both long lead time).
+**Owner**: User
+
+---
+
 ## BUDGET-002 — Budget Dashboard customization features (backlog)
 
 **Status**: Open (backlog; user-requested 2026-06-26 — revisit after more is built)
