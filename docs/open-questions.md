@@ -121,6 +121,42 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## SEC-002 — Security findings from the 2026-07-07 audit (fixes pending)
+
+**Status**: Open
+**Context**: A full architecture + security review (2026-07-07) produced `docs/security-plan.md`. Three concrete code findings await fixes: (1) **HIGH** — open redirect via the unvalidated `next` param in `src/app/auth/callback/route.ts` (exploitable once reset/magic-link emails ship); (2) **MEDIUM** — `src/features/utm/queries.ts` has no auth check and relies on RLS alone; (3) **LOW** — `src/features/budget/queries.ts` lacks explicit `.eq('user_id', ...)` scoping. All sized S.
+**Action**: Apply the "Now" checklist in `docs/security-plan.md` §4 (items 1–7) in a small hardening slice.
+**Owner**: Claude (next session; user to approve the Vitest dependency)
+
+---
+
+## ARCH-003 — Blueprint decisions needing owner sign-off
+
+**Status**: Mostly resolved 2026-07-07 — user confirmed (1) org layer before Phase 2, (2) Vercel Cron for background sync, (3) all dependency approvals per blueprint §6 (`vitest`, `@sentry/nextjs`, `resend`, `stripe`, `@upstash/ratelimit` — add each when its phase needs it). See decision-log "Blueprint Decisions Confirmed."
+**Remaining**: (4) User to start the **Google Ads Developer Token application** and **Meta App Review + Business Verification** — user acknowledged the long lead times and will start soon. Keep this open until both applications are submitted.
+**Owner**: User (item 4 only)
+
+---
+
+## PRODUCT-001 — Rules engine + in-app Claude assistant (user direction 2026-07-07)
+
+**Status**: Open (direction confirmed by user; sequencing in blueprint §5 items 8–9)
+**Context**: User wants (a) Revealbot/Bïrch-style automated rules ("pause all ads with ROI < 0.7") and (b) a natural-language Claude assistant in-app for both report editing and ad actions. Feasible; the server-action architecture maps 1:1 to Claude tool definitions.
+**Data prerequisite (blocks both)**: sync currently stores campaign-level spend/impressions/clicks only. Rules and "top ad groups by leads" need **conversion/lead metrics** and **ad-group/ad-level granularity** added to `budget_entries` (or a sibling table) — fold into Phase 2 sync widening.
+**Safety rule (standing)**: AI/rule-triggered write actions on live ad accounts always preview affected entities + require explicit confirmation (assistant) or an explicit user-enabled rule (engine), and are always audit-logged.
+**Owner**: Claude (build per blueprint sequencing) / User (approve `@anthropic-ai/sdk` dependency when the slice starts)
+
+---
+
+## INT-002 — StackAdapt integration (user-requested platform)
+
+**Status**: Open (feasibility confirmed 2026-07-07)
+**Context**: StackAdapt exposes a GraphQL Public API (docs.stackadapt.com) + official TS SDK (`@stackadapt/pa-typescript-sdk`) covering campaign management and reporting. Auth is an account-tied **API key requested from StackAdapt** (contact their team), not self-serve OAuth.
+**Action**: When prioritized: user requests a GraphQL API key from StackAdapt; build follows the standard platform pattern but with a paste-API-key connect flow (encrypt via the existing token store; no OAuth routes) and a `'stackadapt'` value added to the platform CHECK constraints in `platform_connections`/`budget_entries`/`budget_caps` (consider the lookup-table refactor from BUDGET-001 at that point).
+**Owner**: User (key request + prioritization) / Claude (build)
+
+---
+
 ## BUDGET-002 — Budget Dashboard customization features (backlog)
 
 **Status**: Open (backlog; user-requested 2026-06-26 — revisit after more is built)

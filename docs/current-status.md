@@ -92,7 +92,49 @@ pulling real spend on `ad-op-tools.vercel.app`.
 - Creative asset manager (Phase 4)
 - Dev/prod Supabase project split (deferred to launch — one shared project for now, per user 2026-06-26)
 
+## Planning Coverage Index (as of 2026-07-07)
+
+Where the build steps and security treatment for everything planned actually live:
+
+| Item | Build steps | Security treatment |
+|---|---|---|
+| Security hardening (open redirect, query scoping, headers, CI, tests) | `security-plan.md` §4 "Now" items 1–7 | is the security doc |
+| Org/workspace layer + audit_log | `architecture-blueprint.md` §3.1, 3.11 | RLS rewrite spec'd in same section |
+| Client factory / sync-core / token refresh / service client | blueprint §3.2–3.4 + §4 | service-role discipline: security-plan §3 last bullet |
+| Vercel Cron background sync + sync_jobs + Sentry | blueprint §3.3, 3.5, 3.6 | CRON_SECRET guard + service-role rules in recipe |
+| Google Ads (Phase 2) | roadmap Phase 2 + blueprint §3.2/3.4 | second OAuth flow follows the audited Meta pattern; state user-binding noted in BUDGET-001 |
+| ad_metrics widening (conversions, ad-level) | `features/rules-engine.md` Phase A | RLS/no-delete/micros in spec |
+| Rules engine (notify → write) | `features/rules-engine.md` Phases B–C | safety invariants section (off-by-default, dry-run, audit, cooldown) |
+| AI assistant | `features/ai-assistant.md` | safety model section (tool tiers, no-execute-tool design, injection test gate) |
+| Billing (Stripe), onboarding/auth, email, rate limiting | blueprint §3.7–3.10 | webhook signature, reset-flow items in security-plan §4 launch gate |
+| StackAdapt | open-questions INT-002 (pattern + API-key connect flow) | key stored via existing encrypted token store |
+| Custom Reporting (Phase 2) | roadmap Phase 2 (light) — **write `features/reports.md` at slice start** (per working-style: spec before build) | report configs are Zod-validated JSON; share-links get their own review |
+| GTM automation (Phase 3) | roadmap Phase 3 — **blocked on a product spec** (`features/gtm.md`): the concrete tag/trigger/conversion stack needs user definition | write-path review agents mandated in roadmap |
+| Creative Asset Manager (Phase 4) | intentionally unspecced until Phase 3 done (highest blast radius; spec then) | sequencing itself is the mitigation |
+
+## Next Session — Kickoff
+
+**No pasting needed**: just say "continue the roadmap" — the Session Kickoff Protocol in
+`CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
+every new session at this section automatically. The slice definition:
+
+> Read `docs/current-status.md`, `docs/security-plan.md` §4, and `docs/open-questions.md`
+> (SEC-002). Build the **security hardening slice**: items 1–7 of the "Now" checklist in
+> `docs/security-plan.md` — fix the `/auth/callback` open redirect; add auth checks +
+> explicit user scoping to `src/features/utm/queries.ts` and `src/features/budget/queries.ts`;
+> enable Supabase Auth leaked-password protection; add security headers in `next.config.ts`
+> (CSP report-only first); add a GitHub Actions CI workflow (type-check, lint, build,
+> npm audit) + Dependabot; stand up Vitest with tests for `spendToMicros` and a
+> token-crypto round-trip/tamper case. Run the `security-reviewer` agent on the diff
+> before committing. Then, if time remains, start the **org/workspace layer** per
+> `docs/architecture-blueprint.md` §3.1.
+
+After that slice, the standing order is the sequencing table in
+`docs/architecture-blueprint.md` §4.
+
 ## Last Updated
+2026-07-07 (later) — **Planning completed and closed out.** Owner confirmed ARCH-003 decisions (org layer before Phase 2; Vercel Cron; dependency approvals). Added product direction (PRODUCT-001 rules engine + AI assistant, INT-002 StackAdapt) and full build specs: `docs/features/rules-engine.md` (metrics widening → notify rules → write actions) and `docs/features/ai-assistant.md` (Claude tool-use assistant; model never gets an execute tool). Added the Planning Coverage Index above and this kickoff prompt. **All of this lives on branch `claude/project-architecture-security-fclnow` — merge it to `main` before the next session, or the next session won't see the plan.**
+2026-07-07 — **Architecture + security review session (no code changes).** Ran the `architect` and `security-reviewer` agents over the full codebase and synthesized two leave-behind docs: `docs/architecture-blueprint.md` (systems to build for the remaining phases + SaaS launch — org layer, client factory, sync-core extraction, token refresh, Vercel Cron background sync, sync-job observability, Sentry, Stripe, onboarding, email, audit logging — each with a concrete build recipe and sequencing) and `docs/security-plan.md` (verified strengths; 3 code findings incl. a HIGH open redirect in `/auth/callback`; prioritized pre-launch checklist). New open questions: SEC-002 (pending security fixes), ARCH-003 (owner decisions: org-layer timing, cron choice, dependency approvals, start Google Developer Token + Meta App Review now).
 2026-06-26 — **Budget Dashboard SHIPPED & manually verified in production.** Merged the slice to `main`; fixed the production domain alias (Option A — `ad-op-tools.vercel.app` re-pointed to serve `main`, which was the cause of the prod 404s); set the 4 Budget env vars; connected a real Meta account via OAuth and Sync pulled real spend into the dashboard. **Phase 0+1 COMPLETE.** (Operational learning: the OAuth flow needs `APP_ORIGIN` + the Meta redirect URI + the login domain to be the same working origin — see decision-log.)
 2026-06-26 — Applied the budget migrations to `ad-op-tools` (`platform_connections`, `budget_entries`, `budget_caps` + RLS; hardened `set_updated_at` search_path per the security advisor). `/budget` now loads (connect/empty state) — the earlier production 500 was the missing tables. Security advisors clean except a pre-existing Auth "leaked password protection" toggle. Remaining to go live: env vars + Meta creds.
 2026-06-26 — Phase 0+1 Budget Dashboard COMPLETE (backend + UI). Added the caps backend (`budget_caps` + `getCaps`/`setCaps`) and built the full `/budget` UI from the Claude Design export (pacing hero, KPI row, spend-over-time chart, by-platform donut, monthly-cap widget, grouped/sortable campaign table, connection management, per-campaign detail drawer). Additive; reviewed by database (caps) + react/code agents; type-check/lint/build green. Both budget migrations still UNAPPLIED. Remaining to go live: apply migrations to `ad-op-tools`, set env vars + Meta creds, live OAuth + sync test.
