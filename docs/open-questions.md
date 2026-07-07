@@ -138,6 +138,25 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
+## PRODUCT-001 — Rules engine + in-app Claude assistant (user direction 2026-07-07)
+
+**Status**: Open (direction confirmed by user; sequencing in blueprint §5 items 8–9)
+**Context**: User wants (a) Revealbot/Bïrch-style automated rules ("pause all ads with ROI < 0.7") and (b) a natural-language Claude assistant in-app for both report editing and ad actions. Feasible; the server-action architecture maps 1:1 to Claude tool definitions.
+**Data prerequisite (blocks both)**: sync currently stores campaign-level spend/impressions/clicks only. Rules and "top ad groups by leads" need **conversion/lead metrics** and **ad-group/ad-level granularity** added to `budget_entries` (or a sibling table) — fold into Phase 2 sync widening.
+**Safety rule (standing)**: AI/rule-triggered write actions on live ad accounts always preview affected entities + require explicit confirmation (assistant) or an explicit user-enabled rule (engine), and are always audit-logged.
+**Owner**: Claude (build per blueprint sequencing) / User (approve `@anthropic-ai/sdk` dependency when the slice starts)
+
+---
+
+## INT-002 — StackAdapt integration (user-requested platform)
+
+**Status**: Open (feasibility confirmed 2026-07-07)
+**Context**: StackAdapt exposes a GraphQL Public API (docs.stackadapt.com) + official TS SDK (`@stackadapt/pa-typescript-sdk`) covering campaign management and reporting. Auth is an account-tied **API key requested from StackAdapt** (contact their team), not self-serve OAuth.
+**Action**: When prioritized: user requests a GraphQL API key from StackAdapt; build follows the standard platform pattern but with a paste-API-key connect flow (encrypt via the existing token store; no OAuth routes) and a `'stackadapt'` value added to the platform CHECK constraints in `platform_connections`/`budget_entries`/`budget_caps` (consider the lookup-table refactor from BUDGET-001 at that point).
+**Owner**: User (key request + prioritization) / Claude (build)
+
+---
+
 ## BUDGET-002 — Budget Dashboard customization features (backlog)
 
 **Status**: Open (backlog; user-requested 2026-06-26 — revisit after more is built)

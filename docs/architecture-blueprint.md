@@ -265,6 +265,34 @@ Grounded in what the data model already supports:
    currencies appear.
 7. **Saved views / dashboard customization** — already user-requested (BUDGET-002).
 
+Added 2026-07-07 (user direction — see open-questions PRODUCT-001 / INT-002):
+
+8. **Automated rules engine** (Revealbot/Bïrch-style): user-defined rules like "pause ad
+   when 3-day ROAS < 1.8" evaluated on a schedule against synced metrics, executing
+   platform write actions with full audit logging. Prerequisites: conversion/lead metrics
+   in the sync (today only spend/impressions/clicks), ad-group/ad-level granularity in
+   `budget_entries` (today campaign-level), write scopes (`ads_management` etc.), write
+   methods on `AdPlatformClient`, and the cron infrastructure (3.3). This is Phase 3–4
+   territory; the rules engine is also the execution layer the AI assistant (below) needs.
+9. **In-app Claude assistant**: natural-language commands mapped to the app's existing
+   server actions via Claude API tool use (Anthropic TypeScript SDK, server-side only).
+   Two risk tiers: read-side (edit report configs — "add a chart showing top ad groups by
+   leads") executes freely because a report config is just Zod-validated JSON; write-side
+   ("pause all ads with ROI < 0.7") must always preview the affected entities and require
+   explicit user confirmation before executing, and every execution is audit-logged. The
+   feature-module pattern (auth-checked, Zod-validated server actions) maps 1:1 to tool
+   definitions, so the assistant is a thin layer once the underlying capabilities exist.
+   Sequence: read-side after Custom Reporting ships (Phase 2); write-side after the rules
+   engine / write path. New server-only env var `ANTHROPIC_API_KEY`; new dependency
+   `@anthropic-ai/sdk` (approved category: needs the same owner sign-off as other deps).
+10. **StackAdapt integration**: feasible — StackAdapt has a GraphQL Public API
+    (docs.stackadapt.com) + official TypeScript SDK covering campaign management and
+    reporting. Differences from Meta/Google: auth is an **API key requested from
+    StackAdapt** (account-tied, not a self-serve OAuth app), so the connect flow is
+    "paste API key" (encrypted with the existing token store) instead of an OAuth
+    redirect, and the `platform` CHECK constraints in 3 tables must gain a
+    `'stackadapt'` value (the first platform outside the original four).
+
 ## 6. Decisions the owner must make before building
 
 The working-style rules forbid new libraries without approval. Approvals needed, by phase:
