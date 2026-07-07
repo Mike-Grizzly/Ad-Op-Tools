@@ -265,7 +265,9 @@ Grounded in what the data model already supports:
    currencies appear.
 7. **Saved views / dashboard customization** — already user-requested (BUDGET-002).
 
-Added 2026-07-07 (user direction — see open-questions PRODUCT-001 / INT-002):
+Added 2026-07-07 (user direction — see open-questions PRODUCT-001 / INT-002; **full build
+recipes now live in `docs/features/rules-engine.md` and `docs/features/ai-assistant.md`** —
+items 8–9 below are summaries):
 
 8. **Automated rules engine** (Revealbot/Bïrch-style): user-defined rules like "pause ad
    when 3-day ROAS < 1.8" evaluated on a schedule against synced metrics, executing
