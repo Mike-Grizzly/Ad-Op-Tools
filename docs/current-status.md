@@ -112,7 +112,26 @@ Where the build steps and security treatment for everything planned actually liv
 | GTM automation (Phase 3) | roadmap Phase 3 — **blocked on a product spec** (`features/gtm.md`): the concrete tag/trigger/conversion stack needs user definition | write-path review agents mandated in roadmap |
 | Creative Asset Manager (Phase 4) | intentionally unspecced until Phase 3 done (highest blast radius; spec then) | sequencing itself is the mitigation |
 
+## Next Session — Kickoff
+
+Paste-ready prompt for the next working session:
+
+> Read `docs/current-status.md`, `docs/security-plan.md` §4, and `docs/open-questions.md`
+> (SEC-002). Build the **security hardening slice**: items 1–7 of the "Now" checklist in
+> `docs/security-plan.md` — fix the `/auth/callback` open redirect; add auth checks +
+> explicit user scoping to `src/features/utm/queries.ts` and `src/features/budget/queries.ts`;
+> enable Supabase Auth leaked-password protection; add security headers in `next.config.ts`
+> (CSP report-only first); add a GitHub Actions CI workflow (type-check, lint, build,
+> npm audit) + Dependabot; stand up Vitest with tests for `spendToMicros` and a
+> token-crypto round-trip/tamper case. Run the `security-reviewer` agent on the diff
+> before committing. Then, if time remains, start the **org/workspace layer** per
+> `docs/architecture-blueprint.md` §3.1.
+
+After that slice, the standing order is the sequencing table in
+`docs/architecture-blueprint.md` §4.
+
 ## Last Updated
+2026-07-07 (later) — **Planning completed and closed out.** Owner confirmed ARCH-003 decisions (org layer before Phase 2; Vercel Cron; dependency approvals). Added product direction (PRODUCT-001 rules engine + AI assistant, INT-002 StackAdapt) and full build specs: `docs/features/rules-engine.md` (metrics widening → notify rules → write actions) and `docs/features/ai-assistant.md` (Claude tool-use assistant; model never gets an execute tool). Added the Planning Coverage Index above and this kickoff prompt. **All of this lives on branch `claude/project-architecture-security-fclnow` — merge it to `main` before the next session, or the next session won't see the plan.**
 2026-07-07 — **Architecture + security review session (no code changes).** Ran the `architect` and `security-reviewer` agents over the full codebase and synthesized two leave-behind docs: `docs/architecture-blueprint.md` (systems to build for the remaining phases + SaaS launch — org layer, client factory, sync-core extraction, token refresh, Vercel Cron background sync, sync-job observability, Sentry, Stripe, onboarding, email, audit logging — each with a concrete build recipe and sequencing) and `docs/security-plan.md` (verified strengths; 3 code findings incl. a HIGH open redirect in `/auth/callback`; prioritized pre-launch checklist). New open questions: SEC-002 (pending security fixes), ARCH-003 (owner decisions: org-layer timing, cron choice, dependency approvals, start Google Developer Token + Meta App Review now).
 2026-06-26 — **Budget Dashboard SHIPPED & manually verified in production.** Merged the slice to `main`; fixed the production domain alias (Option A — `ad-op-tools.vercel.app` re-pointed to serve `main`, which was the cause of the prod 404s); set the 4 Budget env vars; connected a real Meta account via OAuth and Sync pulled real spend into the dashboard. **Phase 0+1 COMPLETE.** (Operational learning: the OAuth flow needs `APP_ORIGIN` + the Meta redirect URI + the login domain to be the same working origin — see decision-log.)
 2026-06-26 — Applied the budget migrations to `ad-op-tools` (`platform_connections`, `budget_entries`, `budget_caps` + RLS; hardened `set_updated_at` search_path per the security advisor). `/budget` now loads (connect/empty state) — the earlier production 500 was the missing tables. Security advisors clean except a pre-existing Auth "leaked password protection" toggle. Remaining to go live: env vars + Meta creds.
