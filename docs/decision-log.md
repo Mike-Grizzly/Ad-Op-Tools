@@ -239,3 +239,16 @@ Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
 **Operational learning (applies to every future ad-platform OAuth integration — Google, LinkedIn, TikTok, GTM)**: the OAuth round-trip only works when three things share the **same working origin**: (1) the domain the user is logged into, (2) `APP_ORIGIN` (which builds the `redirect_uri`), and (3) the redirect URI registered in the platform's app. The production 404s during testing were **not a code bug** — `ad-op-tools.vercel.app` (the production alias) had drifted to a stale Vercel deployment while the correct build was only reachable via the branch/`git-main` preview URL, so the Meta callback landed on a dead origin. Fix: re-point the production domain to the latest `main` deployment (Vercel "Promote to Production").
 
 **Next time**: keep the production domain alias on the latest `main` deployment; set `APP_ORIGIN` to that exact production origin; register the matching `…/api/integrations/<platform>/callback` redirect URI; test the OAuth flow on that one origin, not a preview URL.
+
+---
+
+## 2026-07-07 — Blueprint Decisions Confirmed (org layer, cron, dependencies)
+
+**Decision**: User confirmed the three ARCH-003 sign-offs from `docs/architecture-blueprint.md`:
+1. **Organization/workspace layer is built BEFORE Phase 2** (blueprint §3.1) — orgs + members + `is_org_member()` RLS indirection across all five tables, personal org auto-created on signup, `audit_log` table in the same migration.
+2. **Background sync = Vercel Cron** hitting an internal `/api/cron/sync` route with a service-role client (blueprint §3.3) — not Supabase Edge Functions, not a queue.
+3. **Dependency approvals granted** (add each only when its phase needs it): `vitest` (now), `@sentry/nextjs` + `resend` (Phase 2), `stripe`/`@stripe/stripe-js` + `@upstash/ratelimit` (launch-readiness).
+
+**Still user-owned, starting soon** (acknowledged long lead times): Google Ads Developer Token application and Meta App Review + Business Verification — both remain open in ARCH-003.
+
+**Implication**: The pre-Phase-2 work order is settled — (1) security "Now" checklist (`docs/security-plan.md` §4 items 1–7, incl. the HIGH open-redirect fix), (2) org layer migration + query rescoping, (3) client-factory seam + sync-core extraction + token-refresh seam — then Phase 2 proper (Google Ads client/OAuth, cron sync, `sync_jobs`, Sentry).

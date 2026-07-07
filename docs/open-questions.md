@@ -132,10 +132,9 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## ARCH-003 — Blueprint decisions needing owner sign-off
 
-**Status**: Open
-**Context**: `docs/architecture-blueprint.md` (2026-07-07) recommends: build the **organization/workspace layer before Phase 2** (near-free now, expensive later); use **Vercel Cron** (not Supabase Edge Functions or a queue) for background sync; do the client-factory + sync-core extraction + token-refresh seam before adding Google Ads.
-**Action**: User confirms/adjusts: (1) org layer now; (2) Vercel Cron approach; (3) dependency approvals per blueprint §6 (`@sentry/nextjs`, `resend`, `stripe`, `@upstash/ratelimit`, `vitest`); (4) start the Google Ads Developer Token application and Meta App Review now (both long lead time).
-**Owner**: User
+**Status**: Mostly resolved 2026-07-07 — user confirmed (1) org layer before Phase 2, (2) Vercel Cron for background sync, (3) all dependency approvals per blueprint §6 (`vitest`, `@sentry/nextjs`, `resend`, `stripe`, `@upstash/ratelimit` — add each when its phase needs it). See decision-log "Blueprint Decisions Confirmed."
+**Remaining**: (4) User to start the **Google Ads Developer Token application** and **Meta App Review + Business Verification** — user acknowledged the long lead times and will start soon. Keep this open until both applications are submitted.
+**Owner**: User (item 4 only)
 
 ---
 
