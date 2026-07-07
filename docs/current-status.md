@@ -114,7 +114,9 @@ Where the build steps and security treatment for everything planned actually liv
 
 ## Next Session — Kickoff
 
-Paste-ready prompt for the next working session:
+**No pasting needed**: just say "continue the roadmap" — the Session Kickoff Protocol in
+`CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
+every new session at this section automatically. The slice definition:
 
 > Read `docs/current-status.md`, `docs/security-plan.md` §4, and `docs/open-questions.md`
 > (SEC-002). Build the **security hardening slice**: items 1–7 of the "Now" checklist in

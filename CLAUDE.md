@@ -185,6 +185,21 @@ Set `ECC_HOOK_PROFILE=minimal` to disable non-critical hooks, `standard` (defaul
 
 When docs and code disagree, fix the docs to match reality or flag the discrepancy.
 
+## Session Kickoff Protocol
+
+The project is built slice-by-slice from a committed plan. At session start:
+1. **Surface user-action alerts**: if `docs/session-alerts.md` has items, remind the user
+   of them in your first reply. Remove an item (commit the edit) when the user confirms
+   it's done.
+2. **Pick up the roadmap without being re-briefed**: if the user says "continue the
+   roadmap", "next slice", or gives no more specific task, read
+   `docs/current-status.md` → "Next Session — Kickoff" and begin that slice. The
+   sequencing source of truth is `docs/architecture-blueprint.md` §4; per-feature build
+   recipes live in `docs/features/{name}.md` and `docs/architecture-blueprint.md` §3.
+3. **Keep the kickoff pointer current**: at session closeout, rewrite the
+   "Next Session — Kickoff" section in `docs/current-status.md` to describe the next
+   slice, so the following session starts itself.
+
 ## Session Closeout (Required Every Session)
 
 Before ending any session, update:
