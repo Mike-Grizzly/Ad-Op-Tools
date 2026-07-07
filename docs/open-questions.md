@@ -45,12 +45,17 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## TEST-001 — Testing posture (no test runner installed)
+## TEST-001 — Testing posture (Vitest now installed)
 
-**Status**: Open
-**Question**: `package.json` has no Vitest/Playwright despite docs referencing them, and there are no `test`/`test:e2e` scripts. The real quality gate today is manual testing + `type-check`/`lint`/`build`.
-**Action**: Confirm manual-only is acceptable for the upcoming slices, or budget a sub-task to stand up Vitest for the highest-value pure functions (the per-platform `transforms.ts` spend mappers, where an off-by-1000 currency error is exactly the kind of bug a unit test catches cheaply).
-**Owner**: User
+**Status**: Mostly resolved 2026-07-07 — Vitest (`^3.2.7`, dev-only, approved under ARCH-003)
+stood up with `vitest.config.ts` (node env, `@` alias) and `test`/`test:watch` scripts. First
+tests cover the two highest-value pure functions: `spendToMicros` (`meta/transforms.test.ts`, 7
+cases incl. the off-by-1000 / large-spend / negative-credit paths) and token-crypto
+(`token-crypto.test.ts`, 6 cases: round-trip, fresh-IV, tamper, AAD row-binding, unknown-key-id,
+bad-tag-length). 13 tests, all green; wired into CI. Playwright/E2E still not set up.
+**Action**: Add tests opportunistically as new pure logic lands; stand up Playwright when a flow
+warrants an E2E gate.
+**Owner**: Claude
 
 ---
 
@@ -65,11 +70,13 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ## QUAL-001 — Pre-existing lint errors block the "lint passes" gate
 
-**Status**: Open
-**Question**: `npm run lint` currently reports ~35 errors + warnings that pre-date Phase 1 — mostly `require()`-style imports in `scripts/lib/resolve-formatter.js` (ECC hook tooling, CommonJS), plus a few UTM warnings (unused vars, `react-hooks/exhaustive-deps`). `npm run type-check` is clean.
-**Impact**: The working-style pre-commit gate expects lint to pass. New code is kept lint-clean, but the gate can't be honestly green until these are resolved or scoped out.
-**Action**: Address separately from feature work (not during a slice) — e.g. an eslint override/ignore for ECC `scripts/` tooling + fix the UTM warnings, or formally accept lint-as-advisory. Do not bundle into Phase 1.
-**Owner**: Claude (separate cleanup pass)
+**Status**: Resolved 2026-07-07 — the ~35 errors were all in non-application-source files:
+`scripts/**` (ECC hook tooling, legitimately CommonJS `require()`) and `Ad Op Tools UI Design/**`
+(vendored Claude Design mockups). Both are now in `eslint.config.mjs` `globalIgnores`, so the
+Next.js/TS ruleset only lints real app source. `npm run lint` now exits 0 (errors) with 7
+pre-existing UTM **warnings** remaining (unused vars, `react-hooks/exhaustive-deps` — non-blocking;
+tracked in UTM-005). Lint is now a real, green CI gate.
+**Owner**: Claude (UTM warnings fold into UTM-005)
 
 ---
 
@@ -121,12 +128,26 @@ Unresolved questions, risks, and decisions that need to be made. Resolve and mov
 
 ---
 
-## SEC-002 — Security findings from the 2026-07-07 audit (fixes pending)
+## SEC-002 — Security findings from the 2026-07-07 audit (hardening slice shipped 2026-07-07)
 
-**Status**: Open
-**Context**: A full architecture + security review (2026-07-07) produced `docs/security-plan.md`. Three concrete code findings await fixes: (1) **HIGH** — open redirect via the unvalidated `next` param in `src/app/auth/callback/route.ts` (exploitable once reset/magic-link emails ship); (2) **MEDIUM** — `src/features/utm/queries.ts` has no auth check and relies on RLS alone; (3) **LOW** — `src/features/budget/queries.ts` lacks explicit `.eq('user_id', ...)` scoping. All sized S.
-**Action**: Apply the "Now" checklist in `docs/security-plan.md` §4 (items 1–7) in a small hardening slice.
-**Owner**: Claude (next session; user to approve the Vitest dependency)
+**Status**: Mostly resolved 2026-07-07. The three code findings are fixed and reviewed:
+(1) **HIGH** open redirect — `next` now validated as a same-origin relative path in
+`src/app/auth/callback/route.ts`; `security-reviewer` fuzzed it (backslashes, `%2F`, tab/CRLF,
+userinfo `@`) and **confirmed no bypass** (it holds because the target is concatenated onto an
+already-trusted origin). (2) **MEDIUM** `utm/queries.ts` — auth guard + explicit
+`.eq('user_id', user.id)` added. (3) **LOW** `budget/queries.ts` — explicit `.eq('user_id', …)`
+added. §4 "Now" items 1–3, 5, 6, 7 all shipped this slice (headers report-only CSP, CI +
+Dependabot, Vitest + 13 tests).
+**Remaining (small follow-ups, non-blocking)**:
+- **Item 4 — Supabase leaked-password protection**: dashboard Auth toggle, not settable via the
+  Supabase MCP (no auth-config tool). **User action** — Dashboard → Authentication → Policies →
+  enable "Leaked password protection." Surfaced in `docs/session-alerts.md`.
+- **CSP report sink**: the CSP ships report-only but has no `report-to`/`report-uri` yet, so it
+  collects no violations (reviewer MEDIUM, functional-not-exploitable). Wire it when Sentry lands
+  (blueprint §3.6), then enforce (§4 launch-gate item 20).
+- **Query contract style**: `utm/queries.ts` returns `[]` on no-user (per the security-plan's
+  explicit instruction) while `budget/queries.ts` throws `Unauthorized`; align in a later pass.
+**Owner**: Claude (follow-ups) / User (item 4 toggle)
 
 ---
 
