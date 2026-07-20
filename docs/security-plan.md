@@ -105,17 +105,21 @@ change. Track; do not force-resolve.
 ## 4. Prioritized checklist
 
 ### Now (this or next session — cheap, real)
-1. ☐ Fix the `/auth/callback` open redirect (§2.1) — **S**
-2. ☐ Auth guard + explicit user scoping in `utm/queries.ts` (§2.2) — **S**
-3. ☐ Explicit user scoping in `budget/queries.ts` (§2.3) — **S**
-4. ☐ Flip on Supabase Auth leaked-password protection — **S**
-5. ☐ Add security headers via `next.config.ts` `headers()` (HSTS, nosniff,
-   `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`; CSP in
-   report-only first, then enforce) — **M**
-6. ☐ GitHub Actions CI: `type-check` + `lint` + `build` + `npm audit --audit-level=high`,
-   plus Dependabot config — **S**
-7. ☐ Vitest (needs dependency approval) for `spendToMicros` + token-crypto round-trip/tamper
-   tests — **S**
+1. ☑ Fix the `/auth/callback` open redirect (§2.1) — **S** — done 2026-07-07; `next` validated
+   as same-origin relative path; security-reviewer confirmed no bypass.
+2. ☑ Auth guard + explicit user scoping in `utm/queries.ts` (§2.2) — **S** — done 2026-07-07.
+3. ☑ Explicit user scoping in `budget/queries.ts` (§2.3) — **S** — done 2026-07-07.
+4. ☐ Flip on Supabase Auth leaked-password protection — **S** — **USER ACTION** (dashboard
+   toggle, not settable via MCP; in `docs/session-alerts.md`).
+5. ☑ Add security headers via `next.config.ts` `headers()` (HSTS, nosniff, `X-Frame-Options:
+   DENY` + `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`; CSP
+   report-only) — **M** — done 2026-07-07. CSP has no report sink yet (rides Sentry §3.6);
+   enforce later per launch-gate item 20.
+6. ☑ GitHub Actions CI: `type-check` + `lint` + `test` + `build` + `npm audit
+   --audit-level=high`, plus Dependabot config — **S** — done 2026-07-07
+   (`.github/workflows/ci.yml` with `permissions: contents: read`, `.github/dependabot.yml`).
+7. ☑ Vitest for `spendToMicros` + token-crypto round-trip/tamper tests — **S** — done
+   2026-07-07; 13 tests green, wired into CI.
 
 ### Phase 2 (rides the blueprint work)
 8. ☐ Audit-log table with the org migration; log OAuth connect/disconnect, decrypt

@@ -33,6 +33,7 @@ export async function getConnections(): Promise<PlatformConnectionPublic[]> {
     .select(
       'id, platform, external_account_id, account_name, scopes, status, token_expires_at, last_synced_at, created_at, updated_at'
     )
+    .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(`Failed to fetch connections: ${error.message}`)
@@ -49,6 +50,7 @@ export async function getBudgetEntries(range: DateRange): Promise<BudgetEntry[]>
   const { data, error } = await supabase
     .from('budget_entries')
     .select('*')
+    .eq('user_id', user.id)
     .gte('entry_date', range.from)
     .lte('entry_date', range.to)
     .order('entry_date', { ascending: false })
@@ -64,7 +66,10 @@ export async function getCaps(): Promise<BudgetCap[]> {
   } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data, error } = await supabase.from('budget_caps').select('*')
+  const { data, error } = await supabase
+    .from('budget_caps')
+    .select('*')
+    .eq('user_id', user.id)
   if (error) throw new Error(`Failed to fetch caps: ${error.message}`)
   return data
 }

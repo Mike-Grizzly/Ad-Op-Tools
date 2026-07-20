@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Not application source — do not lint with the Next.js/TS ruleset:
+    // vendored Claude Design mockups (HTML/JS) and CommonJS Node tooling scripts.
+    "Ad Op Tools UI Design/**",
+    "scripts/**",
   ]),
 ]);
 

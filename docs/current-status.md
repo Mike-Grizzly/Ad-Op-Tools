@@ -29,6 +29,12 @@ later (after more is built) — see open-questions BUDGET-002.
 - `src/features/auth/` — sign-out server action + button
 - `src/types/database.ts` — hand-maintained (see database state below)
 - `.env.example` — all env vars documented with placeholders
+- **Security hardening (2026-07-07)**: `/auth/callback` open-redirect fix; auth guard + explicit
+  `user_id` scoping in `utm/queries.ts` + `budget/queries.ts`; security headers in
+  `next.config.ts` (HSTS, nosniff, `X-Frame-Options: DENY`, Referrer-Policy, CSP report-only)
+- **Tooling**: Vitest (`vitest.config.ts`, `npm test`) — 13 tests for `spendToMicros` +
+  token-crypto; GitHub Actions CI (`.github/workflows/ci.yml`: type-check/lint/test/build +
+  `npm audit`) + Dependabot; ESLint scoped to app source (`eslint.config.mjs`)
 
 ### UTM Generator (`src/features/utm/`)
 - `validation.ts` — Zod schemas: `utmParamsSchema` (includes `ad_set`, `creative`), `saveTemplateSchema`, `utmHistoryIdSchema` (uuid for edit/delete)
@@ -118,21 +124,38 @@ Where the build steps and security treatment for everything planned actually liv
 `CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
 every new session at this section automatically. The slice definition:
 
-> Read `docs/current-status.md`, `docs/security-plan.md` §4, and `docs/open-questions.md`
-> (SEC-002). Build the **security hardening slice**: items 1–7 of the "Now" checklist in
-> `docs/security-plan.md` — fix the `/auth/callback` open redirect; add auth checks +
-> explicit user scoping to `src/features/utm/queries.ts` and `src/features/budget/queries.ts`;
-> enable Supabase Auth leaked-password protection; add security headers in `next.config.ts`
-> (CSP report-only first); add a GitHub Actions CI workflow (type-check, lint, build,
-> npm audit) + Dependabot; stand up Vitest with tests for `spendToMicros` and a
-> token-crypto round-trip/tamper case. Run the `security-reviewer` agent on the diff
-> before committing. Then, if time remains, start the **org/workspace layer** per
-> `docs/architecture-blueprint.md` §3.1.
+> **Build the org/workspace layer** per `docs/architecture-blueprint.md` §3.1 (and §3.11 for
+> `audit_log`). This is the confirmed pre-Phase-2 slice (ARCH-003): introduce
+> `organizations` + `organization_members`, add `org_id` to the tenant tables
+> (`platform_connections`, `budget_entries`, `budget_caps`, `utm_templates`, `utm_history`),
+> and rewrite RLS from `user_id = auth.uid()` to org-membership (`is_org_member(org_id)`) in
+> the **same migration** (never leave a table open). Backfill each existing user into a
+> personal org. Follow the migration recipe in the blueprint; run the `database-reviewer` and
+> `security-reviewer` agents on the diff before committing. Read `docs/architecture-blueprint.md`
+> §3.1 + §3.11, `docs/current-status.md`, and `docs/open-questions.md` (ARCH-003) first.
+>
+> Security-hardening carry-overs to fold in when convenient (from SEC-002): update the new
+> query scoping to `org_id`; align the `[]`-vs-throw contract between `utm/queries.ts` and
+> `budget/queries.ts`; wire a CSP `report-to` sink once Sentry lands.
 
 After that slice, the standing order is the sequencing table in
 `docs/architecture-blueprint.md` §4.
 
 ## Last Updated
+2026-07-07 (security hardening slice) — **Shipped `docs/security-plan.md` §4 "Now" items 1–3,
+5, 6, 7** on branch `claude/roadmap-planning-6pnp7d`. Fixed the HIGH open redirect in
+`src/app/auth/callback/route.ts` (`next` validated as same-origin relative path); added auth
+guard + explicit `.eq('user_id', …)` scoping to `utm/queries.ts` and `budget/queries.ts`; added
+security headers in `next.config.ts` (HSTS, nosniff, `X-Frame-Options: DENY`, Referrer-Policy,
+CSP report-only); added GitHub Actions CI (`.github/workflows/ci.yml`, `permissions: contents:
+read`) + Dependabot (`.github/dependabot.yml`); stood up Vitest (`vitest.config.ts`, `test`
+script) with 13 tests for `spendToMicros` + token-crypto (round-trip/tamper/AAD-binding). Scoped
+ESLint to app source only (`eslint.config.mjs` ignores `scripts/**` + design mockups) so lint is
+now a real green gate (resolves QUAL-001). `security-reviewer` ran on the diff: **no CRITICAL/HIGH**
+— open-redirect fix confirmed bypass-proof; user_id scoping confirmed correct over RLS. Applied its
+two cheap recs (CI token permissions, CSP-sink-deferred comment). type-check/lint/test/build all
+green. **Remaining item 4 (Supabase leaked-password protection) is a USER dashboard toggle** — in
+`session-alerts.md`. Next slice: **org/workspace layer** (blueprint §3.1) — see Kickoff above.
 2026-07-07 (later) — **Planning completed and closed out.** Owner confirmed ARCH-003 decisions (org layer before Phase 2; Vercel Cron; dependency approvals). Added product direction (PRODUCT-001 rules engine + AI assistant, INT-002 StackAdapt) and full build specs: `docs/features/rules-engine.md` (metrics widening → notify rules → write actions) and `docs/features/ai-assistant.md` (Claude tool-use assistant; model never gets an execute tool). Added the Planning Coverage Index above and this kickoff prompt. **All of this lives on branch `claude/project-architecture-security-fclnow` — merge it to `main` before the next session, or the next session won't see the plan.**
 2026-07-07 — **Architecture + security review session (no code changes).** Ran the `architect` and `security-reviewer` agents over the full codebase and synthesized two leave-behind docs: `docs/architecture-blueprint.md` (systems to build for the remaining phases + SaaS launch — org layer, client factory, sync-core extraction, token refresh, Vercel Cron background sync, sync-job observability, Sentry, Stripe, onboarding, email, audit logging — each with a concrete build recipe and sequencing) and `docs/security-plan.md` (verified strengths; 3 code findings incl. a HIGH open redirect in `/auth/callback`; prioritized pre-launch checklist). New open questions: SEC-002 (pending security fixes), ARCH-003 (owner decisions: org-layer timing, cron choice, dependency approvals, start Google Developer Token + Meta App Review now).
 2026-06-26 — **Budget Dashboard SHIPPED & manually verified in production.** Merged the slice to `main`; fixed the production domain alias (Option A — `ad-op-tools.vercel.app` re-pointed to serve `main`, which was the cause of the prod 404s); set the 4 Budget env vars; connected a real Meta account via OAuth and Sync pulled real spend into the dashboard. **Phase 0+1 COMPLETE.** (Operational learning: the OAuth flow needs `APP_ORIGIN` + the Meta redirect URI + the login domain to be the same working origin — see decision-log.)
