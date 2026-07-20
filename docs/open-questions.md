@@ -187,6 +187,57 @@ Dependabot, Vitest + 13 tests).
 
 ---
 
+## PRODUCT-002 — Pricing tiers need owner confirmation before the Stripe slice
+
+**Status**: Open
+**Context**: The committed product spec (`docs/product-spec-2026-06.md`) proposes flat tiers:
+Solo $29/mo (3 clients, 2 platform accounts), Pro $59/mo (10 clients, unlimited accounts),
+Team $99/mo (5 users, unlimited clients), 14-day full-Pro trial, no card. Recorded as the
+candidate structure for blueprint §3.8 (Stripe), which needs tier definitions to build
+`getPlan(orgId)` feature gating.
+**Action**: Owner confirms (or revises) tiers + limits before the billing slice starts. Limits
+imply enforcement points (client count, connection count, member count) — cheap if known early.
+**Owner**: User
+
+---
+
+## PRODUCT-003 — Checklist template content: seeding and editability
+
+**Status**: Open
+**Context**: The spec ships two detailed default checklist templates (Google Search 18 items,
+Meta Lead Gen 15 items) and says templates are stored in DB and user-editable. Questions for
+slice start: are the spec's defaults seeded per-org (copy-on-create) or global rows? Can users
+edit the defaults or only clones? Same question applies to the pre-seeded negative-keyword
+vertical lists (§5.1).
+**Action**: Decide at the checklist-engine slice; default recommendation — seed as global
+read-only defaults, copy-on-first-edit into the org.
+**Owner**: User (product call) / Claude (default if unanswered)
+
+---
+
+## DEBT-001 — Minor flags from the 2026-07-20 architecture review (non-blocking)
+
+**Status**: Open (tracking only; none block current work)
+**Items**:
+- **Duplicate migration timestamp prefix**: `20260626000000_create_platform_connections_and_budget.sql`
+  and `20260626000000_utm_history_update_policy.sql` share a prefix; ordering relies on
+  lexical filename sort. Harmless today (both applied); avoid reusing timestamps going
+  forward, and consider renaming the policy file if a fresh-environment build ever misorders.
+- **Files over the 300-line guideline (5)**: `budget-helpers.ts` (362), `budget-campaign-table.tsx`
+  (346), `utm-form.tsx` (338), `budget-page-client.tsx` (306), `utm-url-library.tsx` (303).
+  Already flagged in current-status for the budget pair; extract on next touch, not as a
+  dedicated refactor.
+- **Test coverage is pure-functions-only**: no tests for server actions, OAuth routes, or
+  auth guards. Add action-level tests opportunistically (TEST-001), prioritizing `syncBudget`
+  and the OAuth callback validators when Phase 2 touches them.
+- **CSP still report-only with `unsafe-inline`/`unsafe-eval`** and no report sink — already
+  tracked in SEC-002; listed here only for completeness of the review record.
+- **`src/hooks/` doesn't exist** though conventions reference it — fine (no shared hooks yet);
+  create it only when a real shared hook appears.
+**Owner**: Claude (opportunistic)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.

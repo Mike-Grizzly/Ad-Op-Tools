@@ -295,6 +295,17 @@ items 8–9 below are summaries):
     redirect, and the `platform` CHECK constraints in 3 tables must gain a
     `'stackadapt'` value (the first platform outside the original four).
 
+Added 2026-07-20 (owner's product spec, committed as `docs/product-spec-2026-06.md` with
+staleness annotations): a further set of feature clusters — clients + client dashboard,
+campaign records + checklist engine, naming generator, health monitors (disapprovals /
+landing pages / conversion tracking / change log / creative fatigue), ad copy bank + RSA
+builder, negative keyword library + search term triage, account health audit, morning
+digest email, pricing tiers. **Sequencing for all of these lives in `docs/roadmap.md` →
+"Product-spec merge (2026-07-20)"** — they slot in around the §4 table above without
+changing it (the §3 infra recipes are prerequisites for most of them; the `clients` table
+lands immediately after the §3.1 org layer). This section stays the infra source of truth;
+the merge table is the feature source of truth.
+
 ## 6. Decisions the owner must make before building
 
 The working-style rules forbid new libraries without approval. Approvals needed, by phase:
