@@ -77,7 +77,13 @@ gaps.** Specifically:
 
 ## 3. Systems to build (with build recipes)
 
-### 3.1 Organization / workspace layer — **build FIRST, before Phase 2** (M)
+### 3.1 Organization / workspace layer — ✅ **BUILT 2026-07-21** (was: build FIRST, before Phase 2) (M)
+
+> Shipped per this recipe in `20260721000000_create_org_layer.sql` +
+> `src/features/org/queries.ts`; see `docs/features/org-layer.md` for what was built and
+> the deviations (queries.ts only — no actions/validation yet; `budget_entries`/`budget_caps`
+> unique keys re-keyed to org; `platform_connections` kept user-leading because the token
+> AAD is user-bound; tenant-rebinding triggers added from review findings).
 
 **Why:** multi-tenant SaaS needs orgs (teams, billing per company, shared platform
 connections). Retrofitting later means data backfill, Stripe-customer coordination, and
@@ -214,7 +220,7 @@ Recommend Resend (`resend` dep — **approval needed**) behind `src/lib/email/`.
 high-value message is "your Meta connection expired / sync failed — reconnect", which pairs
 directly with 3.4/3.5. Later: welcome email, billing receipts (Stripe sends its own).
 
-### 3.11 Audit logging — **table now, call sites from Phase 3** (S, then ongoing)
+### 3.11 Audit logging — ✅ table BUILT 2026-07-21 (in the §3.1 migration); call sites from Phase 3 (ongoing)
 
 Append-only `audit_log` (`id, org_id, actor_user_id, action text, target text, metadata
 jsonb, created_at`; RLS: members can read their org's log; INSERT via server code only).

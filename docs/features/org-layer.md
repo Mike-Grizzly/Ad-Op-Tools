@@ -1,7 +1,14 @@
 # Feature Spec — Organization / Workspace Layer
 
-**Status**: In progress (slice started 2026-07-21). Confirmed pre-Phase-2 slice per
-ARCH-003 and `docs/architecture-blueprint.md` §3.1 + §3.11.
+**Status**: Built, reviewed, migration applied to `ad-op-tools`, RLS verified by SQL probes
+(2026-07-21). **NOT yet complete**: pending merge to `main` + manual production verification
+(the deploy-window note below). Confirmed pre-Phase-2 slice per ARCH-003 and
+`docs/architecture-blueprint.md` §3.1 + §3.11.
+
+> **DEPLOY WINDOW (action needed)**: the migration is live on the shared DB but `main`
+> still runs pre-org code. Reads work; **writes from the old code fail** (org_id NOT NULL):
+> UTM generate, sync, caps. Merge branch `claude/roadmap-feature-planning-3e4ll0` → `main`
+> before using the app.
 **Owner decisions (2026-07-21)**: invisible this slice — auto-created personal workspace,
 zero UI changes; `docs/design-system.md` ships in the same slice.
 
@@ -82,18 +89,47 @@ Indexes move from user-leading to org-leading.
 
 ## Verification checklist
 
-- [ ] database-reviewer + security-reviewer on the migration; code/typescript reviewers on the diff
-- [ ] type-check / lint / test (13 existing) / build all green
-- [ ] Migration applied to `ad-op-tools` back-to-back with deploy (deploy-window: old
-      code inserts fail once org_id is NOT NULL; reads unaffected)
-- [ ] Post-apply probes: backfill complete (`org_id is null` = 0 everywhere, row counts
-      unchanged), policy set exact, cross-tenant denial probe (random JWT sub sees 0 rows),
-      advisors clean
-- [ ] Manual production verification: UTM generate/edit/delete/template; Budget renders;
-      caps edit; **Sync now against the real Meta connection (proves token decryption
-      survived)**. `disconnectPlatform` verified by review only (destructive vs the only
-      real connection).
+- [x] database-reviewer + security-reviewer on the migration; code-reviewer on the diff —
+      all findings applied (see Test results)
+- [x] type-check / lint / test (13 existing) / build all green
+- [x] Migration applied to `ad-op-tools` (2026-07-21). Deploy-window flagged: merge to
+      `main` still pending (owner action)
+- [x] Post-apply probes: backfill complete (`org_id is null` = 0 on all 5 tables; row
+      counts unchanged: 3 connections / 71 entries / 0 caps / 1 template / 1 history);
+      policy matrix exact (budget_entries has no DELETE; orgs/members SELECT-only;
+      audit_log SELECT+INSERT only); cross-tenant probe: random authenticated sub sees 0
+      rows on every table; real user sees all rows; function ACLs tightened
+- [ ] **Manual production verification (owner, after merging to main)**: UTM
+      generate/edit/delete/template; Budget renders; caps edit; **Sync now against the
+      real Meta connection (proves token decryption survived)**. `disconnectPlatform`
+      verified by review only (destructive vs the only real connection).
 
-## Test results
+## Test results (2026-07-21)
 
-_(to be filled at closeout)_
+- **Reviews**: code-reviewer APPROVE (0 blocking). security-reviewer: 0 CRITICAL/HIGH,
+  3 MEDIUM — all addressed (function grant hygiene incl. Supabase default-privilege direct
+  grants; `prevent_tenant_rebinding` trigger freezing org_id everywhere + user_id on the
+  crypto/attribution tables; `syncBudget` catches per-connection decrypt failures).
+  database-reviewer: 2 HIGH (same grant no-op, independently found; user_id FK index
+  coverage restored on 4 tables + audit_log) + 2 MEDIUM (lock_timeout/statement_timeout
+  guards; UPDATE WITH CHECK membership validation on budget_entries/budget_caps) + 2 LOW
+  (org_id FK NO ACTION intent documented; composite `(user_id, created_at)` index for
+  getOrgContext) — all applied.
+- **Gate**: type-check clean; lint 0 errors (6 pre-existing warnings, UTM-005); 13/13
+  Vitest green; production build clean.
+- **Apply**: one retry — first attempt failed on `name[] = text[]` cast in the
+  constraint-lookup DO block (transaction rolled back cleanly); fixed with `::text` cast.
+- **SQL probes**: all pass (see checklist above). Security advisors: only accepted items
+  remain (`is_org_member` executable by `authenticated` — required by RLS, discloses
+  nothing about other users; leaked-password toggle — pre-existing user action,
+  session-alerts).
+
+## Edge cases found
+
+- Supabase **default privileges** grant EXECUTE directly to anon/authenticated/service_role
+  on new functions — `revoke ... from public` alone is insufficient; named-role revokes
+  required (now in the migration).
+- `pg_attribute.attname` is type `name`; comparing to a text[] literal needs `::text`.
+- The Supabase project had auto-paused (INACTIVE) from inactivity; during restore
+  (`COMING_UP`) queries hit an empty bootstrap DB — never diagnose or migrate against a
+  project that isn't `ACTIVE_HEALTHY`.
