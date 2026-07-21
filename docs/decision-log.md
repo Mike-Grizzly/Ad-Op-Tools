@@ -294,3 +294,46 @@ scoping, AES-256-GCM token crypto with AAD row-binding, hardened OAuth, green CI
 
 **Made autonomously** (session ran unattended; recommended defaults chosen — owner can veto
 any of 1/2/6 cheaply until their slices start).
+
+---
+
+## 2026-07-21 — Org Layer: Key Shapes, Token AAD, and Contracts
+
+Slice: org/workspace layer (blueprint §3.1 + §3.11), owner-confirmed kickoff. Owner
+decisions this session: **org layer invisible this slice** (auto-created "Personal" org,
+zero UI) and **`docs/design-system.md` written now** from the shipped UTM/Budget UI.
+Execution decisions made autonomously within that scope:
+
+1. **Token AAD stays user-bound; `platform_connections` keeps its user-leading unique key**
+   `(user_id, platform, external_account_id)`. The AES-GCM AAD binds each ciphertext to the
+   connecting user's id — re-keying to org would break decryption of every stored token.
+   The decrypt path now derives the AAD from the **row's stored `user_id`** (not the
+   caller), so a future org teammate can use a shared connection. Org-level connection
+   dedupe/adoption is deferred to the invites slice (open-questions ORG-001).
+2. **`budget_entries` re-keyed to `(org_id, platform, external_account_id,
+   campaign_external_id, entry_date)`** (constraint `budget_entries_org_upsert_key`).
+   Spend rows are facts about an ad account; a user-leading key would double-count the
+   same account synced by two members. `user_id` on these rows now means **"last synced
+   by"** (upsert overwrites it).
+3. **`budget_caps` re-keyed to `(org_id, scope)`** — a cap is an org-level setting, not a
+   per-user one. `user_id` now means "set by".
+4. **Personal-org creation is trigger-only** (`handle_new_user` on `auth.users`, SECURITY
+   DEFINER, pinned search_path). No app-side fallback: no signup page exists, dashboard
+   provisioning fires the trigger, and `getOrgContext()` throws loudly on the
+   impossible zero-membership state instead of self-healing silently.
+5. **Query auth contract standardized on throw** — `utm/queries.ts` switched from
+   `return []` to `throw 'Unauthorized'`, matching `budget/queries.ts` (closes the
+   SEC-002 alignment item). The dashboard layout already guarantees auth on every query
+   path, so `[]` only masked bugs as empty states.
+6. **`src/features/org/` ships `queries.ts` only.** No actions/validation/logAudit helper
+   yet — zero call sites until invites/Phase 3 (anti-speculation rule). The `audit_log`
+   INSERT policy ships now so the first call site needs no migration.
+7. **`connections.ts` (lib) imports `getOrgContext` from `features/org`** — accepted mild
+   lib→feature inversion; org is the foundational feature and the blueprint names
+   `src/features/org/` as its home.
+8. **RLS**: INSERT policies keep a `user_id = auth.uid()` WITH CHECK (self-attribution,
+   defense-in-depth); UPDATE policies deliberately do NOT pin user_id (org members edit
+   shared rows; the sync upsert must overwrite teammates' rows). `budget_entries` still
+   has no DELETE policy. All new policies use the hardened `(select auth.uid())` /
+   `public.is_org_member(org_id)` form — this rewrite also converges the tracked-vs-remote
+   policy-shape divergence (UTM-004).
