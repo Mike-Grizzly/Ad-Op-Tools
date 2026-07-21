@@ -25,7 +25,7 @@ type DetailProps = {
   connections: PlatformConnectionPublic[]
   busy: boolean
   onClose: () => void
-  onUpdate: (input: UpdateClientInput) => void
+  onUpdate: (input: UpdateClientInput) => Promise<string | null>
   onDelete: (id: string) => void
   onAssign: (connectionId: string, clientId: string | null) => void
 }
@@ -54,17 +54,21 @@ function DarkStat({ label, value }: { label: string; value: string }) {
 export function ClientDrawer(props: Props) {
   const { busy, onClose } = props
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // Lifted from ClientBudgetEditor so Escape/backdrop can unwind the edit layer
+  // before closing the drawer (3-layer precedence, matching the UTM drawer).
+  const [budgetEditing, setBudgetEditing] = useState(false)
   const [draft, setDraft] = useState<CreateDraft>({ name: '', budget: '', resetDay: '1', currency: 'USD' })
 
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
       if (e.key !== 'Escape' || busy) return
       if (confirmingDelete) setConfirmingDelete(false)
+      else if (budgetEditing) setBudgetEditing(false)
       else onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [busy, confirmingDelete, onClose])
+  }, [busy, confirmingDelete, budgetEditing, onClose])
 
   const resetDayNum = Number(draft.resetDay)
   const createValid =
@@ -91,7 +95,12 @@ export function ClientDrawer(props: Props) {
   return (
     <div
       className="backdrop-in"
-      onClick={() => { if (!busy) onClose() }}
+      onClick={() => {
+        if (busy) return
+        if (confirmingDelete) setConfirmingDelete(false)
+        else if (budgetEditing) setBudgetEditing(false)
+        else onClose()
+      }}
       style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(0,0,0,.35)', display: 'flex', justifyContent: 'flex-end' }}
     >
       <aside
@@ -197,7 +206,14 @@ export function ClientDrawer(props: Props) {
                 <DarkStat label="Days left" value={String(props.pacing.window.daysLeft)} />
               </div>
 
-              <ClientBudgetEditor client={props.client} overrides={props.overrides} busy={busy} onSave={props.onUpdate} />
+              <ClientBudgetEditor
+                client={props.client}
+                overrides={props.overrides}
+                busy={busy}
+                editing={budgetEditing}
+                onEditingChange={setBudgetEditing}
+                onSave={props.onUpdate}
+              />
 
               <ClientAccountsPanel clientId={props.client.id} connections={props.connections} busy={busy} onAssign={props.onAssign} />
 

@@ -81,17 +81,18 @@ export function ClientsPageClient({ clients, overrides, connections, entries, no
     [router, showToast]
   )
 
+  // Promise contract (mirrors the UTM drawer): resolves the error string or null so the
+  // budget editor can stay in edit mode — with the user's draft intact — on failure.
   const handleUpdate = useCallback(
-    (input: UpdateClientInput) => {
-      startTransition(async () => {
-        const result = await updateClient(input)
-        if (result.error !== undefined) {
-          showToast(result.error, 'error')
-          return
-        }
-        showToast('Client updated')
-        router.refresh()
-      })
+    async (input: UpdateClientInput): Promise<string | null> => {
+      const result = await updateClient(input)
+      if (result.error !== undefined) {
+        showToast(result.error, 'error')
+        return result.error
+      }
+      showToast('Client updated')
+      router.refresh()
+      return null
     },
     [router, showToast]
   )

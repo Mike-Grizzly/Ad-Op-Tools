@@ -95,6 +95,8 @@ export function ClientsSubHeader({ showControls, sort, onSortChange, onAdd }: Pr
             </button>
             {menuOpen && (
               <div
+                role="menu"
+                aria-label="Sort clients"
                 style={{
                   position: 'absolute',
                   top: 44,
@@ -114,9 +116,18 @@ export function ClientsSubHeader({ showControls, sort, onSortChange, onAdd }: Pr
                   return (
                     <div
                       key={key}
+                      role="menuitem"
+                      tabIndex={0}
                       onClick={() => {
                         onSortChange(key)
                         setMenuOpen(false)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onSortChange(key)
+                          setMenuOpen(false)
+                        }
                       }}
                       style={{
                         display: 'flex',

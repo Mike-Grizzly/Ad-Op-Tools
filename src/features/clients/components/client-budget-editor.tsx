@@ -12,7 +12,12 @@ type Props = {
   client: Client
   overrides: ClientPlatform[]
   busy: boolean
-  onSave: (input: UpdateClientInput) => void
+  // Controlled by the drawer so Escape/backdrop can unwind the edit layer first.
+  editing: boolean
+  onEditingChange: (editing: boolean) => void
+  // Resolves the error string or null; the editor only leaves edit mode on success,
+  // keeping the user's draft intact on failure.
+  onSave: (input: UpdateClientInput) => Promise<string | null>
 }
 
 type Draft = { budget: string; resetDay: string; platforms: Record<AdPlatform, string> }
@@ -39,18 +44,19 @@ function validAmount(value: string): boolean {
 
 const amountInput = { ...monoInput, paddingLeft: 22 }
 
-export function ClientBudgetEditor({ client, overrides, busy, onSave }: Props) {
-  const [editing, setEditing] = useState(false)
+export function ClientBudgetEditor({ client, overrides, busy, editing, onEditingChange, onSave }: Props) {
+  const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState<Draft>(() => draftFrom(client, overrides))
 
   const resetDayNum = Number(draft.resetDay)
   const resetDayValid = Number.isInteger(resetDayNum) && resetDayNum >= 1 && resetDayNum <= 28
   const amountsValid = validAmount(draft.budget) && AD_PLATFORMS.every((p) => validAmount(draft.platforms[p]))
-  const saveDisabled = busy || !resetDayValid || !amountsValid
+  const saveDisabled = busy || saving || !resetDayValid || !amountsValid
 
-  function handleSave(): void {
+  async function handleSave(): Promise<void> {
     if (saveDisabled) return
-    onSave({
+    setSaving(true)
+    const error = await onSave({
       id: client.id,
       monthlyBudget: draft.budget.trim() === '' ? null : Number(draft.budget),
       budgetResetDay: resetDayNum,
@@ -59,7 +65,8 @@ export function ClientBudgetEditor({ client, overrides, busy, onSave }: Props) {
         amount: Number(draft.platforms[p]),
       })),
     })
-    setEditing(false)
+    setSaving(false)
+    if (error == null) onEditingChange(false)
   }
 
   return (
@@ -74,7 +81,7 @@ export function ClientBudgetEditor({ client, overrides, busy, onSave }: Props) {
             type="button"
             onClick={() => {
               setDraft(draftFrom(client, overrides))
-              setEditing(true)
+              onEditingChange(true)
             }}
             style={smallSecondaryBtn}
           >
@@ -143,9 +150,9 @@ export function ClientBudgetEditor({ client, overrides, busy, onSave }: Props) {
               disabled={saveDisabled}
               style={{ ...primaryBtn, cursor: saveDisabled ? 'not-allowed' : 'pointer', opacity: saveDisabled ? 0.75 : 1 }}
             >
-              {busy ? 'Saving…' : 'Save'}
+              {saving || busy ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" onClick={() => setEditing(false)} disabled={busy} style={secondaryBtn}>
+            <button type="button" onClick={() => onEditingChange(false)} disabled={saving || busy} style={secondaryBtn}>
               Cancel
             </button>
           </div>
