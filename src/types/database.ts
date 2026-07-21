@@ -1,14 +1,118 @@
 // HAND-MAINTAINED — not generated. Update this file by hand when a migration changes the schema.
 // (We are not running `supabase gen types` against the shared project; see docs/decision-log.md.)
-// Last updated by hand: 2026-06-26 (added platform_connections, budget_entries)
+// Last updated by hand: 2026-07-21 (org layer: organizations, organization_members, audit_log,
+// org_id on all tenant tables, is_org_member function)
 
 export type Database = {
   public: {
     Tables: {
+      organizations: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      organization_members: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'organization_members_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'organization_members_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      audit_log: {
+        Row: {
+          id: string
+          org_id: string
+          actor_user_id: string | null
+          action: string
+          target: string | null
+          metadata: Record<string, unknown>
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          actor_user_id?: string | null
+          action: string
+          target?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          actor_user_id?: string | null
+          action?: string
+          target?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'audit_log_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'audit_log_actor_user_id_fkey'
+            columns: ['actor_user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       utm_templates: {
         Row: {
           id: string
           user_id: string
+          org_id: string
           name: string
           source: string | null
           medium: string | null
@@ -21,6 +125,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          org_id: string
           name: string
           source?: string | null
           medium?: string | null
@@ -33,6 +138,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          org_id?: string
           name?: string
           source?: string | null
           medium?: string | null
@@ -49,6 +155,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'users'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'utm_templates_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           }
         ]
       }
@@ -56,6 +169,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          org_id: string
           template_id: string | null
           base_url: string
           source: string
@@ -71,6 +185,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          org_id: string
           template_id?: string | null
           base_url: string
           source: string
@@ -86,6 +201,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          org_id?: string
           template_id?: string | null
           base_url?: string
           source?: string
@@ -107,6 +223,13 @@ export type Database = {
             referencedColumns: ['id']
           },
           {
+            foreignKeyName: 'utm_history_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
             foreignKeyName: 'utm_history_template_id_fkey'
             columns: ['template_id']
             isOneToOne: false
@@ -119,6 +242,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          org_id: string
           platform: string
           external_account_id: string
           account_name: string | null
@@ -139,6 +263,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          org_id: string
           platform: string
           external_account_id: string
           account_name?: string | null
@@ -159,6 +284,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          org_id?: string
           platform?: string
           external_account_id?: string
           account_name?: string | null
@@ -183,6 +309,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'users'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'platform_connections_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           }
         ]
       }
@@ -190,6 +323,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          org_id: string
           platform: string
           external_account_id: string
           campaign_external_id: string
@@ -205,6 +339,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          org_id: string
           platform: string
           external_account_id: string
           campaign_external_id: string
@@ -220,6 +355,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          org_id?: string
           platform?: string
           external_account_id?: string
           campaign_external_id?: string
@@ -239,6 +375,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'users'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'budget_entries_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           }
         ]
       }
@@ -246,6 +389,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          org_id: string
           scope: string
           amount_micros: number
           currency: string
@@ -255,6 +399,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          org_id: string
           scope: string
           amount_micros: number
           currency?: string
@@ -264,6 +409,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          org_id?: string
           scope?: string
           amount_micros?: number
           currency?: string
@@ -277,12 +423,24 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'users'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'budget_caps_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           }
         ]
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      is_org_member: {
+        Args: { org: string }
+        Returns: boolean
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

@@ -1,5 +1,10 @@
 # Current Status
 
+> **⚠️ ACTION NEEDED (2026-07-21)**: the org-layer migration is APPLIED to the shared DB,
+> but `main` still runs pre-org code — **writes fail until branch
+> `claude/roadmap-feature-planning-3e4ll0` is merged to `main`** (reads work). Merge, then
+> run the manual production verification in `docs/features/org-layer.md`.
+
 ## Project Phase
 **Feature Slice 1: UTM Generator — Built and manually tested in production. Complete.**
 UTM generator + URL Library + edit/delete + detail drawer verified working in production by the
@@ -124,26 +129,47 @@ Where the build steps and security treatment for everything planned actually liv
 `CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
 every new session at this section automatically. The slice definition:
 
-> **Build the org/workspace layer** per `docs/architecture-blueprint.md` §3.1 (and §3.11 for
-> `audit_log`). This is the confirmed pre-Phase-2 slice (ARCH-003): introduce
-> `organizations` + `organization_members`, add `org_id` to the tenant tables
-> (`platform_connections`, `budget_entries`, `budget_caps`, `utm_templates`, `utm_history`),
-> and rewrite RLS from `user_id = auth.uid()` to org-membership (`is_org_member(org_id)`) in
-> the **same migration** (never leave a table open). Backfill each existing user into a
-> personal org. Follow the migration recipe in the blueprint; run the `database-reviewer` and
-> `security-reviewer` agents on the diff before committing. Read `docs/architecture-blueprint.md`
-> §3.1 + §3.11, `docs/current-status.md`, and `docs/open-questions.md` (ARCH-003) first.
+> **First**: verify the org-layer slice is fully closed — the branch
+> `claude/roadmap-feature-planning-3e4ll0` merged to `main` and the owner's manual
+> production verification done (checklist in `docs/features/org-layer.md`; the critical
+> probe is a real Meta "Sync now"). If not, surface that before starting new work.
 >
-> Security-hardening carry-overs to fold in when convenient (from SEC-002): update the new
-> query scoping to `org_id`; align the `[]`-vs-throw contract between `utm/queries.ts` and
-> `budget/queries.ts`; wire a CSP `report-to` sink once Sentry lands.
+> **Then: build the `clients` slice** per `docs/roadmap.md` → "Product-spec merge
+> (2026-07-20)" and `docs/product-spec-2026-06.md` §6.1. Clients are **org-scoped rows**
+> (org = paying tenant, client = the agency's customer): write
+> `docs/features/clients.md` first (spec before build), then migration (`clients` table,
+> `org_id not null`, RLS `is_org_member(org_id)` in the same migration, +
+> `prevent_tenant_rebinding` trigger), `src/features/clients/` module, and the client
+> list/dashboard UI **built to `docs/design-system.md`** (new: the codified UI
+> conventions). Follow-on per the merge table: campaign records + checklist engine hang
+> off clients. The alternate next infra slice (if the owner prefers infra-first) is the
+> platform client-factory seam, blueprint §3.2 — small and unblocks Google Ads.
 
-After that slice, the standing order is the sequencing table in
-`docs/architecture-blueprint.md` §4, **then the `clients` table slice** per
-`docs/roadmap.md` → "Product-spec merge (2026-07-20)" (clients are org-scoped rows; most
-product-spec features hang off them).
+After the clients slice, the standing order remains `docs/architecture-blueprint.md` §4
+(factory seam → sync-core extraction → token refresh → Google Ads → cron → sync_jobs/
+Sentry), interleaved with the product-spec merge table in `docs/roadmap.md`.
 
 ## Last Updated
+2026-07-21 — **Org/workspace layer slice (blueprint §3.1 + §3.11) built, reviewed, and
+applied** on branch `claude/roadmap-feature-planning-3e4ll0`. One migration
+(`20260721000000_create_org_layer.sql`): `organizations` + `organization_members` +
+append-only `audit_log`; `is_org_member()` (security definer, pinned search_path, tight
+grants); `handle_new_user` trigger on `auth.users` + backfill (1 personal org created);
+`org_id NOT NULL` on all 5 tenant tables; unique keys re-keyed to org on
+`budget_entries`/`budget_caps` (kept user-leading on `platform_connections` — token AAD is
+user-bound); org-leading indexes; full RLS rewrite to `is_org_member(org_id)` (converges the
+UTM-004 tracked-vs-remote divergence); `prevent_tenant_rebinding` triggers. Code:
+`src/features/org/queries.ts` (`getOrgContext()` — single auth+org resolution point), all
+utm/budget/connections queries+actions org-scoped, decrypt-path AAD derived from the row's
+stored user_id, UTM queries aligned to throw-on-no-user (SEC-002). Reviewed by
+database + security + code agents (all findings applied; 0 CRITICAL/HIGH remaining);
+type-check/lint/test/build green; migration applied to `ad-op-tools` and verified by SQL
+probes (backfill complete, cross-tenant denial, advisors clean save accepted items). Also
+shipped **`docs/design-system.md`** (codified UI/UX conventions from the shipped UTM+Budget
+UI — owner decision) and `docs/features/org-layer.md`. **Owner actions pending: merge the
+branch to `main` (writes fail on old code until then — see banner at top), then manual
+production verification (critical probe: real Meta "Sync now").** Next slice: `clients`
+(see Kickoff).
 2026-07-20 — **Architecture review + product-spec reconciliation (docs only, no code changes).**
 The owner uploaded an external product spec (authored 2026-06-26); it was NOT in the repo.
 Reviewed the full repo (docs + code, via Explore agents): **codebase passes** — RLS on all 5

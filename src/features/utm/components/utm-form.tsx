@@ -182,7 +182,7 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
       onCopy('error:' + (result.error ?? 'Failed to generate URL'))
     } else {
       onGenerated({
-        id: crypto.randomUUID(), user_id: '', template_id: null,
+        id: crypto.randomUUID(), user_id: '', org_id: '', template_id: null,
         base_url: baseUrl, source, medium, campaign,
         content: content || null, term: term || null,
         ad_set: adSet || null, creative: creative || null,
@@ -204,7 +204,7 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
     })
     if (result.data) {
       onTemplateSaved({
-        id: result.data.id, user_id: '', name: templateName.trim(),
+        id: result.data.id, user_id: '', org_id: '', name: templateName.trim(),
         source: source || null, medium: medium || null, campaign: campaign || null,
         content: content || null, term: term || null,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),

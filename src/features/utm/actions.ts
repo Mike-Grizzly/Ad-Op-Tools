@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { getOrgContext } from '@/features/org/queries'
 import { utmParamsSchema, saveTemplateSchema, utmHistoryIdSchema } from './validation'
-import type { UTMParamsInput, SaveTemplateInput } from './validation'
+import type { UTMParamsInput } from './validation'
 import type { Database } from '@/types/database'
 
 type ActionResult<T> = { data: T; error?: undefined } | { data?: undefined; error: string }
@@ -12,9 +12,9 @@ type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
 export async function generateAndSaveURL(
   input: unknown
 ): Promise<ActionResult<{ generated_url: string }>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, userId, orgId } = ctx
 
   const parsed = utmParamsSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
@@ -23,7 +23,8 @@ export async function generateAndSaveURL(
   const generated_url = buildUTMUrl(params)
 
   const { error } = await supabase.from('utm_history').insert({
-    user_id: user.id,
+    user_id: userId,
+    org_id: orgId,
     base_url: params.base_url,
     source: params.source,
     medium: params.medium,
@@ -45,9 +46,9 @@ export async function updateUTMHistory(
   id: unknown,
   input: unknown
 ): Promise<ActionResult<UTMHistoryEntry>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, orgId } = ctx
 
   const idParsed = utmHistoryIdSchema.safeParse(id)
   if (!idParsed.success) return { error: 'Invalid id' }
@@ -72,7 +73,7 @@ export async function updateUTMHistory(
       generated_url,
     })
     .eq('id', idParsed.data)
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .select('*')
     .single()
 
@@ -85,9 +86,9 @@ export async function updateUTMHistory(
 export async function deleteUTMHistory(
   id: unknown
 ): Promise<ActionResult<null>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, orgId } = ctx
 
   const idParsed = utmHistoryIdSchema.safeParse(id)
   if (!idParsed.success) return { error: 'Invalid id' }
@@ -96,7 +97,7 @@ export async function deleteUTMHistory(
     .from('utm_history')
     .delete()
     .eq('id', idParsed.data)
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
 
   if (error) return { error: 'Failed to delete URL' }
 
@@ -107,9 +108,9 @@ export async function deleteUTMHistory(
 export async function saveTemplate(
   input: unknown
 ): Promise<ActionResult<{ id: string }>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, userId, orgId } = ctx
 
   const parsed = saveTemplateSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
@@ -118,7 +119,8 @@ export async function saveTemplate(
   const { data, error } = await supabase
     .from('utm_templates')
     .insert({
-      user_id: user.id,
+      user_id: userId,
+      org_id: orgId,
       name: params.name,
       source: params.source || null,
       medium: params.medium || null,
@@ -141,15 +143,15 @@ export async function saveTemplate(
 export async function deleteTemplate(
   id: string
 ): Promise<ActionResult<null>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, orgId } = ctx
 
   const { error } = await supabase
     .from('utm_templates')
     .delete()
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
 
   if (error) return { error: 'Failed to delete template' }
 
@@ -164,9 +166,9 @@ export async function getAutocompleteSuggestions(
   field: unknown,
   prefix: unknown
 ): Promise<ActionResult<string[]>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, orgId } = ctx
 
   if (!AUTOCOMPLETE_FIELDS.includes(field as AutocompleteField)) {
     return { error: 'Invalid field' }
@@ -179,7 +181,7 @@ export async function getAutocompleteSuggestions(
   const { data, error } = await supabase
     .from('utm_history')
     .select('campaign, base_url')
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .ilike(validField, `${trimmed}%`)
     .order(validField)
     .limit(8)

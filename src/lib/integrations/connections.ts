@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { getOrgContext } from '@/features/org/queries'
 import type { AdPlatform, PlatformConnectionStatus } from '@/types/integrations'
 import { encryptToken, decryptToken, currentKeyId } from './token-crypto'
 
 // Server-only token store for ad-platform OAuth connections. This is the ONLY place token
 // columns are read and decrypted. Client-facing reads (the dashboard) use the token-free
 // shape in the budget feature's queries.ts — never this. Every helper re-verifies auth and
-// scopes by user_id (defense-in-depth on top of RLS) because tokens can spend real money.
+// scopes by org_id (defense-in-depth on top of RLS) because tokens can spend real money.
 
 export type ConnectionWithTokens = {
   id: string
@@ -31,6 +31,8 @@ export type SaveConnectionInput = {
 
 // Binds a token's ciphertext to its row identity: a ciphertext encrypted for one
 // (user, platform, account) won't decrypt under another — GCM AAD verification fails.
+// The AAD is keyed on the CONNECTING user's id (the row's user_id), not the org: existing
+// ciphertexts are bound to it, so decrypt must always derive the AAD from the stored row.
 function tokenAad(userId: string, platform: string, externalAccountId: string): string {
   return `${userId}:${platform}:${externalAccountId}`
 }
@@ -39,16 +41,14 @@ export async function getConnectionWithTokens(
   platform: AdPlatform,
   externalAccountId: string
 ): Promise<ConnectionWithTokens | null> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
+  const ctx = await getOrgContext()
+  if (!ctx) return null
+  const { supabase, orgId } = ctx
 
   const { data, error } = await supabase
     .from('platform_connections')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .eq('platform', platform)
     .eq('external_account_id', externalAccountId)
     .maybeSingle()
@@ -56,7 +56,7 @@ export async function getConnectionWithTokens(
   if (error) throw new Error(`Failed to fetch connection: ${error.message}`)
   if (!data) return null
 
-  const aad = tokenAad(user.id, data.platform, data.external_account_id)
+  const aad = tokenAad(data.user_id, data.platform, data.external_account_id)
   const hasRefresh =
     data.refresh_token_ciphertext !== null &&
     data.refresh_token_iv !== null &&
@@ -106,13 +106,11 @@ export async function getConnectionWithTokens(
 export async function saveConnection(
   input: SaveConnectionInput
 ): Promise<{ id: string } | null> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
+  const ctx = await getOrgContext()
+  if (!ctx) return null
+  const { supabase, userId, orgId } = ctx
 
-  const aad = tokenAad(user.id, input.platform, input.externalAccountId)
+  const aad = tokenAad(userId, input.platform, input.externalAccountId)
   const access = encryptToken(input.accessToken, aad)
   const refresh = input.refreshToken ? encryptToken(input.refreshToken, aad) : null
 
@@ -120,7 +118,8 @@ export async function saveConnection(
     .from('platform_connections')
     .upsert(
       {
-        user_id: user.id,
+        user_id: userId,
+        org_id: orgId,
         platform: input.platform,
         external_account_id: input.externalAccountId,
         account_name: input.accountName ?? null,
@@ -151,18 +150,17 @@ export async function saveConnection(
 export async function saveConnections(inputs: SaveConnectionInput[]): Promise<number> {
   if (inputs.length === 0) return 0
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return 0
+  const ctx = await getOrgContext()
+  if (!ctx) return 0
+  const { supabase, userId, orgId } = ctx
 
   const rows = inputs.map((input) => {
-    const aad = tokenAad(user.id, input.platform, input.externalAccountId)
+    const aad = tokenAad(userId, input.platform, input.externalAccountId)
     const access = encryptToken(input.accessToken, aad)
     const refresh = input.refreshToken ? encryptToken(input.refreshToken, aad) : null
     return {
-      user_id: user.id,
+      user_id: userId,
+      org_id: orgId,
       platform: input.platform,
       external_account_id: input.externalAccountId,
       account_name: input.accountName ?? null,
@@ -191,17 +189,15 @@ export async function markConnectionStatus(
   id: string,
   status: PlatformConnectionStatus
 ): Promise<void> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return
+  const ctx = await getOrgContext()
+  if (!ctx) return
+  const { supabase, orgId } = ctx
 
   const { error } = await supabase
     .from('platform_connections')
     .update({ status })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
 
   if (error) throw new Error(`Failed to update connection status: ${error.message}`)
 }

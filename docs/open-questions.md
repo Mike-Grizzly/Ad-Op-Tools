@@ -86,6 +86,11 @@ tracked in UTM-005). Lint is now a real, green CI gate.
 **Question**: Remote uses one consolidated `FOR ALL` policy per UTM table; the tracked migrations use granular per-command policies (now including UPDATE). Effective permissions match, but the shapes differ.
 **Risk**: Low. `supabase db pull` would overwrite the granular tracked lineage with the consolidated form. A fresh environment built from the tracked migrations gets the granular policies (correct, UPDATE included).
 **Action**: At the dev/prod Supabase split, pick one canonical policy shape and reconcile. Until then, do not `db pull` over `supabase/migrations/`.
+**Update 2026-07-21**: Substantially resolved by the org-layer migration
+(`20260721000000_create_org_layer.sql`) — it drops both naming lineages (`drop policy if
+exists` across the union) and creates one canonical org-scoped policy set, so tracked and
+remote now converge. This unblocks switching `src/types/database.ts` to `supabase gen types`
+at the dev/prod split.
 **Owner**: Claude (at dev/prod split)
 
 ---
@@ -145,8 +150,8 @@ Dependabot, Vitest + 13 tests).
 - **CSP report sink**: the CSP ships report-only but has no `report-to`/`report-uri` yet, so it
   collects no violations (reviewer MEDIUM, functional-not-exploitable). Wire it when Sentry lands
   (blueprint §3.6), then enforce (§4 launch-gate item 20).
-- **Query contract style**: `utm/queries.ts` returns `[]` on no-user (per the security-plan's
-  explicit instruction) while `budget/queries.ts` throws `Unauthorized`; align in a later pass.
+- ~~**Query contract style**~~: Resolved 2026-07-21 (org-layer slice) — `utm/queries.ts` now
+  throws `Unauthorized` like `budget/queries.ts` (see decision-log 2026-07-21 item 5).
 **Owner**: Claude (follow-ups) / User (item 4 toggle)
 
 ---
@@ -235,6 +240,40 @@ read-only defaults, copy-on-first-edit into the org.
 - **`src/hooks/` doesn't exist** though conventions reference it — fine (no shared hooks yet);
   create it only when a real shared hook appears.
 **Owner**: Claude (opportunistic)
+
+---
+
+## ORG-001 — Org-shared connections: dedupe/adoption + single-row assumption (surface at invites slice)
+
+**Status**: Open (landmine documented 2026-07-21 during the org-layer slice; harmless until teams exist)
+**Context**: `platform_connections` deliberately kept its `(user_id, platform, external_account_id)`
+unique key (token AAD is user-bound — see decision-log 2026-07-21 item 1). Once an org has two
+members, the same ad account could be connected by both, creating two rows in one org.
+**Items**:
+- `getConnectionWithTokens` uses `.maybeSingle()` filtered by `(org_id, platform, external_account_id)` —
+  two same-account rows in one org would make it throw. Decide precedence (newest? owner's?) or
+  dedupe/adopt at connect time.
+- Decide the product story for a member leaving an org whose connection others rely on
+  (re-encrypt/adopt via the `token_key_id` rotation mechanism, or force reconnect).
+**Already closed in the org migration** (security review 2026-07-21): cross-org row
+reassignment and `user_id`/AAD drift are blocked by the `prevent_tenant_rebinding` trigger
+(org_id immutable on all 5 tenant tables; user_id immutable on platform_connections and the
+utm tables), and `syncBudget` now treats a failed decrypt as a per-account failure instead
+of aborting the loop.
+**Owner**: Claude (at the invites slice)
+
+---
+
+## ORG-002 — `utm_templates` has no unique name constraint (dead 23505 branch)
+
+**Status**: Open (found 2026-07-21 during org-layer recon)
+**Context**: `saveTemplate` handles error code `23505` with "A template with that name already
+exists", but neither the remote DB nor the tracked migrations define ANY unique constraint on
+`utm_templates` — the branch is dead code and duplicate template names are currently allowed.
+**Action**: Owner call: add `unique (org_id, name)` (templates are org-shared now) in a future
+migration, or drop the dead branch. Not changed during the org slice to avoid an unrequested
+product-behavior change.
+**Owner**: User (product call) / Claude (implement)
 
 ---
 
