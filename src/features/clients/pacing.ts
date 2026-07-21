@@ -77,6 +77,8 @@ export function billingWindow(resetDay: number, now: Date): BillingWindow {
 function bandStatus(spendMicros: number, budgetMicros: number | null, ideal: number): PacingStatus {
   if (budgetMicros == null || budgetMicros <= 0) return 'none'
   if (spendMicros >= budgetMicros) return 'red'
+  // Sub-cent budgets can round ideal to 0 early in a cycle; avoid NaN deviation.
+  if (ideal <= 0) return spendMicros > 0 ? 'red' : 'none'
   const deviation = (spendMicros - ideal) / ideal
   const abs = Math.abs(deviation)
   if (abs <= 0.1) return 'green'

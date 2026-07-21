@@ -127,6 +127,16 @@ describe('computeClientPacing bands', () => {
     expect(zeroBudget.status).toBe('none')
   })
 
+  it('handles a sub-cent budget whose ideal rounds to zero without NaN', () => {
+    // Budget of 10 micros at day 10/31 → ideal rounds to 3; use day 1 via a fresh now.
+    const day1 = at('2026-07-01T00:00:00Z')
+    const tiny = { monthly_budget_micros: 10, budget_reset_day: 1 }
+    expect(computeClientPacing([], tiny, [], day1).status).toBe('none')
+    expect(
+      computeClientPacing([entry('2026-07-01', 5)], tiny, [], day1).status
+    ).toBe('red')
+  })
+
   it('projects linearly to cycle end', () => {
     expect(pace(100_000_000).projectedMicros).toBe(310_000_000)
   })

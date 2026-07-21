@@ -71,14 +71,9 @@ export async function updateClient(input: unknown): Promise<ActionResult<{ id: s
   }
 
   if (overrides !== undefined) {
-    // Replace-all semantics: the given rows become the full override set.
-    const { error: delErr } = await supabase
-      .from('client_platforms')
-      .delete()
-      .eq('client_id', id)
-      .eq('org_id', orgId)
-    if (delErr) return { error: 'Failed to update overrides' }
-
+    // Replace-all semantics, ordered to fail safe: upsert the new set first, then
+    // delete stale rows. A mid-sequence failure leaves an extra stale override rather
+    // than wiping the client's overrides (no cross-statement transaction here).
     if (overrides.length > 0) {
       const rows = overrides.map((o) => ({
         org_id: orgId,
@@ -86,9 +81,21 @@ export async function updateClient(input: unknown): Promise<ActionResult<{ id: s
         platform: o.platform,
         monthly_budget_override_micros: toMicros(o.amount),
       }))
-      const { error: insErr } = await supabase.from('client_platforms').insert(rows)
-      if (insErr) return { error: 'Failed to update overrides' }
+      const { error: upsertErr } = await supabase
+        .from('client_platforms')
+        .upsert(rows, { onConflict: 'client_id,platform' })
+      if (upsertErr) return { error: 'Failed to update overrides' }
     }
+
+    const keep = overrides.map((o) => o.platform)
+    let staleQuery = supabase
+      .from('client_platforms')
+      .delete()
+      .eq('client_id', id)
+      .eq('org_id', orgId)
+    if (keep.length > 0) staleQuery = staleQuery.not('platform', 'in', `(${keep.join(',')})`)
+    const { error: delErr } = await staleQuery
+    if (delErr) return { error: 'Failed to update overrides' }
   }
 
   revalidatePath('/clients')

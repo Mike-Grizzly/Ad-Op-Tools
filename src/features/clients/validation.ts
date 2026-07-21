@@ -29,6 +29,9 @@ export const updateClientSchema = z.object({
   overrides: z
     .array(z.object({ platform: adPlatformSchema, amount: budgetAmountSchema }))
     .max(8)
+    .refine((rows) => new Set(rows.map((r) => r.platform)).size === rows.length, {
+      message: 'Duplicate platform in overrides',
+    })
     .optional(),
 })
 export type UpdateClientInput = z.infer<typeof updateClientSchema>
