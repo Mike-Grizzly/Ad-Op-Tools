@@ -81,10 +81,12 @@ as $$
   );
 $$;
 
--- CREATE FUNCTION grants EXECUTE to PUBLIC by default; revoking from a named role
--- alone would be a no-op. Policies evaluate as `authenticated`, which therefore
--- needs an explicit grant (SECURITY DEFINER still requires the caller to hold EXECUTE).
-revoke all on function public.is_org_member(uuid) from public;
+-- CREATE FUNCTION grants EXECUTE to PUBLIC by default, and Supabase's default
+-- privileges ALSO add direct grants to anon/authenticated/service_role — both must be
+-- revoked or anon can call this via /rest/v1/rpc (advisor 0028). Policies evaluate as
+-- `authenticated`, which keeps an explicit grant (SECURITY DEFINER still requires the
+-- caller to hold EXECUTE).
+revoke all on function public.is_org_member(uuid) from public, anon;
 grant execute on function public.is_org_member(uuid) to authenticated, service_role;
 
 -- 3. Personal-org creation on signup ------------------------------------------
@@ -106,6 +108,10 @@ begin
   return new;
 end;
 $$;
+
+-- Trigger-only: trigger execution never checks the DML caller's EXECUTE privilege,
+-- so no role needs a grant; revoking all closes the /rest/v1/rpc exposure entirely.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -312,6 +318,8 @@ begin
   return new;
 end;
 $$;
+
+revoke all on function public.prevent_tenant_rebinding() from public, anon, authenticated;
 
 drop trigger if exists platform_connections_pin_tenant on public.platform_connections;
 create trigger platform_connections_pin_tenant
