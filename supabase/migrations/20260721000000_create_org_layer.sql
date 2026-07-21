@@ -216,7 +216,7 @@ begin
   where conrelid = 'public.budget_entries'::regclass
     and contype = 'u'
     and (
-      select array_agg(a.attname order by a.attname)
+      select array_agg(a.attname::text order by a.attname)
       from unnest(conkey) k
       join pg_attribute a on a.attrelid = conrelid and a.attnum = k
     ) = array['campaign_external_id','entry_date','external_account_id','platform','user_id'];
@@ -230,7 +230,7 @@ begin
   where conrelid = 'public.budget_caps'::regclass
     and contype = 'u'
     and (
-      select array_agg(a.attname order by a.attname)
+      select array_agg(a.attname::text order by a.attname)
       from unnest(conkey) k
       join pg_attribute a on a.attrelid = conrelid and a.attnum = k
     ) = array['scope','user_id'];
