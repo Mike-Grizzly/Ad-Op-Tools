@@ -43,6 +43,18 @@ const NAV = [
     ),
   },
   {
+    id: 'clients',
+    href: '/clients',
+    label: 'Clients',
+    icon: (
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="7.5" width="18" height="13" rx="2.5" />
+        <path d="M8.5 7.5V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2" />
+        <path d="M3 13h18" />
+      </svg>
+    ),
+  },
+  {
     id: 'campaigns',
     href: '/campaigns',
     label: 'Campaigns',
@@ -85,6 +97,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/utm': 'UTM Generator',
   '/budget': 'Budget Dashboard',
+  '/clients': 'Clients',
   '/campaigns': 'Campaigns',
   '/creative': 'Creative Assets',
   '/reports': 'Reports',
