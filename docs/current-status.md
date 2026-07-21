@@ -1,9 +1,10 @@
 # Current Status
 
-> **⚠️ ACTION NEEDED (2026-07-21)**: the org-layer migration is APPLIED to the shared DB,
-> but `main` still runs pre-org code — **writes fail until branch
-> `claude/roadmap-feature-planning-3e4ll0` is merged to `main`** (reads work). Merge, then
-> run the manual production verification in `docs/features/org-layer.md`.
+> **⚠️ ACTION NEEDED (2026-07-21)**: org layer merged (PR #8) ✅. The **clients slice**
+> awaits owner PR inspection + merge; its migration is applied (additive — live app
+> unaffected). After merging: run the manual production verification for BOTH slices in
+> one pass — checklists in `docs/features/org-layer.md` and `docs/features/clients.md`;
+> the critical probe is a real Meta **"Sync now"** on /budget, then the /clients flow.
 
 ## Project Phase
 **Feature Slice 1: UTM Generator — Built and manually tested in production. Complete.**
@@ -129,27 +130,42 @@ Where the build steps and security treatment for everything planned actually liv
 `CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
 every new session at this section automatically. The slice definition:
 
-> **First**: verify the org-layer slice is fully closed — the branch
-> `claude/roadmap-feature-planning-3e4ll0` merged to `main` and the owner's manual
-> production verification done (checklist in `docs/features/org-layer.md`; the critical
-> probe is a real Meta "Sync now"). If not, surface that before starting new work.
+> **First**: verify both pending slices are fully closed — the clients PR merged and the
+> owner's manual production verification done for org layer + clients (checklists in
+> `docs/features/org-layer.md` and `docs/features/clients.md`; critical probe = real
+> Meta "Sync now"). If not, surface that before new work.
 >
-> **Then: build the `clients` slice** per `docs/roadmap.md` → "Product-spec merge
-> (2026-07-20)" and `docs/product-spec-2026-06.md` §6.1. Clients are **org-scoped rows**
-> (org = paying tenant, client = the agency's customer): write
-> `docs/features/clients.md` first (spec before build), then migration (`clients` table,
-> `org_id not null`, RLS `is_org_member(org_id)` in the same migration, +
-> `prevent_tenant_rebinding` trigger), `src/features/clients/` module, and the client
-> list/dashboard UI **built to `docs/design-system.md`** (new: the codified UI
-> conventions). Follow-on per the merge table: campaign records + checklist engine hang
-> off clients. The alternate next infra slice (if the owner prefers infra-first) is the
-> platform client-factory seam, blueprint §3.2 — small and unblocks Google Ads.
+> **Then, owner picks the next slice** (both unblocked; ask at session start):
+> - **Infra (default)**: the platform **client-factory seam** (blueprint §3.2, S) +
+>   **sync-core extraction** (§3.3 step 1, S–M) as one small slice — removes the
+>   hardcoded Meta dispatch and unblocks Google Ads / token refresh / cron next.
+> - **Product**: **campaign records + checklist engine** (`docs/roadmap.md` product-spec
+>   merge, spec §2.1) — first feature hanging off clients; pure CRUD, no platform API;
+>   spec-before-build (`docs/features/checklists.md`), UI per `docs/design-system.md`.
+>   Checklist template seeding question is PRODUCT-003.
 
-After the clients slice, the standing order remains `docs/architecture-blueprint.md` §4
-(factory seam → sync-core extraction → token refresh → Google Ads → cron → sync_jobs/
-Sentry), interleaved with the product-spec merge table in `docs/roadmap.md`.
+The standing order remains `docs/architecture-blueprint.md` §4 (factory seam → sync-core
+→ token refresh → Google Ads → cron → sync_jobs/Sentry) interleaved with the product-spec
+merge table in `docs/roadmap.md`.
 
 ## Last Updated
+2026-07-21 (later) — **Clients slice built, reviewed, migration applied + probed** on
+branch `claude/roadmap-feature-planning-3e4ll0` (restarted from merged main after PR #8).
+Migration `20260722000000_create_clients.sql` (additive): `clients` (org-scoped, monthly
+budget micros nullable, `budget_reset_day` 1..28, currency) + `client_platforms`
+per-platform overrides + nullable `platform_connections.client_id`; same-org integrity via
+composite FKs `(org_id, client_id) → clients(org_id, id)`; `on delete set null
+(client_id)` detaches accounts on client delete. Code: `src/features/clients/` (pure
+`pacing.ts` honoring reset-day billing cycles with spec bands green ≤10% / amber ≤25% /
+red >25%-or-exhausted — resolves a spec inconsistency, see decision-log; queries/actions/
+validation; 24 unit tests → 37 total) and the `/clients` book-of-business UI (card grid +
+pacing bars + trend, create/detail drawer, budget + overrides editor, account
+assign/unassign, sort, nav entry) built to `docs/design-system.md` (+ new amber warning
+token). Four reviewer agents ran; all findings applied (fail-safe override replace,
+draft-preserving save contract, layered Escape, keyboard menu). Live-DB probes: cross-org
+FK rejections, delete cascade/detach, immutability — all pass; advisors clean.
+**Owner actions pending: inspect + merge the clients PR, then manual production
+verification for both 2026-07-21 slices (see banner).**
 2026-07-21 — **Org/workspace layer slice (blueprint §3.1 + §3.11) built, reviewed, and
 applied** on branch `claude/roadmap-feature-planning-3e4ll0`. One migration
 (`20260721000000_create_org_layer.sql`): `organizations` + `organization_members` +

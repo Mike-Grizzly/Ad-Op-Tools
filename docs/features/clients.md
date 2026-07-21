@@ -1,6 +1,7 @@
 # Feature Spec — Clients (Book of Business)
 
-**Status**: In progress (slice started 2026-07-21; plan approved by owner).
+**Status**: Built, reviewed, migration applied + probed (2026-07-21). **NOT complete**:
+pending owner PR inspection + merge, then manual production verification (checklist below).
 **Product input**: `docs/product-spec-2026-06.md` §1.1–1.2 and §6.1 cluster, superseded
 where the shipped canonical model differs (org scoping per decision-log 2026-07-20;
 integer micros; existing `budget_entries` rather than the spec's `budget_snapshots`).
@@ -109,6 +110,25 @@ had no warning color) — added to `docs/design-system.md` at closeout.
       reset-day 15 shifts the window → all three sorts → unassign → delete (confirm
       strip) → toasts → nav active state
 
-## Test results
+## Test results (2026-07-21)
 
-_(to be filled at closeout)_
+- **Reviews** (all findings applied): database-reviewer — migration correct on all checks
+  incl. composite-FK/`set null (client_id)` syntax; dropped a redundant org_id index;
+  accepted-as-designed notes recorded (client_id mutability on overrides, org FK NO
+  ACTION). security-reviewer — no CRITICAL/HIGH; composite-FK cross-org isolation
+  confirmed sound; carry-forwards honored (name length bounded in Zod; all rollup joins
+  org-filtered). typescript-reviewer — 1 HIGH fixed (fail-safe upsert-then-delete-stale
+  override replace), duplicate-platform Zod refine, NaN band guard. react-reviewer — 2
+  HIGH fixed (budget editor keeps draft on save failure via Promise contract; 3-layer
+  Escape/backdrop unwind with lifted edit state), sort-menu keyboard access added;
+  accepted: single coarse `isPending` (per-control granularity deferred), `createClient`
+  action name (no collision).
+- **Unit tests**: 24 pacing tests (billing windows incl. year-boundary/leap/reset-day
+  edges, all band thresholds, overrides, client join, trend) — 37 total green.
+- **Gate**: type-check clean, lint 0 errors, build clean (`/clients` dynamic route).
+- **Migration applied** to `ad-op-tools` (PG 17.6) and probed: cross-org override insert
+  → FK violation ✓; cross-org connection assignment → FK violation ✓; client delete →
+  overrides cascaded, connection detached, 71 spend rows untouched ✓; org_id change →
+  "org_id is immutable" ✓; org-with-clients delete blocked (NO ACTION, by design) ✓;
+  probe rows cleaned up (final state: 1 org, 0 clients, 3 connections, 71 entries);
+  security advisors clean except the two accepted standing items.

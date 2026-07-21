@@ -277,6 +277,23 @@ product-behavior change.
 
 ---
 
+## DEBT-002 — Minor flags from the 2026-07-21 clients-slice reviews (non-blocking)
+
+**Status**: Open (tracking only)
+**Items**:
+- `budget-sub-header.tsx` sort-menu items are mouse-only (no role/tabIndex/keyboard) —
+  the clients copy was fixed in-slice; fix budget's twin on next touch, or extract a
+  shared `SortMenu` primitive when a third consumer appears (react-reviewer 2026-07-21).
+- `clients-page-client.tsx` uses one coarse `isPending` for create/delete/assign (update
+  has its own draft-preserving contract) — per-control busy granularity like
+  budget-page-client's `busyId` pattern is a nice-to-have (accepted simplification).
+- `createClient` server action name collides conceptually with the Supabase factory
+  `createClient` — no import collision exists; rename to `addClient` only if it ever
+  confuses.
+**Owner**: Claude (opportunistic)
+
+---
+
 ## Resolved
 
 - **SETUP-001** — User has Vercel (connected to GitHub) and Supabase accounts. Resolved 2026-06-24.
