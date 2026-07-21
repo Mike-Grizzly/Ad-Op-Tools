@@ -252,3 +252,45 @@ Tables remain **UNAPPLIED** pending the dev/prod target decision (SETUP-007).
 **Still user-owned, starting soon** (acknowledged long lead times): Google Ads Developer Token application and Meta App Review + Business Verification — both remain open in ARCH-003.
 
 **Implication**: The pre-Phase-2 work order is settled — (1) security "Now" checklist (`docs/security-plan.md` §4 items 1–7, incl. the HIGH open-redirect fix), (2) org layer migration + query rescoping, (3) client-factory seam + sync-core extraction + token-refresh seam — then Phase 2 proper (Google Ads client/OAuth, cron sync, `sync_jobs`, Sentry).
+
+---
+
+## 2026-07-20 — Product Spec Adopted with Corrections; Orgs-then-Clients Composition
+
+**Context**: The owner uploaded an externally-authored product spec ("Ad Op Tools — Full
+Product Spec & Build Roadmap" v1.0, dated 2026-06-26) and asked for a full structural /
+architectural / safety review of the repo, treating the spec's features as additions to the
+current plan. The spec was not previously in the repo. A review this session confirmed the
+shipped codebase is sound (RLS on all tables, auth-first server actions with explicit
+scoping, AES-256-GCM token crypto with AAD row-binding, hardened OAuth, green CI).
+
+**Decisions**:
+1. **Spec committed to the repo** as `docs/product-spec-2026-06.md` with a staleness
+   annotation header. It is the product-scope source of truth for its feature clusters;
+   sequencing authority stays with `docs/roadmap.md` (new "Product-spec merge" section) and
+   `docs/architecture-blueprint.md` §4; schema authority stays with the shipped canonical
+   model.
+2. **Orgs first, then clients.** The committed org-layer kickoff slice (blueprint §3.1) is
+   unchanged. The spec's `clients` concept is a different layer that composes on top:
+   org = the paying tenant (workspace/team/billing), client = the agency's customer
+   (org-scoped rows carrying per-client budgets, checklists, monitors). A `clients` table
+   slice lands immediately after the org layer and becomes a prerequisite for most spec
+   features.
+3. **Corrections where the spec is stale** (spec loses to repo docs): Budget Dashboard
+   (Meta) is already live; StackAdapt has a GraphQL API (paste-key connect flow per
+   INT-002, CSV import demoted to optional fallback); the spec's table sketches
+   (`budget_snapshots`, its `platform_connections` shape) are superseded by the shipped
+   `budget_entries` / hardened `platform_connections` schemas.
+4. **Overlaps folded, not duplicated**: spec §8.2 alert rules builder folds into
+   `features/rules-engine.md` (notify-only rules = its Phase B); spec §7.2 morning digest
+   supersedes the blueprint §5.5 weekly-digest suggestion; spec §3.4 account change log is
+   distinct from the app's `audit_log` (platform-side history vs app-side actions — both
+   get built).
+5. **Spec anti-patterns adopted as standing guardrails** (recorded in roadmap merge
+   section): all platform writes user-confirmed or explicit user-enabled rules; no
+   campaign creation from scratch; LLM additive/optional/labeled; flat pricing only.
+6. **Pricing tiers** ($29 Solo / $59 Pro / $99 Team) recorded as the candidate structure
+   for the Stripe slice — needs owner confirmation before build (PRODUCT-002).
+
+**Made autonomously** (session ran unattended; recommended defaults chosen — owner can veto
+any of 1/2/6 cheaply until their slices start).

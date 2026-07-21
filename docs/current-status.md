@@ -139,9 +139,27 @@ every new session at this section automatically. The slice definition:
 > `budget/queries.ts`; wire a CSP `report-to` sink once Sentry lands.
 
 After that slice, the standing order is the sequencing table in
-`docs/architecture-blueprint.md` §4.
+`docs/architecture-blueprint.md` §4, **then the `clients` table slice** per
+`docs/roadmap.md` → "Product-spec merge (2026-07-20)" (clients are org-scoped rows; most
+product-spec features hang off them).
 
 ## Last Updated
+2026-07-20 — **Architecture review + product-spec reconciliation (docs only, no code changes).**
+The owner uploaded an external product spec (authored 2026-06-26); it was NOT in the repo.
+Reviewed the full repo (docs + code, via Explore agents): **codebase passes** — RLS on all 5
+tables, auth-first actions with explicit user-id scoping, AES-256-GCM token crypto with AAD
+row-binding, hardened OAuth, green CI; minor flags recorded in open-questions **DEBT-001**
+(duplicate migration timestamp prefix, 5 files >300 lines, action/route test gap). Committed
+the spec as `docs/product-spec-2026-06.md` with staleness annotations (Budget already live;
+StackAdapt has an API; its schema sketches superseded by the shipped canonical model). Merged
+its feature clusters (clients, checklists, naming generator, health monitors, copy bank/RSA
+builder, negative keywords, search-term triage, account health audit, morning digest, pricing
+tiers) into `docs/roadmap.md` → "Product-spec merge" by dependency — the org-layer kickoff
+slice is **unchanged**; a `clients` slice follows it. Decisions in decision-log 2026-07-20
+(orgs-then-clients; overlaps folded into rules-engine/audit-log/digest; spec anti-patterns
+adopted as guardrails — flagged as autonomous defaults the owner can veto). New open
+questions: **PRODUCT-002** (confirm pricing tiers), **PRODUCT-003** (checklist template
+seeding). Branch `claude/project-review-architecture-vxukbj`.
 2026-07-07 (security hardening slice) — **Shipped `docs/security-plan.md` §4 "Now" items 1–3,
 5, 6, 7** on branch `claude/roadmap-planning-6pnp7d`. Fixed the HIGH open redirect in
 `src/app/auth/callback/route.ts` (`next` validated as same-origin relative path); added auth

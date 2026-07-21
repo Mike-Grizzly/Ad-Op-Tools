@@ -14,6 +14,11 @@ app-side token encryption, Meta client) now exists and is proven end-to-end (rea
 sync). Remaining: **Phase 2** (next), **Phase 3**, **Phase 4**. The original framing below
 (written 2026-06-25, when nothing ad-platform existed) is kept for context.
 
+**Updated 2026-07-20:** The owner's external product spec (committed as
+`docs/product-spec-2026-06.md`, with staleness annotations) was merged into this roadmap —
+see "Product-spec merge" below. The core phase order is unchanged; the spec adds feature
+clusters that slot in around it.
+
 ## Guiding principle
 
 Build the integration foundation **through one real platform, not as a standalone
@@ -48,6 +53,41 @@ complexity / use service accounts" rationale is wrong. The GTM API requires Goog
 and service accounts are the wrong auth model for multi-tenant GTM (a service account is
 *our* GTM, not the user's). GTM carries the same OAuth cost as the spend features but
 unlocks only one feature — and it's write-path. Budget-first wins on value and de-risking.
+
+## Product-spec merge (2026-07-20)
+
+The committed spec (`docs/product-spec-2026-06.md`) introduces feature clusters with no prior
+presence in the repo docs. They are merged here **by dependency, not by the spec's own sprint
+plan** — the infra pre-work in `architecture-blueprint.md` §4 (org layer → factory seam →
+sync-core → token refresh → Google Ads → cron → sync_jobs/Sentry → email) stays first because
+nearly every spec feature depends on it. Per-feature specs get written at slice start (house
+rule: spec before build), using the spec's sections as the product input.
+
+| Spec feature (section) | Slots in | Hard prerequisites |
+|---|---|---|
+| **Clients + client dashboard** (§6.1) | Immediately after the org layer slice | Org layer (clients are org-scoped rows: org = paying tenant, client = the agency's customer) |
+| **Campaign records + Checklist engine** (§2.1) | Any time after Clients; good early-value CRUD slice | Clients; no platform API needed (auto-complete hooks land as their integrations do) |
+| **Campaign Naming Generator** (§2.2) | With or right after the checklist slice | Clients (per-client conventions) |
+| **Negative Keyword Library** (§5.1) | Any time after Clients (pure CRUD + CSV export) | Clients |
+| **Ad Copy Asset Bank + RSA Builder** (§4.1–4.2) | Any time after Clients; CSV export first, grade-sync later | Clients; performance-grade sync needs Google Ads client |
+| **UTM extensions** (§0.1: per-client templates, validator, checklist hook) | Fold into a UTM maintenance pass after Clients | Clients (adds `client_id` to utm tables) |
+| **Health monitors** (§3.1–3.3: disapprovals, landing pages, conversion tracking) | Phase 2.5 — after Google Ads client + cron + `sync_jobs` + email land | Google Ads client, Vercel Cron (blueprint §3.3), Resend (§3.10) |
+| **Account Change Log** (§3.4) | With the monitors (same cron + platform-pull pattern) | Same as monitors (Google `ChangeEvent`, Meta `/activities`). Distinct from the app's own `audit_log` (§3.11) — both exist: change log = what changed *on the platforms*; audit log = what *this app* did |
+| **Creative Fatigue Monitor** (§3.5) | After monitors pattern proven (Meta-side, needs metrics widening) | Cron + `ad_metrics` widening (`features/rules-engine.md` Phase A) |
+| **Morning Digest email** (§7.2) | After ≥2 monitors exist (it aggregates them). Supersedes blueprint §5.5's "weekly digest" — daily, sectioned | Monitors + email infra |
+| **Search Term Triage** (§5.2) | Phase 3+ — first Google Ads **write** surface (staged queue → Apply All) | Google Ads write scope; audit_log call sites; preview+confirm gate |
+| **Account Health Audit** (§8.1) | Phase 3+ (on-demand read-only scan; LLM summary optional + labeled) | Google Ads client; several checks need metrics widening |
+| **Alert Rules Builder** (§8.2) | **Folds into `features/rules-engine.md`** (repo spec is a superset; its Phase B notify-only rules = this feature) | Per rules-engine spec |
+| **Pricing tiers** ($29/$59/$99, §Pricing) | Launch-readiness — recorded as the candidate tier structure for the Stripe work (blueprint §3.8); needs owner confirmation (open-questions PRODUCT-002) | Org layer, Stripe |
+| **StackAdapt** (§1.1) | Per INT-002 — GraphQL API-key connect flow, **not** CSV-only (spec is stale here); CSV import optional fallback | Platform CHECK constraint change |
+
+**Adopted from the spec's "Anti-Patterns to Avoid" (now standing guardrails):**
+no autonomous bid/budget changes — every platform write is user-confirmed or an explicit
+user-enabled rule; no campaign creation from scratch (checklists guide native-platform
+creation); LLM features are additive, optional, and labeled — never the core value; flat
+pricing only (no % of spend); reporting stays a focused view, not a Looker Studio clone.
+These align with the rules-engine safety invariants already on file (off-by-default,
+dry-run, audit, cooldown).
 
 ## Phase 2 is flexible
 
