@@ -1,7 +1,7 @@
 // HAND-MAINTAINED — not generated. Update this file by hand when a migration changes the schema.
 // (We are not running `supabase gen types` against the shared project; see docs/decision-log.md.)
-// Last updated by hand: 2026-07-21 (org layer: organizations, organization_members, audit_log,
-// org_id on all tenant tables, is_org_member function)
+// Last updated by hand: 2026-07-22 (clients slice: clients, client_platforms,
+// platform_connections.client_id)
 
 export type Database = {
   public: {
@@ -105,6 +105,102 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'users'
             referencedColumns: ['id']
+          }
+        ]
+      }
+      clients: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string
+          name: string
+          monthly_budget_micros: number | null
+          budget_reset_day: number
+          currency: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id: string
+          name: string
+          monthly_budget_micros?: number | null
+          budget_reset_day?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          user_id?: string
+          name?: string
+          monthly_budget_micros?: number | null
+          budget_reset_day?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'clients_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'clients_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      client_platforms: {
+        Row: {
+          id: string
+          org_id: string
+          client_id: string
+          platform: string
+          monthly_budget_override_micros: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          client_id: string
+          platform: string
+          monthly_budget_override_micros: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          client_id?: string
+          platform?: string
+          monthly_budget_override_micros?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'client_platforms_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'client_platforms_org_id_client_id_fkey'
+            columns: ['org_id', 'client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['org_id', 'id']
           }
         ]
       }
@@ -243,6 +339,7 @@ export type Database = {
           id: string
           user_id: string
           org_id: string
+          client_id: string | null
           platform: string
           external_account_id: string
           account_name: string | null
@@ -264,6 +361,7 @@ export type Database = {
           id?: string
           user_id: string
           org_id: string
+          client_id?: string | null
           platform: string
           external_account_id: string
           account_name?: string | null
@@ -285,6 +383,7 @@ export type Database = {
           id?: string
           user_id?: string
           org_id?: string
+          client_id?: string | null
           platform?: string
           external_account_id?: string
           account_name?: string | null
@@ -316,6 +415,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'organizations'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'platform_connections_client_fk'
+            columns: ['org_id', 'client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['org_id', 'id']
           }
         ]
       }
