@@ -11,24 +11,10 @@ export const RANGE_OPTIONS: RangeOption[] = [
   { key: 'mtd', label: 'This month', days: 0 },
 ]
 
-const PLATFORM_META: Record<string, { name: string; color: string; glyph: string }> = {
-  meta: { name: 'Meta', color: '#0866FF', glyph: 'M' },
-  google_ads: { name: 'Google Ads', color: '#EA4335', glyph: 'G' },
-  linkedin: { name: 'LinkedIn', color: '#0A66C2', glyph: 'in' },
-  tiktok: { name: 'TikTok', color: '#010101', glyph: 'TT' },
-}
-
-export function platformLabel(platform: string): string {
-  return PLATFORM_META[platform]?.name ?? platform
-}
-
-export function platformColor(platform: string): string {
-  return PLATFORM_META[platform]?.color ?? '#6b727f'
-}
-
-export function platformGlyph(platform: string): string {
-  return PLATFORM_META[platform]?.glyph ?? platform.slice(0, 1).toUpperCase()
-}
+// Platform identity lives in the shared module now (clients was the second consumer);
+// re-exported here so existing budget component imports keep working.
+import { platformLabel, platformColor, platformGlyph } from '@/lib/platform-meta'
+export { platformLabel, platformColor, platformGlyph }
 
 export function microsToUnits(micros: number): number {
   return micros / 1_000_000
