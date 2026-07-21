@@ -255,6 +255,11 @@ members, the same ad account could be connected by both, creating two rows in on
   dedupe/adopt at connect time.
 - Decide the product story for a member leaving an org whose connection others rely on
   (re-encrypt/adopt via the `token_key_id` rotation mechanism, or force reconnect).
+**Already closed in the org migration** (security review 2026-07-21): cross-org row
+reassignment and `user_id`/AAD drift are blocked by the `prevent_tenant_rebinding` trigger
+(org_id immutable on all 5 tenant tables; user_id immutable on platform_connections and the
+utm tables), and `syncBudget` now treats a failed decrypt as a per-account failure instead
+of aborting the loop.
 **Owner**: Claude (at the invites slice)
 
 ---

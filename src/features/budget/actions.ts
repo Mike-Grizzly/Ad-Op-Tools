@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { getOrgContext } from '@/features/org/queries'
 import { getConnectionWithTokens, markConnectionStatus } from '@/lib/integrations/connections'
 import { createMetaClient, MetaApiError } from '@/lib/integrations/meta/client'
 import { syncBudgetSchema, connectionIdSchema, setCapsSchema } from './validation'
@@ -21,11 +21,9 @@ function defaultRange(days: number): DateRange {
 export async function syncBudget(
   input: unknown
 ): Promise<ActionResult<{ rowsSynced: number; failures: number }>> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, userId, orgId } = ctx
 
   const parsed = syncBudgetSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
@@ -44,7 +42,7 @@ export async function syncBudget(
   let query = supabase
     .from('platform_connections')
     .select('external_account_id')
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .eq('platform', platform)
   if (accountId) query = query.eq('external_account_id', accountId)
 
@@ -56,7 +54,15 @@ export async function syncBudget(
   let failures = 0
 
   for (const { external_account_id } of conns) {
-    const conn = await getConnectionWithTokens(platform, external_account_id)
+    // Inside the loop's failure accounting: one undecryptable/corrupt connection row
+    // must not abort the sync for every other account.
+    let conn: Awaited<ReturnType<typeof getConnectionWithTokens>>
+    try {
+      conn = await getConnectionWithTokens(platform, external_account_id)
+    } catch {
+      failures += 1
+      continue
+    }
     if (!conn) {
       failures += 1
       continue
@@ -67,7 +73,8 @@ export async function syncBudget(
 
       if (spend.length > 0) {
         const rows = spend.map((r) => ({
-          user_id: user.id,
+          user_id: userId,
+          org_id: orgId,
           platform: r.platform,
           external_account_id: r.external_account_id,
           campaign_external_id: r.campaign_external_id,
@@ -80,7 +87,7 @@ export async function syncBudget(
           synced_at: new Date().toISOString(),
         }))
         const { error: upsertErr } = await supabase.from('budget_entries').upsert(rows, {
-          onConflict: 'user_id,platform,external_account_id,campaign_external_id,entry_date',
+          onConflict: 'org_id,platform,external_account_id,campaign_external_id,entry_date',
         })
         if (upsertErr) {
           failures += 1
@@ -93,7 +100,7 @@ export async function syncBudget(
         .from('platform_connections')
         .update({ last_synced_at: new Date().toISOString(), status: 'connected' })
         .eq('id', conn.id)
-        .eq('user_id', user.id)
+        .eq('org_id', orgId)
     } catch (err) {
       failures += 1
       await markConnectionStatus(
@@ -108,11 +115,9 @@ export async function syncBudget(
 }
 
 export async function disconnectPlatform(id: unknown): Promise<ActionResult<{ id: string }>> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, orgId } = ctx
 
   const parsed = connectionIdSchema.safeParse(id)
   if (!parsed.success) return { error: 'Invalid id' }
@@ -121,7 +126,7 @@ export async function disconnectPlatform(id: unknown): Promise<ActionResult<{ id
     .from('platform_connections')
     .delete()
     .eq('id', parsed.data)
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
 
   if (error) return { error: 'Failed to disconnect' }
 
@@ -130,17 +135,16 @@ export async function disconnectPlatform(id: unknown): Promise<ActionResult<{ id
 }
 
 export async function setCaps(input: unknown): Promise<ActionResult<{ count: number }>> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const ctx = await getOrgContext()
+  if (!ctx) return { error: 'Unauthorized' }
+  const { supabase, userId, orgId } = ctx
 
   const parsed = setCapsSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
 
   const rows = parsed.data.caps.map((c) => ({
-    user_id: user.id,
+    user_id: userId,
+    org_id: orgId,
     scope: c.scope,
     amount_micros: Math.round(c.amount * 1_000_000),
   }))
@@ -148,7 +152,7 @@ export async function setCaps(input: unknown): Promise<ActionResult<{ count: num
 
   const { error } = await supabase
     .from('budget_caps')
-    .upsert(rows, { onConflict: 'user_id,scope' })
+    .upsert(rows, { onConflict: 'org_id,scope' })
   if (error) return { error: 'Failed to save caps' }
 
   revalidatePath('/budget')

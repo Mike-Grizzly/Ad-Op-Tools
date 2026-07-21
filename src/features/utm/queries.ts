@@ -1,20 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
+import { getOrgContext } from '@/features/org/queries'
 import type { Database } from '@/types/database'
 
 type UTMTemplate = Database['public']['Tables']['utm_templates']['Row']
 type UTMHistoryEntry = Database['public']['Tables']['utm_history']['Row']
 
 export async function getUTMTemplates(): Promise<UTMTemplate[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
+  const ctx = await getOrgContext()
+  if (!ctx) throw new Error('Unauthorized')
+  const { supabase, orgId } = ctx
 
   const { data, error } = await supabase
     .from('utm_templates')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .order('name', { ascending: true })
 
   if (error) throw new Error(`Failed to fetch UTM templates: ${error.message}`)
@@ -22,16 +20,14 @@ export async function getUTMTemplates(): Promise<UTMTemplate[]> {
 }
 
 export async function getUTMHistory(limit = 500): Promise<UTMHistoryEntry[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
+  const ctx = await getOrgContext()
+  if (!ctx) throw new Error('Unauthorized')
+  const { supabase, orgId } = ctx
 
   const { data, error } = await supabase
     .from('utm_history')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('org_id', orgId)
     .order('created_at', { ascending: false })
     .limit(limit)
 
