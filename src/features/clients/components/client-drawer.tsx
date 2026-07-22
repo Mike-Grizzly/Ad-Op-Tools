@@ -6,7 +6,7 @@ import type { PlatformConnectionPublic } from '@/features/budget/queries'
 import type { Client, ClientPlatform } from '../queries'
 import type { ClientPacing } from '../pacing'
 import type { CreateClientInput, UpdateClientInput } from '../validation'
-import { STATUS_PILLS, dollarPrefix, fieldLabel, inputWrap, monoInput, primaryBtn, sectionLabel, secondaryBtn } from './clients-helpers'
+import { STATUS_PILLS, dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, parseAmount, primaryBtn, sectionLabel, secondaryBtn } from './clients-helpers'
 import { ClientBudgetEditor } from './client-budget-editor'
 import { ClientAccountsPanel } from './client-accounts-panel'
 
@@ -33,12 +33,6 @@ type DetailProps = {
 type Props = CreateProps | DetailProps
 
 type CreateDraft = { name: string; budget: string; resetDay: string; currency: string }
-
-function validAmount(value: string): boolean {
-  if (value.trim() === '') return true
-  const n = Number(value)
-  return Number.isFinite(n) && n >= 0
-}
 
 function DarkStat({ label, value }: { label: string; value: string }) {
   return (
@@ -70,21 +64,21 @@ export function ClientDrawer(props: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [busy, confirmingDelete, budgetEditing, onClose])
 
+  // Per-field validity, surfaced individually in the form so a disabled Create
+  // button is never a mystery. parseAmount tolerates "$5,000"-style input.
+  const budgetParsed = parseAmount(draft.budget)
+  const budgetInvalid = budgetParsed === 'invalid'
   const resetDayNum = Number(draft.resetDay)
-  const createValid =
-    draft.name.trim() !== '' &&
-    validAmount(draft.budget) &&
-    Number.isInteger(resetDayNum) &&
-    resetDayNum >= 1 &&
-    resetDayNum <= 28 &&
-    /^[A-Za-z]{3}$/.test(draft.currency.trim())
+  const resetDayValid = Number.isInteger(resetDayNum) && resetDayNum >= 1 && resetDayNum <= 28
+  const currencyValid = /^[A-Za-z]{3}$/.test(draft.currency.trim())
+  const createValid = draft.name.trim() !== '' && !budgetInvalid && resetDayValid && currencyValid
   const createDisabled = busy || !createValid
 
   function handleCreate(): void {
     if (createDisabled || props.mode !== 'create') return
     props.onCreate({
       name: draft.name.trim(),
-      monthlyBudget: draft.budget.trim() === '' ? null : Number(draft.budget),
+      monthlyBudget: typeof budgetParsed === 'number' ? budgetParsed : null,
       budgetResetDay: resetDayNum,
       currency: draft.currency.trim().toUpperCase(),
     })
@@ -164,13 +158,15 @@ export function ClientDrawer(props: Props) {
                     inputMode="decimal"
                     placeholder="Optional — leave empty for no budget"
                     aria-label="Monthly budget in dollars"
-                    style={{ ...monoInput, paddingLeft: 22 }}
+                    aria-invalid={budgetInvalid}
+                    style={{ ...monoInput, paddingLeft: 22, borderColor: budgetInvalid ? '#ef4444' : '#e1e4e9' }}
                   />
                 </div>
+                {budgetInvalid && <div style={errorHint}>Enter an amount like 5000 or 5,000</div>}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={fieldLabel}>Budget reset day (1–28)</label>
+                  <label style={fieldLabel}>Budget reset day (1–28 · 1 = calendar month)</label>
                   <input
                     value={draft.resetDay}
                     onChange={(e) => setDraft((d) => ({ ...d, resetDay: e.target.value }))}
@@ -178,8 +174,10 @@ export function ClientDrawer(props: Props) {
                     min={1}
                     max={28}
                     aria-label="Budget reset day of month"
-                    style={monoInput}
+                    aria-invalid={!resetDayValid}
+                    style={{ ...monoInput, borderColor: resetDayValid ? '#e1e4e9' : '#ef4444' }}
                   />
+                  {!resetDayValid && <div style={errorHint}>Whole number, 1–28</div>}
                 </div>
                 <div>
                   <label style={fieldLabel}>Currency</label>
@@ -188,8 +186,10 @@ export function ClientDrawer(props: Props) {
                     onChange={(e) => setDraft((d) => ({ ...d, currency: e.target.value }))}
                     maxLength={3}
                     aria-label="Currency (ISO 4217)"
-                    style={{ ...monoInput, textTransform: 'uppercase' }}
+                    aria-invalid={!currencyValid}
+                    style={{ ...monoInput, textTransform: 'uppercase', borderColor: currencyValid ? '#e1e4e9' : '#ef4444' }}
                   />
+                  {!currencyValid && <div style={errorHint}>3-letter code, e.g. USD</div>}
                 </div>
               </div>
             </>

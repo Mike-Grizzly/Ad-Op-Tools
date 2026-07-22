@@ -142,8 +142,16 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
   const [savePending, setSavePending] = useState(false)
   const templateNameRef = useRef<HTMLInputElement>(null)
 
-  const generatedUrl = buildPreviewUrl(baseUrl, source, medium, campaign, content, term, adSet, creative)
-  const urlInvalid = !!baseUrl && !/^https?:\/\//i.test(baseUrl.trim())
+  // A bare domain ("example.com/page") gets https:// prepended automatically — the
+  // generated link must be an absolute URL, but the user shouldn't have to type the
+  // scheme. Anything with an explicit scheme is left untouched.
+  const normalizedBaseUrl = (() => {
+    const t = baseUrl.trim()
+    if (t === '' || /^[a-z][a-z0-9+.-]*:\/\//i.test(t)) return t
+    return `https://${t}`
+  })()
+  const generatedUrl = buildPreviewUrl(normalizedBaseUrl, source, medium, campaign, content, term, adSet, creative)
+  const urlInvalid = !!baseUrl && !/^https?:\/\//i.test(normalizedBaseUrl)
 
   const fetchCampaignSuggestions = useCallback(async (prefix: string) => {
     const result = await autocompleteAction('campaign', prefix)
@@ -173,7 +181,7 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
     try { await navigator.clipboard.writeText(generatedUrl) } catch { /* clipboard unavailable */ }
 
     const result = await generateAction({
-      base_url: baseUrl, source, medium, campaign,
+      base_url: normalizedBaseUrl, source, medium, campaign,
       content: content || undefined, term: term || undefined,
       ad_set: adSet || undefined, creative: creative || undefined,
     })
@@ -183,7 +191,7 @@ export function UTMForm({ templates, onGenerated, onTemplateSaved, onCopy, gener
     } else {
       onGenerated({
         id: crypto.randomUUID(), user_id: '', org_id: '', template_id: null,
-        base_url: baseUrl, source, medium, campaign,
+        base_url: normalizedBaseUrl, source, medium, campaign,
         content: content || null, term: term || null,
         ad_set: adSet || null, creative: creative || null,
         generated_url: result.data.generated_url,

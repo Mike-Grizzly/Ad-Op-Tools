@@ -1,7 +1,14 @@
 # Feature Spec — Clients (Book of Business)
 
-**Status**: Built, reviewed, migration applied + probed (2026-07-21). **NOT complete**:
-pending owner PR inspection + merge, then manual production verification (checklist below).
+**Status**: Merged to main (PR #9, 2026-07-22). Production verification round 1 found one
+blocking UI bug — **"Create client" stayed disabled when the budget was typed with a
+comma/`$` (strict `Number()` parsing) and no field showed an invalid state**. Fixed
+2026-07-22: tolerant `parseAmount` (accepts `5,000` / `$5,000`), per-field red border +
+hint feedback in the create form and budget editor, "(1 = calendar month)" label copy,
+8 parser unit tests (41 total). Same round: UTM base URLs now auto-prepend `https://`
+for bare domains (scheme requirement is structural — absolute URLs only — but typing it
+is no longer required). **Pending: owner merges the fix PR, then re-runs verification
+steps 6–13.**
 **Product input**: `docs/product-spec-2026-06.md` §1.1–1.2 and §6.1 cluster, superseded
 where the shipped canonical model differs (org scoping per decision-log 2026-07-20;
 integer micros; existing `budget_entries` rather than the spec's `budget_snapshots`).
