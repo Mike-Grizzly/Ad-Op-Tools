@@ -6,7 +6,7 @@ import { formatMoneyMicros, microsToUnits } from '@/features/budget/components/b
 import { platformColor, platformGlyph, platformLabel } from '@/lib/platform-meta'
 import type { Client, ClientPlatform } from '../queries'
 import type { UpdateClientInput } from '../validation'
-import { dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, parseAmount, primaryBtn, secondaryBtn, smallSecondaryBtn } from './clients-helpers'
+import { dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, mutedHint, parseAmount, primaryBtn, secondaryBtn, smallSecondaryBtn } from './clients-helpers'
 
 type Props = {
   client: Client
@@ -108,7 +108,7 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
               {budgetInvalid && <div style={errorHint}>Enter an amount like 5000 or 5,000</div>}
             </div>
             <div>
-              <label style={fieldLabel}>Reset day (1–28 · 1 = calendar month)</label>
+              <label style={fieldLabel}>Budget reset day</label>
               <input
                 value={draft.resetDay}
                 onChange={(e) => setDraft((d) => ({ ...d, resetDay: e.target.value }))}
@@ -118,9 +118,18 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
                 aria-label="Budget reset day of month"
                 style={{ ...monoInput, borderColor: resetDayValid ? '#e1e4e9' : '#ef4444' }}
               />
+              <div style={resetDayValid ? mutedHint : errorHint}>
+                {resetDayValid ? 'Day the budget cycle starts — use 1 for calendar months' : 'Whole number, 1–28'}
+              </div>
             </div>
           </div>
 
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#161922' }}>Per-platform budgets (optional)</div>
+            <p style={{ fontSize: 12, color: '#9aa0aa', margin: '3px 0 0' }}>
+              Cap spend per platform within the total — e.g. $3,000 of a $5,000 budget for Meta.
+            </p>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {AD_PLATFORMS.map((p) => (
               <div key={p}>

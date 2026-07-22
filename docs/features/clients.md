@@ -9,6 +9,15 @@ hint feedback in the create form and budget editor, "(1 = calendar month)" label
 for bare domains (scheme requirement is structural — absolute URLs only — but typing it
 is no longer required). **Pending: owner merges the fix PR, then re-runs verification
 steps 6–13.**
+**Round 2 (2026-07-22, later)**: creation confirmed working. Fixed from feedback: a
+budgeted client with **no assigned ad accounts** now shows a neutral "No accounts" pill
++ "Assign an ad account to track spend" hint instead of red "At risk" (raw pacing math
+unchanged — underpacing red still applies once accounts are assigned, per spec); reset-day
+field label shortened with an explanatory hint below (fixes create-form column
+misalignment); per-platform overrides now labeled "Per-platform budgets (optional)" with
+an example. Owner also asked about the page's purpose — clients are the per-client spine
+for the roadmap (checklists, naming, monitors, digest all attach here); revisit the
+question after the checklist engine lands.
 **Product input**: `docs/product-spec-2026-06.md` §1.1–1.2 and §6.1 cluster, superseded
 where the shipped canonical model differs (org scoping per decision-log 2026-07-20;
 integer micros; existing `budget_entries` rather than the spec's `budget_snapshots`).

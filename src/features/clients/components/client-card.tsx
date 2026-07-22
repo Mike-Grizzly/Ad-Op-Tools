@@ -5,7 +5,7 @@ import { formatMoneyMicros, formatPct, clampPct } from '@/features/budget/compon
 import { platformColor, platformGlyph, platformLabel } from '@/lib/platform-meta'
 import type { Client } from '../queries'
 import type { ClientPacing } from '../pacing'
-import { STATUS_PILLS, statusBarColor } from './clients-helpers'
+import { barColorFor, pillFor } from './clients-helpers'
 
 type Props = {
   client: Client
@@ -16,8 +16,9 @@ type Props = {
 
 export function ClientCard({ client, pacing, platforms, onOpen }: Props) {
   const [hovered, setHovered] = useState(false)
-  const pill = STATUS_PILLS[pacing.status]
-  const barColor = statusBarColor(pacing.status)
+  const hasAccounts = platforms.length > 0
+  const pill = pillFor(pacing, hasAccounts)
+  const barColor = barColorFor(pacing, hasAccounts)
   const hasBudget = pacing.budgetMicros != null && pacing.budgetMicros > 0
 
   const footerParts: string[] = []
@@ -127,7 +128,7 @@ export function ClientCard({ client, pacing, platforms, onOpen }: Props) {
       </div>
 
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#9aa0aa' }}>
-        {footerParts.join(' · ')}
+        {hasAccounts ? footerParts.join(' · ') : 'Assign an ad account to track spend'}
       </div>
 
       {platforms.length > 0 && (
