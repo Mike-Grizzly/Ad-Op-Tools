@@ -6,7 +6,7 @@ import { formatMoneyMicros, microsToUnits } from '@/features/budget/components/b
 import { platformColor, platformGlyph, platformLabel } from '@/lib/platform-meta'
 import type { Client, ClientPlatform } from '../queries'
 import type { UpdateClientInput } from '../validation'
-import { dollarPrefix, fieldLabel, inputWrap, monoInput, primaryBtn, secondaryBtn, smallSecondaryBtn } from './clients-helpers'
+import { dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, parseAmount, primaryBtn, secondaryBtn, smallSecondaryBtn } from './clients-helpers'
 
 type Props = {
   client: Client
@@ -36,12 +36,6 @@ function draftFrom(client: Client, overrides: ClientPlatform[]): Draft {
   }
 }
 
-function validAmount(value: string): boolean {
-  if (value.trim() === '') return true
-  const n = Number(value)
-  return Number.isFinite(n) && n >= 0
-}
-
 const amountInput = { ...monoInput, paddingLeft: 22 }
 
 export function ClientBudgetEditor({ client, overrides, busy, editing, onEditingChange, onSave }: Props) {
@@ -50,7 +44,12 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
 
   const resetDayNum = Number(draft.resetDay)
   const resetDayValid = Number.isInteger(resetDayNum) && resetDayNum >= 1 && resetDayNum <= 28
-  const amountsValid = validAmount(draft.budget) && AD_PLATFORMS.every((p) => validAmount(draft.platforms[p]))
+  const budgetParsed = parseAmount(draft.budget)
+  const budgetInvalid = budgetParsed === 'invalid'
+  const overrideInvalid = Object.fromEntries(
+    AD_PLATFORMS.map((p) => [p, parseAmount(draft.platforms[p]) === 'invalid'])
+  ) as Record<AdPlatform, boolean>
+  const amountsValid = !budgetInvalid && AD_PLATFORMS.every((p) => !overrideInvalid[p])
   const saveDisabled = busy || saving || !resetDayValid || !amountsValid
 
   async function handleSave(): Promise<void> {
@@ -58,12 +57,11 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
     setSaving(true)
     const error = await onSave({
       id: client.id,
-      monthlyBudget: draft.budget.trim() === '' ? null : Number(draft.budget),
+      monthlyBudget: typeof budgetParsed === 'number' ? budgetParsed : null,
       budgetResetDay: resetDayNum,
-      overrides: AD_PLATFORMS.filter((p) => draft.platforms[p].trim() !== '').map((p) => ({
-        platform: p,
-        amount: Number(draft.platforms[p]),
-      })),
+      overrides: AD_PLATFORMS.map((p) => ({ platform: p, parsed: parseAmount(draft.platforms[p]) }))
+        .filter((o): o is { platform: AdPlatform; parsed: number } => typeof o.parsed === 'number')
+        .map((o) => ({ platform: o.platform, amount: o.parsed })),
     })
     setSaving(false)
     if (error == null) onEditingChange(false)
@@ -103,12 +101,14 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
                   inputMode="decimal"
                   placeholder="No budget"
                   aria-label="Total monthly budget in dollars"
-                  style={amountInput}
+                  aria-invalid={budgetInvalid}
+                  style={{ ...amountInput, borderColor: budgetInvalid ? '#ef4444' : '#e1e4e9' }}
                 />
               </div>
+              {budgetInvalid && <div style={errorHint}>Enter an amount like 5000 or 5,000</div>}
             </div>
             <div>
-              <label style={fieldLabel}>Reset day (1–28)</label>
+              <label style={fieldLabel}>Reset day (1–28 · 1 = calendar month)</label>
               <input
                 value={draft.resetDay}
                 onChange={(e) => setDraft((d) => ({ ...d, resetDay: e.target.value }))}
@@ -136,9 +136,11 @@ export function ClientBudgetEditor({ client, overrides, busy, editing, onEditing
                     inputMode="decimal"
                     placeholder="No override"
                     aria-label={`${platformLabel(p)} monthly budget override in dollars`}
-                    style={amountInput}
+                    aria-invalid={overrideInvalid[p]}
+                    style={{ ...amountInput, borderColor: overrideInvalid[p] ? '#ef4444' : '#e1e4e9' }}
                   />
                 </div>
+                {overrideInvalid[p] && <div style={errorHint}>Amount like 5000 or 5,000</div>}
               </div>
             ))}
           </div>

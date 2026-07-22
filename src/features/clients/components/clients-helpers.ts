@@ -50,6 +50,24 @@ export function assignedPlatforms(
   ].sort()
 }
 
+// Tolerant money-input parsing: people type "5,000" or "$5,000", not "5000".
+// null = empty (allowed — means "no budget"); 'invalid' = unparseable or negative.
+// Used both for form validity AND at submit time, so the value validated is the
+// value converted to micros.
+export function parseAmount(value: string): number | null | 'invalid' {
+  const cleaned = value.trim().replace(/[$,\s]/g, '')
+  if (cleaned === '') return null
+  const n = Number(cleaned)
+  if (!Number.isFinite(n) || n < 0) return 'invalid'
+  return n
+}
+
+export const errorHint: CSSProperties = {
+  fontSize: 11.5,
+  color: '#dc2626',
+  marginTop: 5,
+}
+
 // ── Shared style objects (design-system tokens) ───────────────────────────────
 
 export const primaryBtn: CSSProperties = {
