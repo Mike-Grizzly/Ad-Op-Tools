@@ -19,6 +19,23 @@ export function statusBarColor(status: PacingStatus): string {
   return status === 'none' ? '#c6cad2' : STATUS_PILLS[status].color
 }
 
+// Presentation-level status: raw pacing math says a budgeted client with $0 spend is
+// deep under pace (red), but that's meaningless — and alarming — when the client has
+// no ad accounts assigned yet. Pacing colors only apply once accounts exist.
+export function pillFor(
+  pacing: ClientPacing,
+  hasAccounts: boolean
+): { label: string; color: string; bg: string } {
+  if (pacing.budgetMicros == null || pacing.budgetMicros <= 0) return STATUS_PILLS.none
+  if (!hasAccounts) return { label: 'No accounts', color: '#6b727f', bg: '#f1f2f4' }
+  return STATUS_PILLS[pacing.status]
+}
+
+export function barColorFor(pacing: ClientPacing, hasAccounts: boolean): string {
+  if (!hasAccounts) return '#c6cad2'
+  return statusBarColor(pacing.status)
+}
+
 export const SORT_LABELS: Record<ClientSort, string> = {
   'at-risk': 'Most at risk',
   alphabetical: 'Alphabetical',
@@ -65,6 +82,12 @@ export function parseAmount(value: string): number | null | 'invalid' {
 export const errorHint: CSSProperties = {
   fontSize: 11.5,
   color: '#dc2626',
+  marginTop: 5,
+}
+
+export const mutedHint: CSSProperties = {
+  fontSize: 11.5,
+  color: '#9aa0aa',
   marginTop: 5,
 }
 

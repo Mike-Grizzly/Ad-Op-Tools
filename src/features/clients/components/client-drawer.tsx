@@ -6,7 +6,7 @@ import type { PlatformConnectionPublic } from '@/features/budget/queries'
 import type { Client, ClientPlatform } from '../queries'
 import type { ClientPacing } from '../pacing'
 import type { CreateClientInput, UpdateClientInput } from '../validation'
-import { STATUS_PILLS, dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, parseAmount, primaryBtn, sectionLabel, secondaryBtn } from './clients-helpers'
+import { dollarPrefix, errorHint, fieldLabel, inputWrap, monoInput, mutedHint, parseAmount, pillFor, primaryBtn, sectionLabel, secondaryBtn } from './clients-helpers'
 import { ClientBudgetEditor } from './client-budget-editor'
 import { ClientAccountsPanel } from './client-accounts-panel'
 
@@ -84,7 +84,13 @@ export function ClientDrawer(props: Props) {
     })
   }
 
-  const pill = props.mode === 'detail' ? STATUS_PILLS[props.pacing.status] : null
+  const pill =
+    props.mode === 'detail'
+      ? pillFor(
+          props.pacing,
+          props.connections.some((c) => c.client_id === props.client.id)
+        )
+      : null
 
   return (
     <div
@@ -166,7 +172,7 @@ export function ClientDrawer(props: Props) {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={fieldLabel}>Budget reset day (1–28 · 1 = calendar month)</label>
+                  <label style={fieldLabel}>Budget reset day</label>
                   <input
                     value={draft.resetDay}
                     onChange={(e) => setDraft((d) => ({ ...d, resetDay: e.target.value }))}
@@ -177,7 +183,11 @@ export function ClientDrawer(props: Props) {
                     aria-invalid={!resetDayValid}
                     style={{ ...monoInput, borderColor: resetDayValid ? '#e1e4e9' : '#ef4444' }}
                   />
-                  {!resetDayValid && <div style={errorHint}>Whole number, 1–28</div>}
+                  <div style={resetDayValid ? mutedHint : errorHint}>
+                    {resetDayValid
+                      ? 'Day the budget cycle starts — use 1 for calendar months'
+                      : 'Whole number, 1–28'}
+                  </div>
                 </div>
                 <div>
                   <label style={fieldLabel}>Currency</label>
