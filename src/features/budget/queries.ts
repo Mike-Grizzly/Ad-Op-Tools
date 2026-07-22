@@ -7,6 +7,7 @@ import type { DateRange } from '@/types/integrations'
 export type PlatformConnectionPublic = Pick<
   Database['public']['Tables']['platform_connections']['Row'],
   | 'id'
+  | 'client_id'
   | 'platform'
   | 'external_account_id'
   | 'account_name'
@@ -29,7 +30,7 @@ export async function getConnections(): Promise<PlatformConnectionPublic[]> {
   const { data, error } = await supabase
     .from('platform_connections')
     .select(
-      'id, platform, external_account_id, account_name, scopes, status, token_expires_at, last_synced_at, created_at, updated_at'
+      'id, client_id, platform, external_account_id, account_name, scopes, status, token_expires_at, last_synced_at, created_at, updated_at'
     )
     .eq('org_id', orgId)
     .order('created_at', { ascending: true })

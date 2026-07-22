@@ -41,6 +41,7 @@ the hexes inline — keep the values below exact.
 | Text muted | `#9aa0aa` | Timestamps, hints, placeholders |
 | Success green | `#16a34a` bg `rgba(22,163,74,.1)` | Status pills, positive deltas; `#22c55e` for toast dot / copied checkmark / live-preview dot |
 | Error red | `#dc2626` bg `rgba(220,38,38,.1)` | Status pills, banners, negative deltas, destructive solid buttons; `#ef4444` for toast dot, delete accents; `#c2410c` inline warning text |
+| Warning amber | `#d97706` bg `rgba(217,119,6,.1)` | "Off pace" pills + pacing bars (added 2026-07-21 with the clients dashboard — the yellow band between green ≤10% and red >25% deviation) |
 | Table header bg | `#f3f4f7` | Column header rows; group headers `#fbfbfc` (budget) / `#f3f4f7` (utm); zebra `#fafafa`; row hover `#f6f7ff` (`.utm-row`) |
 
 Platform brand colors (with glyph chips) — `PLATFORM_META` in

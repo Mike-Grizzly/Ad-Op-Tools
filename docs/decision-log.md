@@ -337,3 +337,39 @@ Execution decisions made autonomously within that scope:
    has no DELETE policy. All new policies use the hardened `(select auth.uid())` /
    `public.is_org_member(org_id)` form — this rewrite also converges the tracked-vs-remote
    policy-shape divergence (UTM-004).
+
+---
+
+## 2026-07-21 — Clients Slice: Keys, Bands, and Scope
+
+Owner-approved plan (checkpoint flow: plan approval → build → owner-gated migration
+apply → owner-gated merge). Owner scope decisions: full vertical slice (CRUD + dashboard
++ spend rollup), spend attribution by assigning ad accounts to clients, per-platform
+budget overrides included now. Execution decisions:
+
+1. **Same-org integrity via composite FKs, not triggers**: `clients` carries
+   `unique (org_id, id)`; `client_platforms` and `platform_connections.client_id`
+   reference `(org_id, client_id) → clients(org_id, id)`. With org_id frozen by the
+   rebinding triggers, a cross-org assignment is structurally impossible (confirmed by
+   security review). `platform_connections` uses `on delete set null (client_id)`
+   (PG 15+ column-list form) so deleting a client detaches accounts without touching
+   org_id.
+2. **Pacing bands resolve a spec inconsistency**: linear projection makes the spec's
+   "projected > budget → red" equivalent to any positive deviation (yellow would be
+   unreachable). Adopted: green |dev| ≤ 10%, yellow ≤ 25%, red > 25% **or budget
+   exhausted**; neutral when no budget. Owner saw this in the approved plan.
+3. **budget_reset_day honored from day one** (billing-cycle window math, 1..28 check
+   sidesteps short months); default 1 ≡ calendar month, parity with the Budget page.
+4. **Hard delete, no archive/status column** (single-owner tool; spend history is
+   untouched by design). Revisit when teams/invites exist.
+5. **`client_platforms` has no `user_id`** (child settings row; attribution lives on the
+   parent). Security review accepted; per-override attribution, if ever needed, goes
+   through `audit_log` call sites at the app layer.
+6. **`client_platforms.client_id` stays mutable** (same-org reparenting only, blocked
+   cross-org by the FK; the app never updates it — replace-all delete+insert). Freezing
+   it would mean widening the shared `prevent_tenant_rebinding()`; not worth it now
+   (database-reviewer INFO finding, accepted).
+7. **Amber warning token** `#d97706` on `rgba(217,119,6,.1)` added to the design system
+   (yellow pacing band) — the palette had no warning color.
+8. **PLATFORM_META lifted** to `src/lib/platform-meta.ts` (clients = designated second
+   consumer); `budget-helpers.ts` re-exports, budget components untouched.
