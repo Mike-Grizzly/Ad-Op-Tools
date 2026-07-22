@@ -373,3 +373,34 @@ budget overrides included now. Execution decisions:
    (yellow pacing band) — the palette had no warning color.
 8. **PLATFORM_META lifted** to `src/lib/platform-meta.ts` (clients = designated second
    consumer); `budget-helpers.ts` re-exports, budget components untouched.
+
+---
+
+## 2026-07-22 — Target Market: Both, In-House Feel With a Client Layer On Top
+
+**Decision** (owner, 2026-07-22, verbatim intent): serve **both markets the way the
+spec's own reference companies do** — "make it feel in-house, but with a client
+management layer built on top." Verified against the reference companies the June spec
+names: **Optmyzr** (§8.2 inspiration) markets to agencies, in-house teams, and paid
+search experts; **Bïrch/Revealbot** (the spec's pricing foil) serves agencies and
+mid-market in-house DTC brands; **Adalysis** (§8.1 inspiration) is strongest for
+agencies and in-house teams. All are structurally **ad-account-first**: the ad account
+is the core object and multi-account/client management is a layer on top — the design
+that lets one product serve both segments.
+
+**Standing design rule adopted**: connections (ad accounts) are the primitive; clients
+are the **optional** multi-client layer (org = paying tenant, client = the tenant's
+customer). Every feature must remain usable without creating clients — an in-house user
+connects an account and works directly; the Clients page is where the multi-client
+workflow lives. Today only the book-of-business grid requires clients; keep it that way.
+
+**Iteration note (owner)**: the current Clients page is explicitly a first wiring
+iteration — its look/feel is expected to change substantially as roadmap features
+(checklists, monitors, digest) attach to client records. Priority now is plumbing, not
+polish.
+
+**Downstream implications (deferred to their slices)**: pricing (PRODUCT-002) — the
+spec's flat client-count tiers differentiate against competitors' %-of-spend pricing,
+but both-market positioning may argue for an account-count or hybrid axis; revisit at
+the Stripe slice. Onboarding leads with "connect your ad account," with "add your first
+client" as the optional next step.
