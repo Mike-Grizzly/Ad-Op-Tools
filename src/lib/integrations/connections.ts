@@ -163,7 +163,9 @@ export async function getFreshConnectionWithTokens(
 // saveConnection: its upsert key is (user_id, platform, external_account_id), so a
 // caller other than the connecting user would insert a new row instead of updating
 // this one. The AAD must come from the row's stored user_id — the crypto invariant
-// from the org slice — never from whoever triggered the refresh.
+// from the org slice — never from whoever triggered the refresh. `row` must be the
+// row as fetched from the DB, never a constructed literal: a wrong user_id here
+// writes ciphertext the real owner can't decrypt (fails closed, but bricks the row).
 export async function persistRefreshedTokens(
   supabase: OrgContext['supabase'],
   orgId: string,

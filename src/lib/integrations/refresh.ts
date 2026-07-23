@@ -51,6 +51,10 @@ export async function freshen(
   conn: ConnectionWithTokens,
   deps: FreshenDeps
 ): Promise<ConnectionWithTokens | null> {
+  // Revocation is authoritative: a successful refresh must never resurrect a
+  // connection someone deliberately shut off, even if the upstream grant is
+  // still live. ('expired'/'error' may recover — that's the point of refresh.)
+  if (conn.status === 'revoked') return null
   if (!needsRefresh(conn.tokenExpiresAt, deps.now())) return conn
 
   const refresher = deps.refresherFor(conn.platform)

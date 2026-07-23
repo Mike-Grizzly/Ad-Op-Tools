@@ -88,6 +88,31 @@ describe('freshen', () => {
     expect(d.expired).toHaveLength(0)
   })
 
+  it('never refreshes a revoked connection, even with a working refresher', async () => {
+    const d = deps({
+      refresherFor: () => async () => ({ accessToken: 'new-access', tokenExpiresAt: null }),
+    })
+    const result = await freshen(
+      conn({ status: 'revoked', tokenExpiresAt: new Date(NOW).toISOString() }),
+      d
+    )
+    expect(result).toBeNull()
+    expect(d.persisted).toHaveLength(0)
+    expect(d.expired).toHaveLength(0) // already revoked — status untouched
+  })
+
+  it('still attempts refresh for an expired-status connection (recovery path)', async () => {
+    const d = deps({
+      refresherFor: () => async () => ({ accessToken: 'new-access', tokenExpiresAt: null }),
+    })
+    const result = await freshen(
+      conn({ status: 'expired', tokenExpiresAt: new Date(NOW).toISOString() }),
+      d
+    )
+    expect(result?.status).toBe('connected')
+    expect(d.persisted).toHaveLength(1)
+  })
+
   it('marks expired and returns null when near expiry with no refresher', async () => {
     const d = deps()
     const result = await freshen(conn({ tokenExpiresAt: new Date(NOW).toISOString() }), d)
