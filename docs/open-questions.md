@@ -242,6 +242,11 @@ read-only defaults, copy-on-first-edit into the org.
   **Narrowed 2026-07-22**: the sync loop itself is now unit-tested (10 sync-core tests
   with injected fakes + 6 factory tests). Remaining gap: the thin `syncBudget` shim and
   OAuth routes (glue only).
+  **Narrowed 2026-07-23**: refresh decision logic (`freshen`/`needsRefresh`, 15 tests)
+  and `persistRefreshedTokens` (5 real-crypto tests) covered. Remaining gap now also
+  includes the session-bound wiring in `connections.ts` (`getConnectionWithTokens` /
+  `getFreshConnectionWithTokens` / `markConnectionStatus` — thin glue over tested parts;
+  flagged MEDIUM by code review; needs a `getOrgContext` mock harness if closed).
 - **CSP still report-only with `unsafe-inline`/`unsafe-eval`** and no report sink — already
   tracked in SEC-002; listed here only for completeness of the review record.
 - **`src/hooks/` doesn't exist** though conventions reference it — fine (no shared hooks yet);
@@ -298,6 +303,36 @@ product-behavior change.
   `createClient` — no import collision exists; rename to `addClient` only if it ever
   confuses.
 **Owner**: Claude (opportunistic)
+
+---
+
+## INT-003 — Refresher-contract guardrails for the Google Ads slice (blocking that slice's review)
+
+**Status**: Open — MUST be addressed when writing the first `TokenRefresher`
+(`src/lib/integrations/google-ads/refresh.ts`), from the 2026-07-23 refresh-slice reviews.
+**Items**:
+- **Token hygiene in errors (security M2)**: the refresher receives plaintext
+  access/refresh tokens. Thrown errors must carry only status/error-code metadata —
+  never the request body, headers, or token values (Google's token endpoint takes the
+  refresh token in the POST body; a stringified request in an Error would leak it the
+  moment logging is added). Follow the Meta client's documented header-only pattern.
+- **Rotating-refresh-token persist gap (ad-platform M1)**: `freshen` propagates a
+  persist failure AFTER a successful platform refresh. Fine while refresh tokens are
+  reusable (Google default: old refresh token stays valid), but for any platform that
+  rotates the refresh token on use (possible for LinkedIn/TikTok), a transient DB
+  failure would strand the connection — the consumed token is gone and the new one
+  unsaved. Add a persist retry (or equivalent) before registering a refresher for a
+  rotating-token platform.
+- **Explicit-null semantics (security L3 / ad-platform L3)**: `RefreshedTokens.refreshToken`
+  treats `null` and `undefined` both as "keep the stored token". If a platform signals
+  revocation via an explicit null/empty field, that signal is currently dropped —
+  decide intentionally per platform before its refresher ships.
+- **No refresh-outcome logging (security L1)**: refresher failures are swallowed into
+  `markExpired`. When Sentry lands (blueprint §3.6), log `{connectionId, platform,
+  outcome}` — never token values — so "grant revoked upstream" is distinguishable from
+  transient failures.
+**Owner**: Claude (enforce at Google-slice review; ad-platform + security reviewers
+should check this entry)
 
 ---
 

@@ -130,26 +130,41 @@ Where the build steps and security treatment for everything planned actually liv
 `CLAUDE.md` plus the `SessionStart` hook (`scripts/hooks/session-start-roadmap.js`) point
 every new session at this section automatically. The slice definition:
 
-> **First**: verify both pending slices are fully closed — the clients PR merged and the
-> owner's manual production verification done for org layer + clients (checklists in
-> `docs/features/org-layer.md` and `docs/features/clients.md`; critical probe = real
-> Meta "Sync now"). If not, surface that before new work.
+> **First**: confirm the owner's production probe for the factory/sync-core PR #12 and
+> the token-refresh PR (both invisible refactors; probe = /budget "Sync now" succeeds
+> with a fresh timestamp). If not yet done, surface it.
 >
-> **Next slice: token refresh lifecycle (blueprint §3.4, S–M) → then the Google Ads
-> client + OAuth route** (§4 order items 4–5). The factory seam + sync-core extraction
-> shipped 2026-07-22, so §3.4's `getFreshConnectionWithTokens` seam is the remaining
-> hard blocker for Google (its access tokens expire hourly). Alternative product slice
-> if the owner prefers: campaign records + checklist engine (`docs/roadmap.md`
-> product-spec merge, spec §2.1; PRODUCT-003 open; owner deferred it 2026-07-22 pending
-> a clearer picture — walk them through a concrete mock before starting it).
-> Note: Google work needs the **Google Ads Developer Token application** (session-alerts,
-> still pending — days-long lead time; prompt the owner).
+> **Next slice: Google Ads client + OAuth route** (blueprint §4 item 5; §3.2 factory
+> case + §3.4 refresher registration + the OAuth connect/callback routes following the
+> audited Meta pattern — state user-binding per BUDGET-001). Before writing the
+> refresher, read **open-questions INT-003** (token hygiene in errors, rotating-token
+> persist gap, null semantics) — the reviewers will check against it. Gated on the
+> **Google Ads Developer Token** (owner applied? check session-alerts): test-level
+> token is enough to build against a test account; Basic Access approval is needed for
+> real spend data. If the token application hasn't been made, help the owner do it
+> first. Alternative product slice if the owner prefers: campaign records + checklist
+> engine (PRODUCT-003; owner deferred 2026-07-22 — walk them through a concrete mock
+> before starting it).
 
 The standing order remains `docs/architecture-blueprint.md` §4 (factory seam → sync-core
 → token refresh → Google Ads → cron → sync_jobs/Sentry) interleaved with the product-spec
 merge table in `docs/roadmap.md`.
 
 ## Last Updated
+2026-07-23 — **Token refresh lifecycle shipped (blueprint §3.4)** on branch
+`claude/roadmap-feature-planning-3e4ll0`. New `src/lib/integrations/refresh.ts`
+(`freshen` + `needsRefresh` + per-platform `REFRESHERS` registry — empty until Google;
+skew applies only when a refresher exists; `revoked` short-circuits) and
+`getFreshConnectionWithTokens`/`persistRefreshedTokens` in `connections.ts` (row-bound
+AAD, update-by-id — deliberate deviation from blueprint's `saveConnection`, see
+decision-log 2026-07-23). `syncBudget` injects the fresh variant (one-line swap).
+Reviewed by ad-platform (approve) + security (1 HIGH: revoked-resurrection — fixed) +
+code (1 HIGH: uniform skew shortening Meta's validity window — fixed); guardrails for
+the Google refresher recorded as open-questions INT-003. 84 tests green. Meta behavior
+unchanged except: an already-expired-by-timestamp token is marked `expired` before the
+API call instead of after. Also codified the plain-terms-planning + explicit-"go" rule
+in `.claude/rules/working-style.md` (owner instruction). Owner was walked through the
+Google Ads Developer Token application steps. Next: Google Ads client + OAuth route.
 2026-07-22 (infra) — **Client-factory seam + sync-core extraction shipped** (blueprint
 §3.2 + §3.3 step 1) on branch `claude/roadmap-feature-planning-3e4ll0`. New
 `src/lib/integrations/{errors,factory}.ts` (PlatformApiError abstract base;

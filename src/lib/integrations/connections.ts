@@ -1,6 +1,8 @@
-import { getOrgContext } from '@/features/org/queries'
+import { getOrgContext, type OrgContext } from '@/features/org/queries'
+import type { Database } from '@/types/database'
 import type { AdPlatform, PlatformConnectionStatus } from '@/types/integrations'
 import { encryptToken, decryptToken, currentKeyId } from './token-crypto'
+import { freshen, getRefresher, type RefreshedTokens } from './refresh'
 
 // Server-only token store for ad-platform OAuth connections. This is the ONLY place token
 // columns are read and decrypted. Client-facing reads (the dashboard) use the token-free
@@ -37,14 +39,14 @@ function tokenAad(userId: string, platform: string, externalAccountId: string): 
   return `${userId}:${platform}:${externalAccountId}`
 }
 
-export async function getConnectionWithTokens(
+type ConnectionRow = Database['public']['Tables']['platform_connections']['Row']
+
+async function fetchConnectionRow(
+  supabase: OrgContext['supabase'],
+  orgId: string,
   platform: AdPlatform,
   externalAccountId: string
-): Promise<ConnectionWithTokens | null> {
-  const ctx = await getOrgContext()
-  if (!ctx) return null
-  const { supabase, orgId } = ctx
-
+): Promise<ConnectionRow | null> {
   const { data, error } = await supabase
     .from('platform_connections')
     .select('*')
@@ -54,8 +56,10 @@ export async function getConnectionWithTokens(
     .maybeSingle()
 
   if (error) throw new Error(`Failed to fetch connection: ${error.message}`)
-  if (!data) return null
+  return data
+}
 
+function decryptConnectionRow(data: ConnectionRow): ConnectionWithTokens {
   const aad = tokenAad(data.user_id, data.platform, data.external_account_id)
   const hasRefresh =
     data.refresh_token_ciphertext !== null &&
@@ -101,6 +105,85 @@ export async function getConnectionWithTokens(
     tokenExpiresAt: data.token_expires_at,
     status: data.status,
   }
+}
+
+export async function getConnectionWithTokens(
+  platform: AdPlatform,
+  externalAccountId: string
+): Promise<ConnectionWithTokens | null> {
+  const ctx = await getOrgContext()
+  if (!ctx) return null
+  const { supabase, orgId } = ctx
+
+  const data = await fetchConnectionRow(supabase, orgId, platform, externalAccountId)
+  if (!data) return null
+  return decryptConnectionRow(data)
+}
+
+// Like getConnectionWithTokens, but refreshes a near-expiry token first (blueprint
+// §3.4) and marks the connection 'expired' when it can't be made usable — the
+// sync path then reports it as a failure and the UI shows "reconnect". Platforms
+// without a refresher (Meta) simply expire. Sync callers should inject THIS one.
+export async function getFreshConnectionWithTokens(
+  platform: AdPlatform,
+  externalAccountId: string
+): Promise<ConnectionWithTokens | null> {
+  const ctx = await getOrgContext()
+  if (!ctx) return null
+  const { supabase, orgId } = ctx
+
+  const data = await fetchConnectionRow(supabase, orgId, platform, externalAccountId)
+  if (!data) return null
+  const conn = decryptConnectionRow(data)
+
+  return freshen(conn, {
+    refresherFor: getRefresher,
+    persist: (tokens) => persistRefreshedTokens(supabase, orgId, data, tokens),
+    markExpired: () => updateConnectionStatus(supabase, orgId, data.id, 'expired'),
+    now: Date.now,
+  })
+}
+
+// Persists refreshed tokens onto the EXISTING row by id. Deliberately not
+// saveConnection: its upsert key is (user_id, platform, external_account_id), so a
+// caller other than the connecting user would insert a new row instead of updating
+// this one. The AAD must come from the row's stored user_id — the crypto invariant
+// from the org slice — never from whoever triggered the refresh. `row` must be the
+// row as fetched from the DB, never a constructed literal: a wrong user_id here
+// writes ciphertext the real owner can't decrypt (fails closed, but bricks the row).
+export async function persistRefreshedTokens(
+  supabase: OrgContext['supabase'],
+  orgId: string,
+  row: Pick<ConnectionRow, 'id' | 'user_id' | 'platform' | 'external_account_id'>,
+  tokens: RefreshedTokens
+): Promise<void> {
+  const aad = tokenAad(row.user_id, row.platform, row.external_account_id)
+  const access = encryptToken(tokens.accessToken, aad)
+  // undefined/null = platform sent no new refresh token; keep the stored columns
+  // untouched (Google often omits it on refresh — overwriting would orphan us).
+  const refresh = tokens.refreshToken ? encryptToken(tokens.refreshToken, aad) : null
+
+  const { error } = await supabase
+    .from('platform_connections')
+    .update({
+      token_key_id: currentKeyId,
+      access_token_ciphertext: access.ciphertext,
+      access_token_iv: access.iv,
+      access_token_auth_tag: access.authTag,
+      ...(refresh
+        ? {
+            refresh_token_ciphertext: refresh.ciphertext,
+            refresh_token_iv: refresh.iv,
+            refresh_token_auth_tag: refresh.authTag,
+          }
+        : {}),
+      token_expires_at: tokens.tokenExpiresAt,
+      status: 'connected',
+    })
+    .eq('id', row.id)
+    .eq('org_id', orgId)
+
+  if (error) throw new Error(`Failed to persist refreshed tokens: ${error.message}`)
 }
 
 export async function saveConnection(
@@ -185,14 +268,12 @@ export async function saveConnections(inputs: SaveConnectionInput[]): Promise<nu
   return rows.length
 }
 
-export async function markConnectionStatus(
+async function updateConnectionStatus(
+  supabase: OrgContext['supabase'],
+  orgId: string,
   id: string,
   status: PlatformConnectionStatus
 ): Promise<void> {
-  const ctx = await getOrgContext()
-  if (!ctx) return
-  const { supabase, orgId } = ctx
-
   const { error } = await supabase
     .from('platform_connections')
     .update({ status })
@@ -200,4 +281,13 @@ export async function markConnectionStatus(
     .eq('org_id', orgId)
 
   if (error) throw new Error(`Failed to update connection status: ${error.message}`)
+}
+
+export async function markConnectionStatus(
+  id: string,
+  status: PlatformConnectionStatus
+): Promise<void> {
+  const ctx = await getOrgContext()
+  if (!ctx) return
+  await updateConnectionStatus(ctx.supabase, ctx.orgId, id, status)
 }
