@@ -9,6 +9,11 @@ import type { ConnectionWithTokens } from './connections'
 // (sync-core, future cron) stay platform-blind. Adding Google Ads means adding a
 // case here — nothing at the call sites changes.
 
+// Read per call rather than snapshotted: after assertPlatformReady passes, the throw
+// here is unreachable in a sync loop (Node env vars can't vanish mid-request). If a
+// future platform resolves per-call credentials that CAN fail mid-loop (e.g. rotated
+// tokens), resolve them once up front and thread them through — a config failure must
+// not be misclassified as a per-connection error.
 function requireMetaAppSecret(): string {
   const secret = process.env.META_APP_SECRET
   if (!secret) throw new PlatformNotConfiguredError('meta')
