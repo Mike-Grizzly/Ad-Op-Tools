@@ -9,6 +9,15 @@ Carry-over from Proscene. These rules govern how we plan, build, and close out e
 - Summarize your understanding and identify the exact files you will touch before making any changes.
 - If the task conflicts with documented architecture, flag it before coding — do not silently work around it.
 
+## Planning & Approval (owner rule, 2026-07-23)
+
+- Every slice plan is presented with a **plain-terms explanation first**: what we are
+  building, why it matters to the app, and why the slice is tackled the way it is —
+  before the technical outline. No jargon-only plans.
+- After presenting a plan, **wait for the owner's explicit "go"** before writing any
+  code. Plan-mode approval signals alone are not sufficient (they have misfired twice).
+- Checkpoints stay owner-gated: plan approval → build → migration apply → merge.
+
 ## How We Build
 
 ### Vertical slices
