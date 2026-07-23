@@ -128,6 +128,10 @@ at the dev/prod split.
 - **Verify against the live API once Meta creds exist**: `date_start` returned with `time_increment=1`; `v21.0` still in Meta's support window; default `/campaigns` excludes deleted; the BUC rate-limit header name.
 - Next 16 deprecates the `middleware` file convention in favor of `proxy` (pre-existing build warning). Migrate when convenient.
 - Key rotation: `token-crypto.getKey()` is single-key (`v1`); extend it to a key map before the first rotation.
+- **Google Ads slice prerequisite** (ad-platform review 2026-07-22): accounts under an
+  MCC/manager hierarchy need a `login-customer-id` header that isn't derivable from the
+  stored token/account id — add an optional field to `ConnectionWithTokens` (+ column if
+  persisted) when the Google client lands. Additive; the factory seam itself needs no rework.
 - Platform values are CHECK-constrained in three tables (`platform_connections`, `budget_entries`, `budget_caps`); adding a platform means updating all three in sync. Consider a lookup table or domain type when the next platform is added.
 **Owner**: Claude (during Budget UI / pre-launch hardening)
 
@@ -235,6 +239,9 @@ read-only defaults, copy-on-first-edit into the org.
 - **Test coverage is pure-functions-only**: no tests for server actions, OAuth routes, or
   auth guards. Add action-level tests opportunistically (TEST-001), prioritizing `syncBudget`
   and the OAuth callback validators when Phase 2 touches them.
+  **Narrowed 2026-07-22**: the sync loop itself is now unit-tested (10 sync-core tests
+  with injected fakes + 6 factory tests). Remaining gap: the thin `syncBudget` shim and
+  OAuth routes (glue only).
 - **CSP still report-only with `unsafe-inline`/`unsafe-eval`** and no report sink — already
   tracked in SEC-002; listed here only for completeness of the review record.
 - **`src/hooks/` doesn't exist** though conventions reference it — fine (no shared hooks yet);

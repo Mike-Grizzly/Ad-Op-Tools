@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { getOrgContext } from '@/features/org/queries'
 import { getConnectionWithTokens, markConnectionStatus } from '@/lib/integrations/connections'
-import { createMetaClient, MetaApiError } from '@/lib/integrations/meta/client'
+import { getClientForConnection } from '@/lib/integrations/factory'
+import { PlatformNotConfiguredError, UnsupportedPlatformError } from '@/lib/integrations/errors'
+import { syncConnections, SyncPreconditionError } from './sync-core'
 import { syncBudgetSchema, connectionIdSchema, setCapsSchema } from './validation'
 import { DEFAULT_SYNC_DAYS } from './constants'
 import type { DateRange } from '@/types/integrations'
@@ -29,89 +31,36 @@ export async function syncBudget(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
 
   const { platform, accountId, range: inputRange } = parsed.data
-  // Phase 1 supports Meta only. Before enabling another platform, add a client-factory
-  // branch below — do NOT just drop this guard (the code path builds a Meta client).
-  if (platform !== 'meta') return { error: 'Only Meta is supported right now' }
-
-  const appSecret = process.env.META_APP_SECRET
-  if (!appSecret) return { error: 'Meta is not configured' }
-
   const range = inputRange ?? defaultRange(DEFAULT_SYNC_DAYS)
 
-  // One connection if accountId is given, else every connection for this platform.
-  let query = supabase
-    .from('platform_connections')
-    .select('external_account_id')
-    .eq('org_id', orgId)
-    .eq('platform', platform)
-  if (accountId) query = query.eq('external_account_id', accountId)
-
-  const { data: conns, error: connErr } = await query
-  if (connErr) return { error: 'Failed to load connections' }
-  if (!conns || conns.length === 0) return { error: 'No connection found for this platform' }
-
-  let rowsSynced = 0
-  let failures = 0
-
-  for (const { external_account_id } of conns) {
-    // Inside the loop's failure accounting: one undecryptable/corrupt connection row
-    // must not abort the sync for every other account.
-    let conn: Awaited<ReturnType<typeof getConnectionWithTokens>>
-    try {
-      conn = await getConnectionWithTokens(platform, external_account_id)
-    } catch {
-      failures += 1
-      continue
-    }
-    if (!conn) {
-      failures += 1
-      continue
-    }
-    try {
-      const client = createMetaClient(conn.accessToken, appSecret)
-      const spend = await client.getDailySpend(external_account_id, range)
-
-      if (spend.length > 0) {
-        const rows = spend.map((r) => ({
-          user_id: userId,
-          org_id: orgId,
-          platform: r.platform,
-          external_account_id: r.external_account_id,
-          campaign_external_id: r.campaign_external_id,
-          campaign_name: r.campaign_name,
-          entry_date: r.entry_date,
-          spend_micros: r.spend_micros,
-          currency: r.currency,
-          impressions: r.impressions,
-          clicks: r.clicks,
-          synced_at: new Date().toISOString(),
-        }))
-        const { error: upsertErr } = await supabase.from('budget_entries').upsert(rows, {
-          onConflict: 'org_id,platform,external_account_id,campaign_external_id,entry_date',
-        })
-        if (upsertErr) {
-          failures += 1
-          continue
-        }
-        rowsSynced += rows.length
+  // The loop lives in sync-core (transport-agnostic; the future cron calls it with a
+  // service-role client). This action stays the session shim: auth, parsing, and the
+  // user-facing wording for the typed errors the core throws.
+  try {
+    const result = await syncConnections(
+      supabase,
+      { orgId, userId, platform, accountId, range },
+      {
+        getConnection: getConnectionWithTokens,
+        clientFor: getClientForConnection,
+        markStatus: markConnectionStatus,
       }
-
-      await supabase
-        .from('platform_connections')
-        .update({ last_synced_at: new Date().toISOString(), status: 'connected' })
-        .eq('id', conn.id)
-        .eq('org_id', orgId)
-    } catch (err) {
-      failures += 1
-      await markConnectionStatus(
-        conn.id,
-        err instanceof MetaApiError && err.isAuthError ? 'expired' : 'error'
-      )
+    )
+    revalidatePath('/budget')
+    return { data: result }
+  } catch (err) {
+    if (err instanceof UnsupportedPlatformError) return { error: 'Only Meta is supported right now' }
+    if (err instanceof PlatformNotConfiguredError) return { error: 'Meta is not configured' }
+    if (err instanceof SyncPreconditionError) {
+      return {
+        error:
+          err.code === 'no-connections'
+            ? 'No connection found for this platform'
+            : 'Failed to load connections',
+      }
     }
+    throw err
   }
-
-  revalidatePath('/budget')
-  return { data: { rowsSynced, failures } }
 }
 
 export async function disconnectPlatform(id: unknown): Promise<ActionResult<{ id: string }>> {

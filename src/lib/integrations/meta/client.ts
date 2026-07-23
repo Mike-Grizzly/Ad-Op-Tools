@@ -5,6 +5,7 @@ import type {
   CanonicalSpendRow,
   DateRange,
 } from '@/types/integrations'
+import { PlatformApiError } from '../errors'
 import type { MetaAccount, MetaCampaign, MetaErrorBody, MetaInsight, MetaListResponse } from './types'
 import { toCanonicalCampaign, toCanonicalSpendRow } from './transforms'
 import {
@@ -18,7 +19,7 @@ const BASE_URL = `https://graph.facebook.com/${META_API_VERSION}`
 
 // Typed Graph API error so callers can branch: a dead token must flip the connection to
 // expired/revoked (not retry forever); throttling must back off; transient 5xx may retry.
-export class MetaApiError extends Error {
+export class MetaApiError extends PlatformApiError {
   readonly code: number | undefined
   readonly subcode: number | undefined
   readonly httpStatus: number

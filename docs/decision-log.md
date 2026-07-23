@@ -373,3 +373,61 @@ budget overrides included now. Execution decisions:
    (yellow pacing band) — the palette had no warning color.
 8. **PLATFORM_META lifted** to `src/lib/platform-meta.ts` (clients = designated second
    consumer); `budget-helpers.ts` re-exports, budget components untouched.
+
+---
+
+## 2026-07-22 — Target Market: Both, In-House Feel With a Client Layer On Top
+
+**Decision** (owner, 2026-07-22, verbatim intent): serve **both markets the way the
+spec's own reference companies do** — "make it feel in-house, but with a client
+management layer built on top." Verified against the reference companies the June spec
+names: **Optmyzr** (§8.2 inspiration) markets to agencies, in-house teams, and paid
+search experts; **Bïrch/Revealbot** (the spec's pricing foil) serves agencies and
+mid-market in-house DTC brands; **Adalysis** (§8.1 inspiration) is strongest for
+agencies and in-house teams. All are structurally **ad-account-first**: the ad account
+is the core object and multi-account/client management is a layer on top — the design
+that lets one product serve both segments.
+
+**Standing design rule adopted**: connections (ad accounts) are the primitive; clients
+are the **optional** multi-client layer (org = paying tenant, client = the tenant's
+customer). Every feature must remain usable without creating clients — an in-house user
+connects an account and works directly; the Clients page is where the multi-client
+workflow lives. Today only the book-of-business grid requires clients; keep it that way.
+
+**Iteration note (owner)**: the current Clients page is explicitly a first wiring
+iteration — its look/feel is expected to change substantially as roadmap features
+(checklists, monitors, digest) attach to client records. Priority now is plumbing, not
+polish.
+
+**Downstream implications (deferred to their slices)**: pricing (PRODUCT-002) — the
+spec's flat client-count tiers differentiate against competitors' %-of-spend pricing,
+but both-market positioning may argue for an account-count or hybrid axis; revisit at
+the Stripe slice. Onboarding leads with "connect your ad account," with "add your first
+client" as the optional next step.
+
+---
+
+## 2026-07-22 — Platform Error Contract & Sync-Core Seam
+
+Slice: client-factory seam (blueprint §3.2) + sync-core extraction (§3.3 step 1).
+Pure refactor, byte-identical Meta behavior. Design decisions:
+
+1. **Error contract = abstract base class** `PlatformApiError` (`isAuthError` /
+   `isRateLimited` / `isTransient` getters) in `src/lib/integrations/errors.ts`;
+   `MetaApiError` extends it (2-line diff). Shared code classifies with one
+   `instanceof` — no per-platform imports. Alternatives rejected: duck-typed guard on
+   `unknown` (weaker semantics), `classifyError(platform, err)` dispatch (reintroduces
+   platform switching at every call site — the thing the factory kills).
+2. **Typed preflight errors**: `UnsupportedPlatformError` + `PlatformNotConfiguredError`
+   thrown by the factory; the action maps them to the previous user-facing strings.
+   `assertPlatformReady()` runs BEFORE the connection lookup because today's message
+   ordering ("Only Meta…" outranks "No connection found") is behavior.
+3. **`errors.ts` exists** (not named in the blueprint) to keep the factory↔meta-client
+   import graph acyclic — execution detail.
+4. **SyncDeps is required DI, never defaulted**: `getConnection`/`markStatus` resolve
+   their org via `getOrgContext()` internally (session-bound). A defaulted dep would let
+   the future cron route compile while silently failing per connection. The cron slice
+   must add `(supabase, orgId)`-parameterized variants in `connections.ts` first.
+5. **Knowingly preserved oddities** (byte-identical rule): the `last_synced_at` update
+   result stays unchecked; `markStatus` throwing inside the loop's catch still
+   propagates (crashes) as before. Change either only as a deliberate follow-up.

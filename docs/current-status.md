@@ -135,20 +135,35 @@ every new session at this section automatically. The slice definition:
 > `docs/features/org-layer.md` and `docs/features/clients.md`; critical probe = real
 > Meta "Sync now"). If not, surface that before new work.
 >
-> **Then, owner picks the next slice** (both unblocked; ask at session start):
-> - **Infra (default)**: the platform **client-factory seam** (blueprint §3.2, S) +
->   **sync-core extraction** (§3.3 step 1, S–M) as one small slice — removes the
->   hardcoded Meta dispatch and unblocks Google Ads / token refresh / cron next.
-> - **Product**: **campaign records + checklist engine** (`docs/roadmap.md` product-spec
->   merge, spec §2.1) — first feature hanging off clients; pure CRUD, no platform API;
->   spec-before-build (`docs/features/checklists.md`), UI per `docs/design-system.md`.
->   Checklist template seeding question is PRODUCT-003.
+> **Next slice: token refresh lifecycle (blueprint §3.4, S–M) → then the Google Ads
+> client + OAuth route** (§4 order items 4–5). The factory seam + sync-core extraction
+> shipped 2026-07-22, so §3.4's `getFreshConnectionWithTokens` seam is the remaining
+> hard blocker for Google (its access tokens expire hourly). Alternative product slice
+> if the owner prefers: campaign records + checklist engine (`docs/roadmap.md`
+> product-spec merge, spec §2.1; PRODUCT-003 open; owner deferred it 2026-07-22 pending
+> a clearer picture — walk them through a concrete mock before starting it).
+> Note: Google work needs the **Google Ads Developer Token application** (session-alerts,
+> still pending — days-long lead time; prompt the owner).
 
 The standing order remains `docs/architecture-blueprint.md` §4 (factory seam → sync-core
 → token refresh → Google Ads → cron → sync_jobs/Sentry) interleaved with the product-spec
 merge table in `docs/roadmap.md`.
 
 ## Last Updated
+2026-07-22 (infra) — **Client-factory seam + sync-core extraction shipped** (blueprint
+§3.2 + §3.3 step 1) on branch `claude/roadmap-feature-planning-3e4ll0`. New
+`src/lib/integrations/{errors,factory}.ts` (PlatformApiError abstract base;
+`getClientForConnection` + `assertPlatformReady`; typed Unsupported/NotConfigured
+errors) and `src/features/budget/sync-core.ts` (`syncConnections(supabase, params,
+deps)` — transport-agnostic, required DI, `SyncPreconditionError`); `syncBudget` is now
+a thin session shim mapping typed errors to the exact previous user-facing strings.
+Byte-identical Meta behavior; 16 new unit tests (60 total) retire the DEBT-001
+sync-loop test gap. Reviewed by ad-platform + typescript/code agents. Earlier same day:
+clients verification rounds 1–2 shipped via PR #10 (tolerant money parsing + field
+errors + UTM https auto-prepend + sharp/postcss CVE bumps) and PR #11 ("No accounts"
+pacing state, reset-day field polish, override explanation) — both merged; owner
+confirmed client creation works. Target-market decision recorded (both markets,
+account-first — see decision-log 2026-07-22). Next: token refresh (§3.4) → Google Ads.
 2026-07-21 (later) — **Clients slice built, reviewed, migration applied + probed** on
 branch `claude/roadmap-feature-planning-3e4ll0` (restarted from merged main after PR #8).
 Migration `20260722000000_create_clients.sql` (additive): `clients` (org-scoped, monthly
