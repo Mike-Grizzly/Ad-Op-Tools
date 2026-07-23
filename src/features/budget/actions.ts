@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getOrgContext } from '@/features/org/queries'
-import { getConnectionWithTokens, markConnectionStatus } from '@/lib/integrations/connections'
+import { getFreshConnectionWithTokens, markConnectionStatus } from '@/lib/integrations/connections'
 import { getClientForConnection } from '@/lib/integrations/factory'
 import { PlatformNotConfiguredError, UnsupportedPlatformError } from '@/lib/integrations/errors'
 import { syncConnections, SyncPreconditionError } from './sync-core'
@@ -41,7 +41,7 @@ export async function syncBudget(
       supabase,
       { orgId, userId, platform, accountId, range },
       {
-        getConnection: getConnectionWithTokens,
+        getConnection: getFreshConnectionWithTokens,
         clientFor: getClientForConnection,
         markStatus: markConnectionStatus,
       }
