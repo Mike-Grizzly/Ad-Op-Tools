@@ -31,9 +31,13 @@ export function getRefresher(platform: string): TokenRefresher | null {
 // An unparseable timestamp yields NaN comparisons → false → passthrough: the sync
 // call then fails as an auth error and marks the connection, same as before this
 // seam existed. Null expiry (platform never told us) also passes through.
-export function needsRefresh(tokenExpiresAt: string | null, nowMs: number): boolean {
+export function needsRefresh(
+  tokenExpiresAt: string | null,
+  nowMs: number,
+  skewMs: number
+): boolean {
   if (tokenExpiresAt === null) return false
-  return Date.parse(tokenExpiresAt) - nowMs <= REFRESH_SKEW_MS
+  return Date.parse(tokenExpiresAt) - nowMs <= skewMs
 }
 
 export type FreshenDeps = {
@@ -55,9 +59,15 @@ export async function freshen(
   // connection someone deliberately shut off, even if the upstream grant is
   // still live. ('expired'/'error' may recover — that's the point of refresh.)
   if (conn.status === 'revoked') return null
-  if (!needsRefresh(conn.tokenExpiresAt, deps.now())) return conn
 
+  // The skew buffer only makes sense when there is a refresh path to spend it on.
+  // A platform with no refresher (Meta) keeps its full validity window: a token
+  // 4 minutes from expiry is still a valid token — marking it early would force
+  // a premature reconnect for nothing.
   const refresher = deps.refresherFor(conn.platform)
+  if (!needsRefresh(conn.tokenExpiresAt, deps.now(), refresher ? REFRESH_SKEW_MS : 0)) {
+    return conn
+  }
   if (!refresher) {
     await deps.markExpired()
     return null

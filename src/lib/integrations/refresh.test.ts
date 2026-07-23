@@ -46,27 +46,38 @@ function deps(overrides: Partial<FreshenDeps> = {}) {
 
 describe('needsRefresh', () => {
   it('is false for a null expiry (platform never reported one)', () => {
-    expect(needsRefresh(null, NOW)).toBe(false)
+    expect(needsRefresh(null, NOW, REFRESH_SKEW_MS)).toBe(false)
   })
 
   it('is false when expiry is comfortably in the future', () => {
-    expect(needsRefresh(new Date(NOW + 60 * 60_000).toISOString(), NOW)).toBe(false)
+    expect(needsRefresh(new Date(NOW + 60 * 60_000).toISOString(), NOW, REFRESH_SKEW_MS)).toBe(
+      false
+    )
   })
 
   it('is true inside the skew window', () => {
-    expect(needsRefresh(new Date(NOW + REFRESH_SKEW_MS - 1000).toISOString(), NOW)).toBe(true)
+    expect(
+      needsRefresh(new Date(NOW + REFRESH_SKEW_MS - 1000).toISOString(), NOW, REFRESH_SKEW_MS)
+    ).toBe(true)
   })
 
   it('is true exactly at the skew boundary', () => {
-    expect(needsRefresh(new Date(NOW + REFRESH_SKEW_MS).toISOString(), NOW)).toBe(true)
+    expect(
+      needsRefresh(new Date(NOW + REFRESH_SKEW_MS).toISOString(), NOW, REFRESH_SKEW_MS)
+    ).toBe(true)
   })
 
   it('is true for an already-expired token', () => {
-    expect(needsRefresh(new Date(NOW - 1000).toISOString(), NOW)).toBe(true)
+    expect(needsRefresh(new Date(NOW - 1000).toISOString(), NOW, REFRESH_SKEW_MS)).toBe(true)
+  })
+
+  it('with zero skew, is false right up until literal expiry', () => {
+    expect(needsRefresh(new Date(NOW + 1000).toISOString(), NOW, 0)).toBe(false)
+    expect(needsRefresh(new Date(NOW).toISOString(), NOW, 0)).toBe(true)
   })
 
   it('is false for an unparseable timestamp (passthrough — API call surfaces the auth error)', () => {
-    expect(needsRefresh('not-a-date', NOW)).toBe(false)
+    expect(needsRefresh('not-a-date', NOW, REFRESH_SKEW_MS)).toBe(false)
   })
 })
 
@@ -113,12 +124,34 @@ describe('freshen', () => {
     expect(d.persisted).toHaveLength(1)
   })
 
-  it('marks expired and returns null when near expiry with no refresher', async () => {
+  it('marks expired and returns null when past expiry with no refresher', async () => {
     const d = deps()
     const result = await freshen(conn({ tokenExpiresAt: new Date(NOW).toISOString() }), d)
     expect(result).toBeNull()
     expect(d.expired).toHaveLength(1)
     expect(d.persisted).toHaveLength(0)
+  })
+
+  it('passes a still-valid token through when inside the skew window with no refresher', async () => {
+    // Regression guard: the skew buffer must not shorten Meta's real validity
+    // window — only platforms WITH a refresher refresh early.
+    const d = deps()
+    const c = conn({ tokenExpiresAt: new Date(NOW + REFRESH_SKEW_MS - 1000).toISOString() })
+    const result = await freshen(c, d)
+    expect(result).toBe(c)
+    expect(d.expired).toHaveLength(0)
+  })
+
+  it('refreshes early inside the skew window when a refresher exists', async () => {
+    const d = deps({
+      refresherFor: () => async () => ({ accessToken: 'new-access', tokenExpiresAt: null }),
+    })
+    const result = await freshen(
+      conn({ tokenExpiresAt: new Date(NOW + REFRESH_SKEW_MS - 1000).toISOString() }),
+      d
+    )
+    expect(result?.accessToken).toBe('new-access')
+    expect(d.persisted).toHaveLength(1)
   })
 
   it('refreshes, persists, and returns the updated connection', async () => {

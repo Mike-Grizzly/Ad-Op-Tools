@@ -1,4 +1,5 @@
 import { getOrgContext, type OrgContext } from '@/features/org/queries'
+import type { Database } from '@/types/database'
 import type { AdPlatform, PlatformConnectionStatus } from '@/types/integrations'
 import { encryptToken, decryptToken, currentKeyId } from './token-crypto'
 import { freshen, getRefresher, type RefreshedTokens } from './refresh'
@@ -38,23 +39,7 @@ function tokenAad(userId: string, platform: string, externalAccountId: string): 
   return `${userId}:${platform}:${externalAccountId}`
 }
 
-type ConnectionRow = {
-  id: string
-  user_id: string
-  platform: string
-  external_account_id: string
-  account_name: string | null
-  scopes: string[]
-  token_key_id: string
-  access_token_ciphertext: string
-  access_token_iv: string
-  access_token_auth_tag: string
-  refresh_token_ciphertext: string | null
-  refresh_token_iv: string | null
-  refresh_token_auth_tag: string | null
-  token_expires_at: string | null
-  status: string
-}
+type ConnectionRow = Database['public']['Tables']['platform_connections']['Row']
 
 async function fetchConnectionRow(
   supabase: OrgContext['supabase'],
