@@ -431,3 +431,34 @@ Pure refactor, byte-identical Meta behavior. Design decisions:
 5. **Knowingly preserved oddities** (byte-identical rule): the `last_synced_at` update
    result stays unchecked; `markStatus` throwing inside the loop's catch still
    propagates (crashes) as before. Change either only as a deliberate follow-up.
+
+---
+
+## 2026-07-23 — Token Refresh Lifecycle (blueprint §3.4)
+
+Slice: refresh seam only; Google's actual refresher lands with the Google client.
+Design decisions (reviewed by ad-platform + security + code agents):
+
+1. **Persistence deviates from the blueprint's `saveConnection` instruction** —
+   deliberate. `saveConnection` upserts on `(user_id, platform, external_account_id)`
+   with the CALLER's identity, so any caller other than the connecting user (future
+   teammate, cron) would insert a new row instead of updating the refreshed one, and
+   would encrypt with the wrong AAD. New `persistRefreshedTokens` updates the existing
+   row by id + org_id and derives the AES-GCM AAD from the row's STORED user_id (the
+   org-slice crypto invariant). Blueprint §3.4 updated to match.
+2. **Skew only with a refresh path**: the 5-min early-refresh buffer applies only to
+   platforms with a registered refresher. Meta (no silent refresh) keeps its full
+   validity window — marking a still-valid token expired would force a premature
+   reconnect (caught as a HIGH by code review; the first draft skewed uniformly).
+3. **`revoked` is authoritative**: `freshen` never invokes a refresher for a revoked
+   connection (caught by security review). `expired`/`error` may recover via refresh —
+   that is the feature. Nothing writes `revoked` today; the guard is for the first
+   feature that does (admin revoke, platform webhook).
+4. **Refresh-token retention**: a refresher returning no refresh token keeps the stored
+   one (Google routinely omits it on refresh); returning one rotates it. An explicit
+   `null` currently behaves like "keep" — revisit if a platform signals revocation via
+   null (open-questions INT-003).
+5. **A persist failure propagates** (never silently sync with a token we failed to
+   store). Acceptable while refresh tokens are reusable (Google default); must be
+   revisited (retry/alerting) before any rotating-refresh-token platform registers a
+   refresher — tracked in INT-003.

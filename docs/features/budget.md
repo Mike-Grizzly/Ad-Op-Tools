@@ -101,3 +101,13 @@ mapping the core's typed errors to user-facing strings. Platform dispatch goes t
 `src/lib/integrations/factory.ts` (blueprint §3.2) — adding a platform never touches
 this feature. The future cron route calls the same core with a service-role client
 (blueprint §3.3; see the seam note there about connections.ts variants).
+
+## Update 2026-07-23 — token refresh seam
+
+`syncBudget` now injects `getFreshConnectionWithTokens` (blueprint §3.4): the token's
+`token_expires_at` is checked before sync, and platforms with a registered refresher
+(`src/lib/integrations/refresh.ts` — none yet; Google next slice) get a silent refresh
+inside a 5-min pre-expiry window. Meta has no refresh path: nothing changes until a
+token is genuinely past expiry, at which point it is marked `expired` before the API
+call instead of after a failed one — same user-visible outcome (failure count + a
+"reconnect" status pill).

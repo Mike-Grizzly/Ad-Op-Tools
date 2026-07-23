@@ -161,21 +161,25 @@ scope every query explicitly in code, because service role bypasses RLS.
 4. `vercel.json` — `{"crons": [{"path": "/api/cron/sync", "schedule": "0 6 * * *"}]}`
    (daily is enough to start; hourly later).
 
-### 3.4 Token refresh lifecycle — **Phase 2, hard-blocks Google** (S–M)
+### 3.4 Token refresh lifecycle — ✅ BUILT 2026-07-23 (seam; Google refresher lands with §4 item 5)
 
-Add to `src/lib/integrations/connections.ts`:
+`getFreshConnectionWithTokens(platform, externalAccountId)` in
+`src/lib/integrations/connections.ts`; decision logic + per-platform refresher registry
+in `src/lib/integrations/refresh.ts` (`freshen`, `needsRefresh`, `REFRESHERS`).
 
-```
-getFreshConnectionWithTokens(platform, externalAccountId)
-```
-
-- Reads `token_expires_at`; if within a skew buffer (e.g. 5 min) of expiry, calls a
-  per-platform `refreshAccessToken(conn)` hook: Meta = none (mark `expired`; user must
-  reconnect), Google = POST `https://oauth2.googleapis.com/token` with the stored refresh
-  token (`src/lib/integrations/google-ads/refresh.ts`), then re-encrypt + persist via the
-  existing `saveConnection`, and flip `status` to `'expired'` when refresh fails.
-- Switch `sync-core.ts` to call this instead of `getConnectionWithTokens`. Because the seam
-  is added before Google exists, Google drops in without touching call sites.
+- Reads `token_expires_at`; within a 5-min skew of expiry, calls the platform's
+  registered refresher. **The skew applies only when a refresher exists** — a platform
+  with none (Meta) keeps its full validity window and is marked `expired` only past
+  literal expiry. `status = 'revoked'` short-circuits: refresh never resurrects a
+  deliberately shut-off connection.
+- Persistence goes through **`persistRefreshedTokens`** (updates the existing row by
+  id + org_id, AAD from the row's stored user_id) — deliberately NOT `saveConnection`,
+  whose `(user_id, platform, external_account_id)` upsert key would insert a new row
+  for any caller other than the connecting user (see decision-log 2026-07-23).
+- `syncBudget` injects it as sync-core's `getConnection` dep. Google's refresher
+  (`src/lib/integrations/google-ads/refresh.ts`, POST `oauth2.googleapis.com/token`)
+  registers in `REFRESHERS` next slice without touching call sites. Before writing it,
+  read the refresher-contract guardrails in open-questions INT-003.
 
 ### 3.5 Sync-job status & observability — **Phase 2, same slice as cron** (M)
 
