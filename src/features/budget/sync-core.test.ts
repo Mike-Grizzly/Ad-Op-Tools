@@ -40,6 +40,9 @@ function fakeSupabase(results: {
   }
 
   return {
+    // `as never`: only `.from()` is faked — structurally typing a full SupabaseClient
+    // for a test double isn't practical. The queued upsert/update results are
+    // single-consumption; never await the same chain twice.
     client: { from: (table: string) => chain(table) } as never,
     calls,
   }
@@ -148,6 +151,13 @@ describe('syncConnections', () => {
     const eqArgs = db.calls.filter((c) => c.method === 'eq').map((c) => c.args)
     expect(eqArgs).toContainEqual(['id', 'conn-acct-1'])
     expect(eqArgs).toContainEqual(['org_id', 'org-1'])
+  })
+
+  it('filters the connection lookup by accountId when given', async () => {
+    const db = fakeSupabase({ select: { data: [{ external_account_id: 'acct-2' }], error: null } })
+    await syncConnections(db.client, { ...params, accountId: 'acct-2' }, deps())
+    const eqArgs = db.calls.filter((c) => c.method === 'eq').map((c) => c.args)
+    expect(eqArgs).toContainEqual(['external_account_id', 'acct-2'])
   })
 
   it('still updates last_synced_at when a connection has no spend rows', async () => {
