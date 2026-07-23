@@ -109,7 +109,12 @@ can remain single-user (one implicit personal org).
 4. Update every existing `queries.ts`/`actions.ts` to resolve and scope by org, and
    hand-update `src/types/database.ts`.
 
-### 3.2 Platform client factory / dispatch seam — **before Google** (S)
+### 3.2 Platform client factory / dispatch seam — ✅ **BUILT 2026-07-22** (was: before Google) (S)
+
+> Shipped as `src/lib/integrations/factory.ts` (`getClientForConnection` +
+> `assertPlatformReady`) with a typed error contract in `src/lib/integrations/errors.ts`
+> (`PlatformApiError` abstract base; `UnsupportedPlatformError` / `PlatformNotConfiguredError`).
+> The Meta-only guard now lives behind the seam; adding Google = one factory case.
 
 Replace the hardcoded Meta wiring with one seam:
 
@@ -138,10 +143,13 @@ must use the **service-role key** (already set in Vercel, currently unused by de
 scope every query explicitly in code, because service role bypasses RLS.
 
 **Build recipe (order matters):**
-1. Extract the loop body of `syncBudget` into
-   `src/features/budget/sync-core.ts` — a pure function
-   `syncConnections(supabase, scope, opts)` taking a Supabase client + org/user scope.
-   The server action becomes a thin caller passing the session client.
+1. ✅ **DONE 2026-07-22** — loop extracted into `src/features/budget/sync-core.ts`:
+   `syncConnections(supabase, params, deps)` with required DI
+   (`getConnection`/`clientFor`/`markStatus`). **Seam note for steps 2–4**: the default
+   deps (`getConnectionWithTokens`, `markConnectionStatus`) resolve their org via
+   `getOrgContext()` internally (session-bound). Before the cron route can call the
+   core, add `(supabase, orgId)`-parameterized variants of both in
+   `src/lib/integrations/connections.ts` and inject those.
 2. `src/lib/supabase/service.ts` — service-role client. Add a top-of-file comment: **only
    importable from cron/webhook routes, never from user-request paths, and it must never
    SELECT token columns beyond what `connections.ts` needs.**

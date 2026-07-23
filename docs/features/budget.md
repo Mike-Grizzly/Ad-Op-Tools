@@ -90,3 +90,14 @@ token-column exclusion), `ad-platform-reviewer` (Meta client/transforms/refresh)
 ## Sizing
 
 XL — this is two features' worth: the whole integration foundation + a full Budget slice.
+
+## Update 2026-07-22 — sync architecture
+
+The sync loop no longer lives in `actions.ts`. `src/features/budget/sync-core.ts`
+(`syncConnections`) owns connection lookup → client dispatch → spend upsert →
+status marking, with the Supabase client and session-bound helpers injected
+(`SyncDeps`). `syncBudget` is a thin session shim: auth/org + zod + default range +
+mapping the core's typed errors to user-facing strings. Platform dispatch goes through
+`src/lib/integrations/factory.ts` (blueprint §3.2) — adding a platform never touches
+this feature. The future cron route calls the same core with a service-role client
+(blueprint §3.3; see the seam note there about connections.ts variants).

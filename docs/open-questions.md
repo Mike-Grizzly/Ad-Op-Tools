@@ -235,6 +235,9 @@ read-only defaults, copy-on-first-edit into the org.
 - **Test coverage is pure-functions-only**: no tests for server actions, OAuth routes, or
   auth guards. Add action-level tests opportunistically (TEST-001), prioritizing `syncBudget`
   and the OAuth callback validators when Phase 2 touches them.
+  **Narrowed 2026-07-22**: the sync loop itself is now unit-tested (10 sync-core tests
+  with injected fakes + 6 factory tests). Remaining gap: the thin `syncBudget` shim and
+  OAuth routes (glue only).
 - **CSP still report-only with `unsafe-inline`/`unsafe-eval`** and no report sink — already
   tracked in SEC-002; listed here only for completeness of the review record.
 - **`src/hooks/` doesn't exist** though conventions reference it — fine (no shared hooks yet);
